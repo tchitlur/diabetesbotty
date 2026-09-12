@@ -35,7 +35,7 @@ async function checkText(page: Page, step: string) {
   }
   const outsidePre = await page.evaluate(() => {
     const clone = document.body.cloneNode(true) as HTMLElement
-    clone.querySelectorAll('pre').forEach((p) => p.remove())
+    clone.querySelectorAll('pre, #recharts_measurement_span').forEach((p) => p.remove())   // Recharts keeps an off-screen span for measuring tick text
     return (clone as HTMLElement).innerText
   })
   if (/(^|[^A-Za-z_])null([^A-Za-z_]|$)/.test(outsidePre)) issues.push({ step, kind: 'placeholder', detail: 'text contains "null" outside a details block' })
@@ -184,9 +184,10 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
   await expect(page.locator('.help')).toContainText('Can I have pizza for dinner?')
   await expect(page.locator('.help')).toContainText('Move workouts to morning')
   await snap(page, 'chat-help')
-  await page.locator('.help button', { hasText: 'Is dessert okay right now?' }).click()
+  for (const g of ['Ask', 'Decide', 'Log', 'Explore']) await expect(page.locator('.help')).toContainText(g)
+  await page.locator('.help button', { hasText: 'What if I skip dinner?' }).click()
   const input = page.getByPlaceholder('Ask your personalized model about your daily decisions.')
-  await expect(input).toHaveValue('Is dessert okay right now?')
+  await expect(input).toHaveValue('What if I skip dinner?')
   await input.fill('')
 
   // ---- Plan: render checks, suggest, drag, hover, accept
@@ -338,7 +339,8 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
     await page.waitForTimeout(800)
     await page.waitForFunction(() => document.querySelectorAll('.spinner').length === 0, null, { timeout: 90_000 })
   } else {
-    issues.push({ step: 'plan-suggested', kind: 'plan', detail: 'no suggested workout (nothing left of the day?)' })
+    // depends on the time of day: late in the day the planner may find no safe slot left; a note, not a defect
+    issues.push({ step: 'plan-suggested', kind: 'note', detail: 'no suggested workout (no safe slot left today)' })
   }
 
   // ---- chat: quick buttons, the seven questions, compare toggle
@@ -376,7 +378,10 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
     await input.fill(msg)
     await ask.click()
     await waitCard(label)
-    reasons.push(await page.locator('.answer .reason').last().innerText())
+    const wrap = page.locator('.answer-wrap').last()
+    const cardType = await wrap.getAttribute('data-card')
+    if (cardType !== 'permission') issues.push({ step: label, kind: 'chat', detail: `"${msg}" was routed to a ${cardType} card, not the permission engine` })
+    reasons.push(await wrap.locator('.answer .reason').innerText().catch(() => `no permission card for ${msg}`))
   }
   if (new Set(reasons).size !== reasons.length) issues.push({ step: 'chat', kind: 'chat', detail: 'two questions produced the same reason text' })
   expect(new Set(reasons).size, 'seven distinct reasons').toBe(reasons.length)
@@ -389,6 +394,54 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
   await input.fill('/change morning_workouts'); await ask.click(); await waitCard('chat-change')
   await input.fill('/plan tomorrow'); await ask.click(); await waitCard('chat-plan')
   await input.fill('/why'); await ask.click(); await waitCard('chat-why')
+
+  // ---- the tool-routed assistant: 24 messages, every card type, tool chips under every answer
+  const CHAT_SCREENS = path.join(OUT, 'screens_chat')
+  fs.mkdirSync(CHAT_SCREENS, { recursive: true })
+  const TWENTY_FOUR: [string, string][] = [
+    ['what is my current glucose', 'state'], ["what's my glucose", 'state'], ['am I going up or down', 'state'],
+    ['what will my glucose be in 2 hours', 'forecast'], ['will I go low tonight', 'forecast'],
+    ['I ate 15 minutes ago, why is my glucose not rising', 'explain'], ['why am I dropping', 'explain'],
+    ['how much insulin is still active', 'explain'], ['how many carbs are still digesting', 'explain|state'],
+    ['what was my glucose at 3pm', 'history'], ['how many lows did I have this week', 'history'], ["what's my average this week", 'history'],
+    ['what did I eat yesterday', 'history'], ['when was my last low', 'history'],
+    ['I just ate a bagel', 'logged'], ['I had a large coffee 20 minutes ago', 'logged'], ['just finished a 30 minute run', 'logged'],
+    ['can I have pizza for dinner', 'permission'], ['run at 7 tomorrow for 30 min', 'permission'],
+    ['what if I skip dinner', 'forecast'], ['what if I have two coffees', 'forecast'], ['/plan tomorrow', 'plan'],
+    ['what is a hypo', 'text'], ['how much sleep did I get last night', 'history'],
+  ]
+  const seenCards = new Set<string>()
+  const routed: { msg: string; card: string; tools: string }[] = []
+  let k = 0
+  for (const [msg, want] of TWENTY_FOUR) {
+    k += 1
+    await input.fill(msg)
+    await ask.click()
+    await page.waitForFunction(() => document.querySelectorAll('.chat .spinner').length === 0, null, { timeout: 180_000 })
+    await page.waitForTimeout(400)
+    const wrap = page.locator('.answer-wrap').last()
+    const card = (await wrap.getAttribute('data-card')) || ''
+    const chips = wrap.getByTestId('tool-chips')
+    if (!(await chips.count())) issues.push({ step: `chat-${k}`, kind: 'chat', detail: `no tool chips under "${msg}"` })
+    const chipText = (await chips.count()) ? await chips.innerText() : ''
+    if (!want.split('|').includes(card)) issues.push({ step: `chat-${k}`, kind: 'chat', detail: `"${msg}" rendered a ${card || 'missing'} card, expected ${want}` })
+    if (card !== 'text' && !/checked:/.test(chipText)) issues.push({ step: `chat-${k}`, kind: 'chat', detail: `"${msg}" has no "checked:" chips (${chipText})` })
+    if (card === 'explain' && k === 6) {
+      const pending = Number((await wrap.getByTestId('pending-carbs').innerText()).replace(/[^\d.]/g, ''))
+      if (!(pending > 0)) issues.push({ step: `chat-${k}`, kind: 'chat', detail: `explain card shows ${pending} g pending carbs` })
+      expect(pending, 'pending carbs after eating').toBeGreaterThan(0)
+    }
+    seenCards.add(card)
+    routed.push({ msg, card, tools: chipText.replace(/\s+/g, ' ') })
+    await page.locator('.chat').screenshot({ path: path.join(CHAT_SCREENS, `${String(k).padStart(2, '0')}-${card}.png`) })
+    await checkText(page, `chat-${k}`)
+  }
+  fs.writeFileSync(path.join(OUT, 'chat-routing.json'), JSON.stringify(routed, null, 2))
+  for (const t of ['state', 'forecast', 'explain', 'history', 'permission', 'plan', 'logged', 'text']) {
+    if (!seenCards.has(t)) issues.push({ step: 'chat', kind: 'chat', detail: `card type ${t} never rendered` })
+    expect(seenCards.has(t), `card type ${t} rendered`).toBeTruthy()
+  }
+  await snap(page, 'chat-assistant')
 
   // ---- Details: the "Your twin" card and "I'm nerdy"
   await page.getByRole('button', { name: 'Details', exact: true }).click()
@@ -421,5 +474,5 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
   fs.writeFileSync(path.join(OUT, 'audit-log.json'), JSON.stringify({ steps, issues }, null, 2))
   console.log(`\n${issues.length} issue(s) recorded; ${steps.length} screenshots in ${SCREENS}`)
   for (const i of issues) console.log(` - [${i.kind}] ${i.step}: ${i.detail}`)
-  expect(issues.filter((i) => ['console.error', 'pageerror', 'placeholder', 'clock', 'plan', 'tiles', 'chart'].includes(i.kind)).length, 'no console errors, placeholders or render defects').toBe(0)
+  expect(issues.filter((i) => ['console.error', 'pageerror', 'placeholder', 'clock', 'plan', 'tiles', 'chart', 'chat'].includes(i.kind)).length, 'no console errors, placeholders or render defects').toBe(0)
 })

@@ -1,0 +1,122 @@
+[
+  {
+    "msg": "what is my current glucose",
+    "card": "state",
+    "tools": "checked: current state · routed by Gemini"
+  },
+  {
+    "msg": "what's my glucose",
+    "card": "state",
+    "tools": "checked: current state · routed by Gemini"
+  },
+  {
+    "msg": "am I going up or down",
+    "card": "state",
+    "tools": "checked: current state · routed by Gemini"
+  },
+  {
+    "msg": "what will my glucose be in 2 hours",
+    "card": "forecast",
+    "tools": "checked: forecast · routed by Gemini"
+  },
+  {
+    "msg": "will I go low tonight",
+    "card": "forecast",
+    "tools": "checked: forecast · routed by Gemini"
+  },
+  {
+    "msg": "I ate 15 minutes ago, why is my glucose not rising",
+    "card": "explain",
+    "tools": "checked: why now · routed by Gemini"
+  },
+  {
+    "msg": "why am I dropping",
+    "card": "explain",
+    "tools": "checked: why now · routed by Gemini"
+  },
+  {
+    "msg": "how much insulin is still active",
+    "card": "explain",
+    "tools": "checked: why now · routed by Gemini"
+  },
+  {
+    "msg": "how many carbs are still digesting",
+    "card": "explain",
+    "tools": "checked: why now · routed by Gemini"
+  },
+  {
+    "msg": "what was my glucose at 3pm",
+    "card": "history",
+    "tools": "checked: history · routed by Gemini"
+  },
+  {
+    "msg": "how many lows did I have this week",
+    "card": "history",
+    "tools": "checked: history · routed by Gemini"
+  },
+  {
+    "msg": "what's my average this week",
+    "card": "history",
+    "tools": "checked: history · routed by Gemini"
+  },
+  {
+    "msg": "what did I eat yesterday",
+    "card": "history",
+    "tools": "checked: history · routed by Gemini"
+  },
+  {
+    "msg": "when was my last low",
+    "card": "history",
+    "tools": "checked: history · routed by Gemini"
+  },
+  {
+    "msg": "I just ate a bagel",
+    "card": "logged",
+    "tools": "checked: your log · routed by Gemini"
+  },
+  {
+    "msg": "I had a large coffee 20 minutes ago",
+    "card": "logged",
+    "tools": "checked: your log · routed by Gemini"
+  },
+  {
+    "msg": "just finished a 30 minute run",
+    "card": "logged",
+    "tools": "checked: your log · routed by Gemini"
+  },
+  {
+    "msg": "can I have pizza for dinner",
+    "card": "permission",
+    "tools": "checked: permission engine · routed by Gemini"
+  },
+  {
+    "msg": "run at 7 tomorrow for 30 min",
+    "card": "permission",
+    "tools": "checked: permission engine · routed by Gemini"
+  },
+  {
+    "msg": "what if I skip dinner",
+    "card": "forecast",
+    "tools": "checked: what-if simulation · routed by Gemini"
+  },
+  {
+    "msg": "what if I have two coffees",
+    "card": "forecast",
+    "tools": "checked: what-if simulation · routed by Gemini"
+  },
+  {
+    "msg": "/plan tomorrow",
+    "card": "plan",
+    "tools": "checked: day planner · routed by Gemini"
+  },
+  {
+    "msg": "what is a hypo",
+    "card": "text",
+    "tools": "general answer, no model call"
+  },
+  {
+    "msg": "how much sleep did I get last night",
+    "card": "history",
+    "tools": "checked: history · routed by Gemini"
+  }
+]
