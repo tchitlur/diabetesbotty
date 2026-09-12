@@ -157,11 +157,17 @@ def permission_plain(card: PermissionCard, now: datetime, cause_event: Optional[
         except (ValueError, TypeError):
             return _t(iso)
 
+    def _same_day(iso: str) -> bool:
+        try:
+            return datetime.fromisoformat(iso).date() == now.date()
+        except (ValueError, TypeError):
+            return True
+
     def peak_clause(v):
-        return f"about {int(round(v['peak']))} by {_at(v['peak_time'])}"
+        return f"about {int(round(v['peak']))} " + (f"by {_t(v['peak_time'])}" if _same_day(v['peak_time']) else _when(v['peak_time'], now).replace(" at ", " by "))
 
     def low_clause(v):
-        return f"about {int(round(v['nadir']))} around {_at(v['nadir_time'])}"
+        return f"about {int(round(v['nadir']))} " + (f"around {_t(v['nadir_time'])}" if _same_day(v['nadir_time']) else _when(v['nadir_time'], now).replace(" at ", " around "))
 
     cause = CAUSE.get(typ, "")
     rises = typ == "meal" and prop["peak"] - (nothing["peak"] if nothing else prop["peak"]) > 8
@@ -195,6 +201,12 @@ def permission_plain(card: PermissionCard, now: datetime, cause_event: Optional[
         return {"headline": head, "tone": "warn", "reason": reason}
     alt = _alt(card)
     head = "Better to wait" if (alt and typ == "exercise") else ("Better not tonight" if now.hour >= 17 else "Better not right now")
+    if float(prop.get("p_hyper", 0.0) or 0.0) >= 0.2 and p_prop < 0.05:
+        # denied for a high, not a low
+        reason = f"{What} would take you to {peak_clause(prop)} as {cause}; a high (over 250) is {likelihood(float(prop['p_hyper']))}."
+        if best and cond and best is not prop:
+            reason += f" Even if you {cond}, the peak is about {int(round(best['peak']))}."
+        return {"headline": head, "tone": "bad", "reason": reason}
     reason = f"{What} would drop you to {low_clause(prop)} because {cause}"
     if best and cond:
         reason += f"; even if you {cond} it only lifts to about {int(round(best['nadir']))}, so a low stays {likelihood(card.p_hypo)}."

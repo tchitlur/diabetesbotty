@@ -47,6 +47,8 @@ class Twin:
         dpath = self.pt.path / "drift.json"
         self.drift_data: Dict[str, Any] = self._shift_dates(json.loads(dpath.read_text(encoding="utf-8"))) if dpath.exists() else {}
         self.session_events: List[Event] = []
+        self.logged_events: List[Event] = []      # things the person told the chat they did (survive tick reloads)
+        self.chat_history: List[Dict[str, str]] = []   # last turns of the chat, session-scoped
         self.cards: List[Dict[str, Any]] = []
         self.escalations: List[Escalation] = []
         self.last_card: Optional[PermissionCard] = None
@@ -111,12 +113,28 @@ class Twin:
         with self._lock:
             self.pt = pt
             self.now = new_now
+            if self.logged_events:
+                self.pt.events = sorted(self.pt.events + list(self.logged_events), key=lambda e: e.start)
             self._ukf = None
             self._state_cache = None
             self._week_cache = None
             self._cache = {}
             self._daily = twin_daily_states(self.pt)
         return True
+
+    def invalidate(self) -> None:
+        """Forget every derived quantity (state estimate, forecasts, tiles) so the next call recomputes."""
+        with self._lock:
+            self._ukf = None
+            self._state_cache = None
+            self._cache = {}
+
+    def log_event(self, e: Event) -> None:
+        """Record something the person says they did (a meal, a coffee, a workout, a dose): it joins
+        the logged history the estimator and every forecast read, and the state is re-estimated."""
+        self.logged_events.append(e)
+        self.pt.events = sorted(self.pt.events + [e], key=lambda x: x.start)
+        self.invalidate()
 
     @staticmethod
     def _latest_reading_of(pt: PatientData, wall: datetime) -> datetime:

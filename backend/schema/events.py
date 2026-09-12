@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional, List
 EVENT_TYPES = {"meal", "insulin", "alcohol", "caffeine", "exercise", "sleep", "illness", "stress", "water"}
 INSULIN_KINDS = {"bolus", "basal"}
 EXERCISE_KINDS = {"aerobic", "anaerobic", "mixed"}
-SOURCES = {"gemini", "local", "tap", "csv", "synthetic"}
+SOURCES = {"gemini", "local", "tap", "csv", "synthetic", "chat"}
 
 
 @dataclass

@@ -426,7 +426,7 @@ def _slots(twin, a: datetime, b: datetime, step_min: int = 30) -> List[datetime]
 def _fmt_window(a: str, b: str, now: datetime) -> str:
     da, db = datetime.fromisoformat(a), datetime.fromisoformat(b)
     day = _day_word(da, now)
-    return f"{_hhmm(da)}–{_hhmm(db)}" + ("" if day == "today" else f" {day}")
+    return f"{fmt12(a)}–{fmt12(b)}" + ("" if day == "today" else f" {day}")
 
 
 def coming_up(twin, mc) -> List[Dict[str, Any]]:
