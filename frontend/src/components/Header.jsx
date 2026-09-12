@@ -1,32 +1,38 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { pct } from '../api.js'
+import React, { useEffect, useRef, useState } from 'react'
+import QuickLog from './QuickLog.jsx'
 
-// Shared header for the dashboard and the clinician page. Every indicator has a
-// plain-language label and a title attribute that explains it on hover.
-export default function Header({ health, state, drift, parser, right }) {
-  const syncTone = drift ? (drift.days_flagged >= 5 ? 'bad' : drift.flagged ? 'warn' : 'good') : 'off'
-  const syncText = drift ? (drift.days_flagged >= 5 ? 'escalate' : drift.flagged ? 'drifting' : 'in sync') : 'checking…'
-  const syncTitle = drift
-    ? `Twin sync compares the twin's 60-minute forecast with the CGM every day. Drift score ${drift.score} = today's error relative to the recent median (1.0 = unchanged). ${drift.flagged ? `Rising for ${drift.days_flagged} day(s) since ${drift.since}.` : 'Not rising: the twin still matches the sensor.'}`
-    : 'Loading drift status'
-  const q = state ? state.data_quality : null
-  const qTone = q == null ? 'off' : q >= 0.7 ? 'good' : q >= 0.4 ? 'warn' : 'bad'
-  const qTitle = 'Data quality 0–100 %: CGM coverage over the last 24 h and overall, penalised for rate-of-change artifacts and stale readings. Decisions are refused below 30 %.'
-  const stale = state ? Math.round(state.staleness_min) : null
-  const pTitle = parser
-    ? (parser.gemini_configured ? `Gemini (${parser.model}) parses text and photos into structured events; the local regex + food-table parser takes over if a call fails.` : 'No GEMINI_API_KEY configured: the deterministic local parser (regex + food table) is handling text. Run scripts\\setup_key.ps1 to enable Gemini.')
-    : ''
+// Header: profile switcher, app name, tabs, sensor-status dot (plain tooltip), "Log something".
+export default function Header({ profile, profiles, home, health, onSwitch, onLogout, onQuick, parser, tab, setTab, tabs }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const k = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', h)
+    document.addEventListener('keydown', k)
+    return () => { document.removeEventListener('mousedown', h); document.removeEventListener('keydown', k) }
+  }, [open])
+  const stale = home?.sensor?.staleness_min
+  const tone = stale == null ? 'off' : stale <= 10 ? 'good' : stale <= 20 ? 'warn' : 'bad'
+  const word = stale == null ? 'checking sensor' : stale <= 10 ? 'sensor fresh' : stale <= 20 ? 'sensor getting stale' : 'no sensor data'
+  const tip = stale == null ? 'Waiting for the sensor status.' : `Last glucose reading ${Math.round(stale)} min ago. Green: under 10 min. Amber: 10–20 min. Red: older than 20 min, when the app stops giving advice.`
   return (
-    <header className="header">
-      <Link to="/" className="brand">Gluco<span>Pilot</span></Link>
-      <span className="pill" title={syncTitle}><span className={`dot ${syncTone}`} />Twin sync&nbsp;<b>{syncText}</b>{drift ? <span className="faint">&nbsp;·&nbsp;drift {Number(drift.score).toFixed(2)}</span> : null}</span>
-      <span className="pill" title={qTitle}><span className={`dot ${qTone}`} />Data quality&nbsp;<b>{q != null ? pct(q) : '…'}</b></span>
-      <span className="pill" title="Minutes since the last valid CGM reading. Decisions are refused after 20 minutes."><span className={`dot ${stale == null ? 'off' : stale <= 20 ? 'good' : 'bad'}`} />CGM&nbsp;<b>{stale != null ? `${stale} min ago` : '…'}</b></span>
-      <span className="pill" title={pTitle}>Parser:&nbsp;<b>{parser ? (parser.last_parser === 'gemini' ? 'Gemini' : 'local fallback') : '…'}</b>{parser && !parser.gemini_configured ? <span className="faint">&nbsp;(no key)</span> : null}</span>
+    <header className="header" ref={ref}>
+      <span className="who">
+        <span className="avatar">{profile.initial}</span>
+        <select value={profile.id} onChange={(e) => (e.target.value === '__out' ? onLogout() : onSwitch(e.target.value))} aria-label="profile" title="Switch profile">
+          {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          <option value="__out">Switch profile…</option>
+        </select>
+      </span>
+      <span className="brand">Gluco<span>Pilot</span></span>
+      <nav className="tabs">{tabs.map((t) => <button key={t} className={t === tab ? 'active' : ''} onClick={() => setTab(t)}>{t}</button>)}</nav>
       <div className="spacer" />
-      <span className="pill" title="The demo clock. The twin lives at this moment inside the synthetic data and never sees anything after it.">Twin clock&nbsp;<b>{health ? health.now.replace('T', ' ') : '…'}</b></span>
-      {right}
+      <span className="sensor" title={tip}><span className={`dot ${tone}`} />{word}</span>
+      <span className="sensor" title="The demo clock. Everything on screen is as of this moment in the person's data.">{health ? `${health.now.slice(0, 10)} ${health.now.slice(11, 16)}` : ''}</span>
+      <button className="primary" onClick={() => setOpen((o) => !o)}>Log something</button>
+      {open ? <div className="popover"><QuickLog parser={parser} onAction={(a) => { setOpen(false); onQuick(a) }} /></div> : null}
     </header>
   )
 }
