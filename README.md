@@ -51,6 +51,10 @@ The app is live: the demo person's 90 days of synthetic data are lined up with t
 
 Remove `.env` (or set an invalid key) and text is read by the built-in reader instead of Gemini; everything still works. `POST /permission?stale=30` returns a "need a fresh reading first" card.
 
+## The pitch page: /compare
+
+http://127.0.0.1:8000/compare puts one question to three people at once (Alex, Priya, Marcus) and shows three answers side by side: each person's own forecast, verdict and reason, with the population model's curve in gray behind, and a summary built from their numbers. Keys 1-6 fire the six prepared prompts, Enter asks what you typed, Escape resets, and the Personalized / Average switch shows what everyone would get without personalization. The six prompts are pre-computed and bundled into the page; anything else runs live with a cached fallback.
+
 ## Screenshots
 
 From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v5/` after a run). A curated set is committed under `docs/screens/`:
@@ -65,6 +69,7 @@ From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v5/
 | Plan with a suggested workout and snack | `docs/screens/plan-suggested.png` |
 | Chat: the same question with and without personalisation | `docs/screens/chat-compared.png` |
 | Details | `docs/screens/details.png` |
+| The /compare pitch page, initial and after a prompt | `docs/screens/compare-initial.png`, `docs/screens/compare.png` |
 | Login (five people) and the switcher | `docs/screens/login.png`, `docs/screens/switcher.png` |
 | Phone: Home, the Ask sheet, Plan | `docs/screens/phone-home.png`, `docs/screens/phone-chat.png`, `docs/screens/phone-plan.png` |
 

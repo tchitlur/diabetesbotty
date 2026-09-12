@@ -1,0 +1,102 @@
+{
+  "loadMs": 301,
+  "chips": [
+    {
+      "chip": 1,
+      "text": "Can I have a large pepperoni pizza for dinner?",
+      "verdicts": [
+        "Better to wait",
+        "Better to wait",
+        "Yes, but less"
+      ],
+      "peaks": [
+        182,
+        276,
+        181
+      ],
+      "spread": 95,
+      "total_ms": 1028
+    },
+    {
+      "chip": 2,
+      "text": "Two slices of cheesecake right now?",
+      "verdicts": [
+        "Yes, but less",
+        "Better to wait",
+        "Yes, but less"
+      ],
+      "peaks": [
+        147,
+        219,
+        225
+      ],
+      "spread": 78,
+      "total_ms": 1032
+    },
+    {
+      "chip": 3,
+      "text": "30 minute run at 7 am tomorrow?",
+      "verdicts": [
+        "Yes, with a snack",
+        "Yes, with a snack",
+        "Yes, with a snack"
+      ],
+      "peaks": [
+        72,
+        143,
+        192
+      ],
+      "spread": 120,
+      "total_ms": 1031
+    },
+    {
+      "chip": 4,
+      "text": "Large latte with a muffin now?",
+      "verdicts": [
+        "Go ahead",
+        "Better to wait",
+        "Yes, but less"
+      ],
+      "peaks": [
+        169,
+        237,
+        251
+      ],
+      "spread": 82,
+      "total_ms": 1033
+    },
+    {
+      "chip": 5,
+      "text": "Skip lunch today?",
+      "verdicts": [
+        "Go ahead",
+        "Yes, with a snack",
+        "Go ahead"
+      ],
+      "peaks": [
+        130,
+        106,
+        186
+      ],
+      "spread": 80,
+      "total_ms": 1030
+    },
+    {
+      "chip": 6,
+      "text": "Big bowl of pasta at 9 pm?",
+      "verdicts": [
+        "Yes, with one change",
+        "Better to wait",
+        "Go ahead"
+      ],
+      "peaks": [
+        189,
+        283,
+        188
+      ],
+      "spread": 95,
+      "total_ms": 1026
+    }
+  ],
+  "errors": []
+}

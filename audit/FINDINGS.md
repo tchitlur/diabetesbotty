@@ -97,3 +97,12 @@ Phones (Playwright device descriptors, real scale factor, touch, mobile user age
 | bare375 | 375x667 | 0 | 0.3 px | 988 / 325 | 28x28 / 14 px | 359 / 375 | 60 px |
 
 Every phone screen (login, home, coming-up scroll, tile sheet, plan, ask sheet, pizza answer, switcher sheet, Zara's home) passed: no horizontal overflow except the Plan timeline, every tappable element at least 44x44, no visible text under 13 px, the floating Ask button present (absent at 1440), zero console errors. The first phone run found two things, both fixed: the "?" help button was 30 px wide, and the pizza card was narrower than the sheet because of the message-bubble padding (on phones the bubble padding is dropped so cards run edge to edge). The 60 px permission strip needed a compact mode (ticks every 2 hours, no marker label) to stay readable. The v5 audit was updated for the new login button and the switcher and still passes.
+
+## /compare pitch page (`audit/screens_compare/`)
+
+| width | page ready | Enter → summary (chips 1–6) | peak spread per chip (mg/dL) | distinct verdicts per chip | console errors |
+|---|---|---|---|---|---|
+| 1440 | 301 ms | 1026–1033 ms | 95, 78, 120, 82, 80, 95 | 2, 2, 1, 3, 2, 3 | 0 |
+| 1920 | 146 ms | 1026–1034 ms | 95, 78, 120, 82, 80, 95 | 2, 2, 1, 3, 2, 3 | 0 |
+
+Initial state, key 1, summary strip, Average (three identical verdicts and one curve), back to Personalized (they differ), Escape (initial layout back), then every chip diverged (two verdicts or a 40+ peak spread), and `?prompt=3` pre-fired the run. Found on the way: the toggle re-rendered the hidden profile columns instead of the panels (both carried the same data attribute; selectors are now scoped), the ask bar stayed visible in the answer state (the state class lived on `main` while the bar is its sibling; it is on `body` now), and two wording defects (a denial that quoted the with-advice probability, and a summary that said "yes, with a snack" for a "yes, but less"). The divergence tuning is recorded in `audit/compare_divergence.md`.
