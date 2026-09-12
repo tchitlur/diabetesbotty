@@ -1,0 +1,178 @@
+# GlucoPilot physiology parameters.
+# Every number carries a source. "tuned" means chosen by us so the qualitative
+# behaviour named in the spec appears (e.g. the delayed alcohol low); such
+# values are also the ones the fitter is allowed to move per patient.
+
+meta:
+  glucose_mg_per_mmol: 18.016
+  carbs_mmol_per_g: 5.551          # 1 g glucose = 1000/180.16 mmol
+  hovorka_citation: >
+    Hovorka R, Canonico V, Chassin LJ, et al. Nonlinear model predictive control
+    of glucose concentration in subjects with type 1 diabetes. Physiol Meas.
+    2004;25(4):905-920. doi:10.1088/0967-3334/25/4/010
+  hovorka_ranges_citation: >
+    Hovorka R, et al. Partitioning glucose distribution/transport, disposal, and
+    endogenous production during IVGTT. Am J Physiol Endocrinol Metab.
+    2002;282:E992-E1007 (population distributions used in the 2004 paper,
+    Table 1) - used for the synthetic cohort sampling ranges below.
+
+# ---------------------------------------------------------------- Hovorka 2004
+hovorka:
+  VG: 0.16          # L/kg   glucose distribution volume (Hovorka 2004 Tab.1)
+  VI: 0.12          # L/kg   insulin distribution volume
+  k12: 0.066        # 1/min  transfer Q1->Q2
+  ka1: 0.006        # 1/min  deactivation, transport
+  ka2: 0.06         # 1/min  deactivation, disposal
+  ka3: 0.03         # 1/min  deactivation, EGP
+  SIT: 0.00512      # 1/min per mU/L  insulin sensitivity of transport (51.2e-4)
+  SID: 0.00082      # 1/min per mU/L  insulin sensitivity of disposal (8.2e-4)
+  SIE: 0.052        # per mU/L        insulin sensitivity of EGP (520e-4)
+  ke: 0.138         # 1/min  insulin elimination
+  F01: 0.0097       # mmol/kg/min  non-insulin-dependent glucose flux
+  EGP0: 0.0161      # mmol/kg/min  EGP extrapolated to zero insulin
+  AG: 0.8           # bioavailability of CHO
+  tmaxG: 40.0       # min  time-to-max CHO absorption
+  tmaxI: 55.0       # min  time-to-max insulin absorption
+  G_F01_threshold_mmol: 4.5   # F01 becomes proportional below this
+  renal_threshold_mmol: 9.0   # renal clearance above this
+  renal_k: 0.003              # 1/min
+
+# Population ranges used by data/cohort.py (Hovorka 2002/2004 CV values; means
+# above, coefficient of variation from Table 1 of the 2004 paper, widened
+# slightly so the cohort spans realistic clinical heterogeneity).
+cohort_ranges:
+  SIT: {mean: 0.00512, cv: 0.32}
+  SID: {mean: 0.00082, cv: 0.35}
+  SIE: {mean: 0.052,   cv: 0.35}
+  k12: {mean: 0.066,   cv: 0.20}
+  ke:  {mean: 0.138,   cv: 0.20}
+  EGP0: {mean: 0.0161, cv: 0.15}
+  F01: {mean: 0.0097,  cv: 0.10}
+  tmaxG: {mean: 40.0,  cv: 0.25}
+  tmaxI: {mean: 55.0,  cv: 0.20}
+  AG: {min: 0.7, max: 0.9}
+  body_weight_kg: {min: 50, max: 100}
+  basal_dose_error: {min: 0.85, max: 1.15}   # patient basal = steady_basal_rate(true params) * this
+  alcohol_gain: {min: 0.7, max: 1.4}
+  exercise_mult: {min: 0.7, max: 1.5}
+
+# ------------------------------------------------- patient-level defaults
+patient:
+  body_weight_kg: 70.0
+  basal_u_per_h: 0.38         # long-acting / pump basal (U/h); = steady_basal_rate() for the default physiology, overridable by basal events
+  carb_ratio_g_per_u: 10.0    # clinical dosing ratio (planner uses it)
+  # fitted per patient (fitter.py); population priors here
+  si_tod: [0.85, 1.0, 1.1]    # insulin-sensitivity multiplier: night 00-08, day 08-16, evening 16-24 (dawn phenomenon) - tuned
+  carb_ratio: 0.8             # effective CHO bioavailability (=Hovorka AG); absorbs meal-logging bias
+  tau_carb: 40.0              # min, carb absorption time constant (=tmaxG)
+  exercise_mult: 1.0          # multiplier on all exercise effects
+  alcohol_gain: 1.0           # multiplier on EGP suppression by alcohol
+  basal_drift: 1.0            # multiplier on basal insulin need (fitted)
+  sleep_debt_coef: 0.2        # fractional SI drop per poor night (Donga 2010: ~20-25%)
+
+# ------------------------------------------------- extensions (1-2 ODEs each)
+extensions:
+  gut:
+    fat_tau_gain: 0.5         # tau *= 1 + gain*fat_g/50   (Wolpert 2013: fat delays absorption) - tuned
+    fiber_tau_gain: 0.4       # tau *= 1 + gain*fiber_g/10 - tuned
+    meal_spread_min: 10       # carbs delivered over this many minutes if duration_min = 0
+  liver:
+    L_max: 120.0              # g  hepatic glycogen capacity (~100-120 g, Guyton)
+    L_half: 8.0               # g  half-saturation of glycogenolysis vs store - tuned
+    L_floor: 0.45             # EGP fraction remaining at empty liver (gluconeogenesis) - tuned
+    store_frac: 0.60          # fraction of absorbed CHO that refills liver glycogen - tuned for daily balance
+    exercise_drain_g_per_min: 0.5   # at intensity 1 - tuned
+  muscle:
+    M_max: 400.0              # g  skeletal muscle glycogen (~300-500 g)
+    refill_frac: 0.35         # fraction of insulin-dependent uptake that refills muscle
+    drain_g_per_min: 1.2      # at intensity 1 (~1 g/min aerobic; Romijn 1993) - tuned
+    depletion_si_gain: 0.6    # SI *= 1 + gain*(1 - M/M_max) ; lasts while refilling (~24h)
+  alcohol:
+    widmark_r: 0.62           # Widmark r: 0.68 male / 0.55 female; mid value
+    absorption_tau_min: 30.0  # stomach -> blood
+    elimination_g_per_dl_per_h: 0.015   # zero-order (Widmark; Jones 2010)
+    egp_suppression_per_bac: 10.0       # EGP *= max(floor, 1 - gain*BAC*this) : BAC 0.05 -> -50% - tuned
+    egp_floor: 0.35
+    hangover_tau_min: 300.0   # lingering GNG inhibition after BAC clears (NADH redox), ~5 h decay; rises with tau 150 min - tuned
+    hangover_gain: 1.3        # weight of the lingering state in EGP suppression - tuned (sweep: 4 beers -> nadir 61 mg/dL at 9.7 h)
+    hydration_loss_per_bac_min: 0.003   # diuresis
+  caffeine:
+    half_life_min: 300.0      # ~5 h (Institute of Medicine 2001)
+    absorption_tau_min: 25.0
+    si_drop_per_200mg: 0.15   # Lane 2004: ~15-20% lower insulin sensitivity after 250 mg - approx
+    sleep_quality_drop_per_200mg_at_bed: 0.15
+  exercise:
+    effect_tau_min: 180.0     # decay of post-exercise sensitivity window (~3 h; Kennedy 1999) - tuned
+    si_gain: 0.5              # SI *= 1 + gain*ex_effect
+    uptake_gain: 1.5          # F01 *= 1 + gain*intensity during aerobic exercise (~+1 mg/dL/min at 0.6) - tuned
+    anaerobic_egp_gain: 0.5   # EGP *= 1 + gain*anaer_effect (catecholamines) - tuned
+    anaerobic_tau_min: 45.0
+    long_exercise_ketone_after_min: 60
+  ketones:
+    baseline: 0.1             # mmol/L
+    clear_half_life_min: 120.0
+    prod_rate: 0.012          # mmol/L/min at maximal drive - tuned so 12h with I<3 mU/L and empty liver -> ~2 mmol/L
+    insulin_half_mU: 2.5      # low-insulin sigmoid midpoint (basal plasma insulin in this model is ~5.5 mU/L)
+    exercise_prod_gain: 0.3
+    dka_ketone_threshold: 1.5
+    dka_glucose_threshold_mgdl: 250
+  hydration:
+    osmotic_loss_per_min_at_100_over: 0.0004   # per min per 100 mg/dL above 180 - tuned
+    hyper_threshold_mgdl: 180
+    recovery_setpoint: 0.9
+    recovery_tau_min: 720.0
+    ml_to_full: 1500.0
+  energy:
+    base: 92.0
+    glucose_coef: 0.30        # per mg/dL away from 100
+    sleep_debt_coef: 5.0      # per hour of sleep debt
+    dehydration_coef: 60.0    # per unit below setpoint
+    caffeine_boost: 8.0       # at 200 mg
+    alcohol_penalty: 30.0     # at BAC 0.10
+    ketone_penalty: 10.0
+  illness:
+    si_drop: 0.30             # at severity 1
+    egp_gain: 0.25
+  stress:
+    si_drop: 0.15
+    egp_gain: 0.20
+
+# ------------------------------------------------- medium layer (daily)
+medium:
+  sleep_target_h: 7.5
+  sleep_debt_decay_per_day: 0.5       # fraction of debt cleared per adequate day
+  si_drop_per_debt_hour: 0.08         # 2.5 h debt (one 5 h night) -> ~20% (Donga 2010)
+  si_recovery_tau_days: 3.0
+  training_load_decay: 0.9            # per day (Banister impulse-response, fast component)
+  training_load_si_gain: 0.003        # per load unit
+  kcal_per_kg_fat: 7700
+  bmr_kcal_per_kg_lean: 22
+  activity_kcal_per_intensity_min: 8
+  alcohol_kcal_per_g: 7
+  caffeine_sleep_drop_per_200mg: 0.15
+  # HbA1c: dA/dt = k*G*(1-A) - A/120 ; A in fraction, G in mg/dL.
+  # ADAG (Nathan 2008): mean glucose 154 mg/dL <-> A1c 7.0 %.
+  # steady state: k*154*(1-0.07) = 0.07/120 -> k = 4.072e-6 per (mg/dL * day)
+  hba1c_k: 4.072e-6
+  hba1c_rbc_life_days: 120
+
+# ------------------------------------------------- slow layer (10 years)
+slow:
+  glucose_threshold_mgdl: 140         # exposure integrates (G - 140)+ ; DCCT: risk rises sharply above ~7% A1c
+  variability_gain: 0.5               # weight on glucose SD term
+  # hazard coefficients: 10-year probability p = 1 - exp(-h0 * exp(beta * exposure_scaled))
+  # beta_a1c is calibrated so that A1c 9 -> 7 cuts retinopathy risk by ~76 % (DCCT 1993,
+  # N Engl J Med 329:977-986: 76 % reduction in primary-prevention cohort). The UKPDS 35
+  # (Stratton 2000, BMJ 321:405) relative-risk-per-1%-A1c values are: microvascular 37 %,
+  # MI 14 %, any diabetes endpoint 21 %.
+  organs:
+    dmg_eye:    {h0: 0.045, beta_per_a1c: 0.714, alcohol_w: 0.0, hydration_w: 0.0, fat_w: 0.0, sleep_w: 0.0, label: "retinopathy"}
+    dmg_kidney: {h0: 0.040, beta_per_a1c: 0.60,  alcohol_w: 0.0, hydration_w: 0.8, fat_w: 0.0, sleep_w: 0.0, label: "nephropathy"}
+    dmg_nerve:  {h0: 0.050, beta_per_a1c: 0.55,  alcohol_w: 0.6, hydration_w: 0.0, fat_w: 0.0, sleep_w: 0.0, label: "neuropathy"}
+    dmg_cardio: {h0: 0.060, beta_per_a1c: 0.15,  alcohol_w: 0.3, hydration_w: 0.0, fat_w: 0.4, sleep_w: 0.3, label: "cardiovascular"}
+    dmg_liver:  {h0: 0.020, beta_per_a1c: 0.05,  alcohol_w: 1.0, hydration_w: 0.0, fat_w: 0.6, sleep_w: 0.0, label: "liver"}
+  reference_a1c: 7.0
+  alcohol_ref_g_per_week: 100.0       # ~7 standard drinks
+  fat_ref_kg: 20.0
+  sleep_debt_ref_h: 2.0
+  hydration_ref: 0.85

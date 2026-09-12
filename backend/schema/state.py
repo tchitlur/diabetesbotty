@@ -57,7 +57,7 @@ UNITS: Dict[str, str] = {
 class State:
     # ---- fast layer ----
     glucose: float = 120.0
-    plasma_insulin: float = 10.0
+    plasma_insulin: float = 5.5
     gut_carbs_1: float = 0.0
     gut_carbs_2: float = 0.0
     liver_glycogen: float = 80.0

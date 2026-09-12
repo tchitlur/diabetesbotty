@@ -18,7 +18,7 @@ COHORT_DIR = DATA_DIR / "cohort"
 PARAMS_PATH = BACKEND_DIR / "engine" / "params.yaml"
 RULES_PATH = BACKEND_DIR / "safety" / "rules.yaml"
 FOOD_TABLE_PATH = BACKEND_DIR / "adapters" / "food_table.json"
-VALIDATION_DIR = BACKEND_DIR / "validation"
+VALIDATION_DIR = REPO_ROOT / "validation"   # plots + RESULTS.md live at the repo root; scripts in backend/validation
 PLOTS_DIR = VALIDATION_DIR / "plots"
 
 load_dotenv(REPO_ROOT / ".env")
