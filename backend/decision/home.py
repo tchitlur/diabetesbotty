@@ -637,30 +637,31 @@ def timeline(twin, workout: Optional[Dict[str, Any]] = None, snacks: Optional[Li
     spark_v = past["display"] + fut_g[1:]
     spark_kind = ["actual"] * len(past["times"]) + ["forecast"] * (len(fut_times) - 1)
 
-    # ---- glucose band (30-min slots over the whole window)
-    g_by_t = {t: v for t, v in zip(spark_t, spark_v)}
+    # ---- one slot grid for both bands: every 30-minute slot between wake and bedtime, first and
+    # last clipped to the axis, so each band has exactly len(slots) segments ending at the axis end
+    slots = []
     slot = wake.replace(minute=(wake.minute // 30) * 30)
-    glucose_band = []
-    slot = max(slot, wake) if slot >= wake else slot
     while slot < bt:
-        seg = np.array([np.nan if g_by_t.get(_iso(slot + timedelta(minutes=k * 5))) is None else g_by_t.get(_iso(slot + timedelta(minutes=k * 5))) for k in range(7)], dtype=float)
-        if np.all(np.isnan(seg)):
+        slots.append((max(slot, wake), min(slot + timedelta(minutes=30), bt)))
+        slot += timedelta(minutes=30)
+
+    # ---- glucose band: past = what the sensor showed, future = the predicted path
+    g_by_t = {t: v for t, v in zip(spark_t, spark_v)}
+    glucose_band = []
+    for a, b in slots:
+        seg = np.array([np.nan if g_by_t.get(_iso(a + timedelta(minutes=k * 5))) is None else g_by_t.get(_iso(a + timedelta(minutes=k * 5)))
+                        for k in range(int((b - a).total_seconds() // 300) + 1)], dtype=float)
+        if seg.size == 0 or np.all(np.isnan(seg)):
             color, reason = "none", "no sensor data"
         else:
             color, reason = _band_color_glucose(seg)
-        glucose_band.append({"start": _iso(max(slot, wake)), "end": _iso(min(slot + timedelta(minutes=30), bt)), "color": color, "reason": reason, "past": slot < now})
-        slot += timedelta(minutes=30)
+        glucose_band.append({"start": _iso(a), "end": _iso(b), "color": color, "reason": reason, "past": a < now})
 
-    # ---- exercise band: past slots replayed (what it was), future slots judged with everything else in place
-    past_starts = []
-    ps = wake.replace(minute=(wake.minute // 30) * 30)
-    if ps < wake:
-        ps += timedelta(minutes=30)
-    while ps + timedelta(minutes=30) <= now:
-        past_starts.append(ps)
-        ps += timedelta(minutes=30)
-    past_scan = scan_past(twin, past_starts, wake - timedelta(hours=3))
-    starts = _slots(twin, now, bt - timedelta(minutes=30))
+    # ---- exercise band over the same slots: slots already started are replayed (what a workout then
+    # would have done on top of what really happened), the rest judged with everything else in place
+    past_starts = [a for a, _ in slots if a < now]
+    starts = [a for a, _ in slots if a >= now]
+    past_scan = scan_past(twin, past_starts, wake - timedelta(hours=3)) if past_starts else []
     per = []
     for st in starts:
         base = list(ctx_base) + list(accepted) + list(s_evs)
@@ -668,8 +669,11 @@ def timeline(twin, workout: Optional[Dict[str, Any]] = None, snacks: Optional[Li
             base.append(w_ev)
         per.append(base)
     scan = scan_starts(twin, "exercise", starts, ctx_base + accepted + suggestions, per_start_ctx=per) if starts else []
-    exercise_band = ([{"start": r["start"], "end": _iso(min(datetime.fromisoformat(r["start"]) + timedelta(minutes=30), now)), "color": r["color"], "reason": r["reason"], "past": True} for r in past_scan]
-                     + [{"start": r["start"], "end": _iso(min(datetime.fromisoformat(r["start"]) + timedelta(minutes=30), bt)), "color": r["color"], "reason": r["reason"] or "a good time to exercise", "past": False} for r in scan])
+    judged = {r["start"]: r for r in past_scan + scan}
+    exercise_band = []
+    for a, b in slots:
+        r = judged.get(_iso(a), {"color": "none", "reason": "not judged"})
+        exercise_band.append({"start": _iso(a), "end": _iso(b), "color": r["color"], "reason": r["reason"] or ("a good time to exercise" if a >= now else "was a fine time to exercise"), "past": a < now})
 
     # ---- items on the axis (no wake marker: the axis starts at wake time)
     items: List[Dict[str, Any]] = []

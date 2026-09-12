@@ -5,7 +5,7 @@ import ChangeCard from './ChangeCard.jsx'
 import QuickLog from './QuickLog.jsx'
 import HelpPopover, { CHANGES } from './HelpPopover.jsx'
 
-const PLACEHOLDER = 'Ask before you eat, drink, or move…'
+const PLACEHOLDER = 'Ask your personalized model about your daily decisions.'
 const changeLabel = (name) => (CHANGES.find(([n]) => n === name) || [name, name])[1]
 
 function Understood({ event, nowIso, parsed }) {

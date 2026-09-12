@@ -1,0 +1,332 @@
+[
+  {
+    "width": 1280,
+    "chain": [
+      {
+        "tag": "div.pt-wrap",
+        "w": 730,
+        "h": 260,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.card",
+        "w": 780,
+        "h": 406.2,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.inner",
+        "w": 780,
+        "h": 406.2,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.content",
+        "w": 860,
+        "h": 840,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.main",
+        "w": 1280,
+        "h": 840,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.app",
+        "w": 1280,
+        "h": 900,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div",
+        "w": 1280,
+        "h": 900,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      }
+    ],
+    "svgs": [
+      {
+        "cls": "pt",
+        "w": 730,
+        "h": 260,
+        "viewBox": "0 0 1000 200",
+        "widthAttr": null,
+        "heightAttr": null,
+        "preserveAspectRatio": "none",
+        "cssWidth": "730px",
+        "cssHeight": "260px",
+        "transform": "none",
+        "scaleX": 0.73,
+        "scaleY": 1.3,
+        "viewBoxAspect": 5,
+        "boxAspect": 2.81
+      }
+    ],
+    "label": {
+      "text": "8:00 am",
+      "rendered": {
+        "w": 31.2,
+        "h": 17.3
+      },
+      "natural": {
+        "w": 42.8,
+        "h": 16.5
+      },
+      "font": "11px / 16.5px Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+    },
+    "icon": {
+      "nominalDiameter": 18,
+      "rendered": {
+        "w": 13.1,
+        "h": 23.4
+      },
+      "emoji": {
+        "w": 12,
+        "h": 18.5
+      },
+      "emojiFont": "12px"
+    }
+  },
+  {
+    "width": 1440,
+    "chain": [
+      {
+        "tag": "div.pt-wrap",
+        "w": 890,
+        "h": 260,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.card",
+        "w": 940,
+        "h": 390,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.inner",
+        "w": 940,
+        "h": 390,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.content",
+        "w": 1020,
+        "h": 840,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.main",
+        "w": 1440,
+        "h": 840,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.app",
+        "w": 1440,
+        "h": 900,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div",
+        "w": 1440,
+        "h": 900,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      }
+    ],
+    "svgs": [
+      {
+        "cls": "pt",
+        "w": 890,
+        "h": 260,
+        "viewBox": "0 0 1000 200",
+        "widthAttr": null,
+        "heightAttr": null,
+        "preserveAspectRatio": "none",
+        "cssWidth": "890px",
+        "cssHeight": "260px",
+        "transform": "none",
+        "scaleX": 0.89,
+        "scaleY": 1.3,
+        "viewBoxAspect": 5,
+        "boxAspect": 3.42
+      }
+    ],
+    "label": {
+      "text": "8:00 am",
+      "rendered": {
+        "w": 38.3,
+        "h": 17.5
+      },
+      "natural": {
+        "w": 42.8,
+        "h": 16.5
+      },
+      "font": "11px / 16.5px Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+    },
+    "icon": {
+      "nominalDiameter": 18,
+      "rendered": {
+        "w": 16,
+        "h": 23.4
+      },
+      "emoji": {
+        "w": 14.7,
+        "h": 18.7
+      },
+      "emojiFont": "12px"
+    }
+  },
+  {
+    "width": 1920,
+    "chain": [
+      {
+        "tag": "div.pt-wrap",
+        "w": 930,
+        "h": 260,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.card",
+        "w": 980,
+        "h": 390,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.inner",
+        "w": 980,
+        "h": 390,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.content",
+        "w": 1500,
+        "h": 840,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.main",
+        "w": 1920,
+        "h": 840,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div.app",
+        "w": 1920,
+        "h": 900,
+        "display": "grid",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      },
+      {
+        "tag": "div",
+        "w": 1920,
+        "h": 900,
+        "display": "block",
+        "transform": "none",
+        "zoom": "1",
+        "scale": "none"
+      }
+    ],
+    "svgs": [
+      {
+        "cls": "pt",
+        "w": 930,
+        "h": 260,
+        "viewBox": "0 0 1000 200",
+        "widthAttr": null,
+        "heightAttr": null,
+        "preserveAspectRatio": "none",
+        "cssWidth": "930px",
+        "cssHeight": "260px",
+        "transform": "none",
+        "scaleX": 0.93,
+        "scaleY": 1.3,
+        "viewBoxAspect": 5,
+        "boxAspect": 3.58
+      }
+    ],
+    "label": {
+      "text": "8:00 am",
+      "rendered": {
+        "w": 39.8,
+        "h": 17.3
+      },
+      "natural": {
+        "w": 42.8,
+        "h": 16.5
+      },
+      "font": "11px / 16.5px Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+    },
+    "icon": {
+      "nominalDiameter": 18,
+      "rendered": {
+        "w": 16.7,
+        "h": 23.4
+      },
+      "emoji": {
+        "w": 15.3,
+        "h": 18.4
+      },
+      "emojiFont": "12px"
+    }
+  }
+]

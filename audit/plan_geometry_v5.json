@@ -1,0 +1,158 @@
+[
+  {
+    "width": 1280,
+    "widths": {
+      "container": 650,
+      "spark": 650,
+      "sparkAttr": 650,
+      "sparkH": 120,
+      "bands": [
+        650,
+        650
+      ]
+    },
+    "par": 0,
+    "viewBoxes": 0,
+    "transforms": 0,
+    "label": {
+      "text": "8:00 am",
+      "rendered": 46.65625,
+      "natural": 46.65625,
+      "fontSize": "12px"
+    },
+    "icons": [
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ]
+    ],
+    "axisRight": 795,
+    "segRight": [
+      794.984375,
+      794.984375
+    ],
+    "segH": [
+      14,
+      14
+    ],
+    "inside": true,
+    "cardRight": 820,
+    "tlRight": 795
+  },
+  {
+    "width": 1440,
+    "widths": {
+      "container": 810,
+      "spark": 810,
+      "sparkAttr": 810,
+      "sparkH": 120,
+      "bands": [
+        810,
+        810
+      ]
+    },
+    "par": 0,
+    "viewBoxes": 0,
+    "transforms": 0,
+    "label": {
+      "text": "8:00 am",
+      "rendered": 46.65625,
+      "natural": 46.65625,
+      "fontSize": "12px"
+    },
+    "icons": [
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ]
+    ],
+    "axisRight": 955,
+    "segRight": [
+      954.984375,
+      954.984375
+    ],
+    "segH": [
+      14,
+      14
+    ],
+    "inside": true,
+    "cardRight": 980,
+    "tlRight": 955
+  },
+  {
+    "width": 1920,
+    "widths": {
+      "container": 850,
+      "spark": 850,
+      "sparkAttr": 850,
+      "sparkH": 120,
+      "bands": [
+        850,
+        850
+      ]
+    },
+    "par": 0,
+    "viewBoxes": 0,
+    "transforms": 0,
+    "label": {
+      "text": "8:00 am",
+      "rendered": 46.65625,
+      "natural": 46.65625,
+      "fontSize": "12px"
+    },
+    "icons": [
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ],
+      [
+        28,
+        28
+      ]
+    ],
+    "axisRight": 1215,
+    "segRight": [
+      1214.984375,
+      1214.984375
+    ],
+    "segH": [
+      14,
+      14
+    ],
+    "inside": true,
+    "cardRight": 1240,
+    "tlRight": 1215
+  }
+]

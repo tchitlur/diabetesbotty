@@ -1,4 +1,4 @@
-// UI audit v4: walks every screen of the live, food-first UI, screenshots each step into ../audit/screens_v4/,
+// UI audit v5: walks every screen of the live, food-first UI, screenshots each step into ../audit/screens_v5/,
 // records console errors, failed requests, placeholder text, empty charts and leftover technical words, and
 // asserts: the "now" marker follows the wall clock, one unbroken 3-hour sensor line, fixed axes in the tile
 // details, the plan render (no overlapping icons, no stray segments, forecast clipped), the chat header, the
@@ -8,7 +8,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 const OUT = path.resolve(process.cwd(), '..', 'audit')
-const SCREENS = path.join(OUT, 'screens_v4')
+const SCREENS = path.join(OUT, 'screens_v5')
 fs.mkdirSync(SCREENS, { recursive: true })
 
 type Issue = { step: string; kind: string; detail: string }
@@ -76,7 +76,7 @@ function pathInfo(d: string) {
   return { subpaths, first: [nums[0], nums[1]], last: [nums[nums.length - 2], nums[nums.length - 1]], ys: nums.filter((_, i) => i % 2 === 1) }
 }
 
-test('GlucoPilot UI audit v4', async ({ page }) => {
+test('GlucoPilot UI audit v5', async ({ page }) => {
   page.on('console', (msg) => {
     if (msg.type() === 'error') issues.push({ step: steps[steps.length - 1] || 'start', kind: 'console.error', detail: msg.text().slice(0, 300) })
     if (msg.type() === 'warning') issues.push({ step: steps[steps.length - 1] || 'start', kind: 'console.warning', detail: msg.text().slice(0, 300) })
@@ -185,48 +185,115 @@ test('GlucoPilot UI audit v4', async ({ page }) => {
   await expect(page.locator('.help')).toContainText('Move workouts to morning')
   await snap(page, 'chat-help')
   await page.locator('.help button', { hasText: 'Is dessert okay right now?' }).click()
-  const input = page.getByPlaceholder('Ask before you eat, drink, or move…')
+  const input = page.getByPlaceholder('Ask your personalized model about your daily decisions.')
   await expect(input).toHaveValue('Is dessert okay right now?')
   await input.fill('')
 
   // ---- Plan: render checks, suggest, drag, hover, accept
   await page.getByRole('button', { name: 'Plan', exact: true }).click()
-  await page.waitForFunction(() => !!document.querySelector('svg.pt') && document.querySelectorAll('.spinner').length === 0, null, { timeout: 90_000 })
+  const planReady = () => page.waitForFunction(() => !!document.querySelector('[data-testid=spark-actual]') && document.querySelectorAll('.spinner').length === 0, null, { timeout: 90_000 })
+  await planReady()
   await page.waitForTimeout(500)
   await snap(page, 'plan')
   const planCheck = async (step: string) => {
     const r = await page.evaluate(() => {
-      const svg = document.querySelector('svg.pt') as SVGSVGElement
-      const sb = svg.getBoundingClientRect()
-      const items = Array.from(svg.querySelectorAll('.pt-item')).map((e) => e.getBoundingClientRect())
+      const tl = document.querySelector('.pt-tl') as HTMLElement
+      const items = Array.from(tl.querySelectorAll('.pt-item')).map((e) => e.getBoundingClientRect())
       let overlaps = 0
       for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
         const a = items[i], b = items[j]
         if (a.left < b.right - 2 && b.left < a.right - 2 && a.top < b.bottom - 2 && b.top < a.bottom - 2) overlaps++
       }
-      const axisRight = sb.left + (sb.width * (1000 - 20)) / 1000
-      const segs = Array.from(svg.querySelectorAll('rect.pt-seg')).map((e) => e.getBoundingClientRect())
-      const stray = segs.filter((r) => r.right > axisRight + 1.5).length
-      const clip = svg.querySelector('#pt-clip rect') as SVGRectElement
-      const fc = (svg.querySelector('[data-testid=spark-forecast]') as SVGPathElement)?.getAttribute('d') || ''
+      const axis = (tl.querySelector('.pt-axis') as HTMLElement).getBoundingClientRect()
+      const segs = Array.from(tl.querySelectorAll('.pt-seg')).map((e) => e.getBoundingClientRect())
+      const stray = segs.filter((r) => r.right > axis.right + 1).length
+      const spark = tl.querySelector('svg.pt-spark') as SVGSVGElement
+      const sb = spark.getBoundingClientRect()
+      const fc = (tl.querySelector('[data-testid=spark-forecast]') as SVGPathElement)?.getAttribute('d') || ''
       const ys = fc.replace(/[ML]/g, ' ').trim().split(/[\s,]+/).map(Number).filter((_, i) => i % 2 === 1)
-      const yTop = Number(clip.getAttribute('y')), yBot = yTop + Number(clip.getAttribute('height'))
-      const outside = ys.filter((y) => y < yTop - 0.01 || y > yBot + 0.01).length
-      const exSegs = svg.querySelectorAll('rect.pt-seg.ex').length
-      const wake = Array.from(svg.querySelectorAll('.pt-item')).filter((e) => e.getAttribute('data-kind') === 'wake').length
-      return { overlaps, stray, outside, exSegs, wake, nItems: items.length, bottom: (document.querySelector('.plan-card') as HTMLElement).getBoundingClientRect().bottom }
+      const outside = ys.filter((y) => y < -0.01 || y > sb.height + 0.01).length
+      const exSegs = tl.querySelectorAll('.pt-seg.ex').length, glSegs = tl.querySelectorAll('.pt-seg.gl').length
+      const exPast = Array.from(tl.querySelectorAll('.pt-seg.ex')).filter((e) => getComputedStyle(e).opacity === '0.4').length
+      const wake = Array.from(tl.querySelectorAll('.pt-item')).filter((e) => e.getAttribute('data-kind') === 'wake').length
+      return { overlaps, stray, outside, exSegs, glSegs, exPast, wake, nItems: items.length, bottom: (document.querySelector('.plan-card') as HTMLElement).getBoundingClientRect().bottom }
     })
     if (r.overlaps) issues.push({ step, kind: 'plan', detail: `${r.overlaps} overlapping icon(s)` })
     if (r.stray) issues.push({ step, kind: 'plan', detail: `${r.stray} band segment(s) run past the axis` })
-    if (r.outside) issues.push({ step, kind: 'plan', detail: `${r.outside} forecast point(s) drawn outside the chart area (unclipped)` })
+    if (r.outside) issues.push({ step, kind: 'plan', detail: `${r.outside} forecast point(s) drawn outside the sparkline` })
     if (r.wake) issues.push({ step, kind: 'plan', detail: 'wake (sun) icon still rendered' })
     if (r.bottom > 900) issues.push({ step, kind: 'layout', detail: `plan card bottom at ${Math.round(r.bottom)}px` })
     expect(r.overlaps, 'no overlapping icons').toBe(0)
     expect(r.stray, 'no stray band segment').toBe(0)
+    expect(r.exSegs, 'exercise band has one segment per 30-minute slot').toBe(r.glSegs)
     expect(r.exSegs, 'exercise band spans the day').toBeGreaterThan(10)
     return r
   }
   await planCheck('plan')
+
+  // ---- geometry proof at three viewport widths: an unscaled pixel layout
+  const geometry: any[] = []
+  for (const width of [1280, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.waitForTimeout(600)
+    await planReady()
+    const g = await page.evaluate(() => {
+      const root = document.querySelector('[data-testid=plan-timeline]') as HTMLElement
+      const tl = root.querySelector('.pt-tl') as HTMLElement
+      const cw = tl.getBoundingClientRect().width
+      const spark = root.querySelector('svg.pt-spark') as SVGSVGElement
+      const bands = Array.from(root.querySelectorAll('.pt-band')).map((b) => b.getBoundingClientRect().width)
+      // (1) container = sparkline = band rows
+      const widths = { container: cw, spark: spark.getBoundingClientRect().width, sparkAttr: Number(spark.getAttribute('width')), sparkH: spark.getBoundingClientRect().height, bands }
+      // (2) nothing scaled: no preserveAspectRatio="none", no viewBox on the sparkline, no transforms
+      const par = Array.from(root.querySelectorAll('[preserveAspectRatio]')).filter((e) => e.getAttribute('preserveAspectRatio') === 'none').length
+      const viewBoxes = Array.from(root.querySelectorAll('svg')).filter((e) => e.hasAttribute('viewBox')).length
+      const transforms = Array.from(root.querySelectorAll('*')).filter((e) => getComputedStyle(e).transform !== 'none').length
+      // (3) axis label rendered width = natural text width
+      const lbl = root.querySelector('.pt-axis .pt-axislbl') as HTMLElement
+      const probe = document.createElement('span')
+      probe.style.cssText = `position:absolute;left:-9999px;top:0;font:${getComputedStyle(lbl).font};letter-spacing:${getComputedStyle(lbl).letterSpacing};white-space:nowrap`
+      probe.textContent = lbl.textContent
+      document.body.appendChild(probe)
+      const natural = probe.getBoundingClientRect().width
+      probe.remove()
+      const label = { text: lbl.textContent, rendered: lbl.getBoundingClientRect().width, natural, fontSize: getComputedStyle(lbl).fontSize }
+      // (4) icons 28×28
+      const icons = Array.from(root.querySelectorAll('.pt-item')).map((e) => { const r = e.getBoundingClientRect(); return [r.width, r.height] })
+      // (5) rightmost band segment right edge = axis right edge
+      const axisRight = (root.querySelector('.pt-axis') as HTMLElement).getBoundingClientRect().right
+      const segRight = Array.from(root.querySelectorAll('.pt-band')).map((b) => { const segs = Array.from(b.querySelectorAll('.pt-seg')); return segs[segs.length - 1].getBoundingClientRect().right })
+      const segH = Array.from(root.querySelectorAll('.pt-seg')).map((e) => e.getBoundingClientRect().height)
+      // (6) the timeline sits inside its card (a too-wide SVG must not hold the column open)
+      const card = (root.closest('.card') as HTMLElement).getBoundingClientRect()
+      const inside = tl.getBoundingClientRect().right <= card.right + 1 && card.right <= (document.querySelector('.content') as HTMLElement).getBoundingClientRect().right + 1
+      return { widths, par, viewBoxes, transforms, label, icons, axisRight, segRight, segH: [Math.min(...segH), Math.max(...segH)], inside, cardRight: card.right, tlRight: tl.getBoundingClientRect().right }
+    })
+    geometry.push({ width, ...g })
+    const step = `plan-${width}`
+    const w = g.widths
+    const bandOk = w.bands.every((b: number) => Math.abs(b - w.container) <= 1)
+    if (Math.abs(w.spark - w.container) > 1 || !bandOk) issues.push({ step, kind: 'plan', detail: `container ${w.container.toFixed(1)} vs spark ${w.spark.toFixed(1)} vs bands ${w.bands.map((b: number) => b.toFixed(1)).join('/')}` })
+    if (g.par || g.viewBoxes || g.transforms) issues.push({ step, kind: 'plan', detail: `scaled elements: preserveAspectRatio=none ×${g.par}, viewBox ×${g.viewBoxes}, transforms ×${g.transforms}` })
+    if (Math.abs(g.label.rendered - g.label.natural) > 1) issues.push({ step, kind: 'plan', detail: `axis label "${g.label.text}" renders ${g.label.rendered.toFixed(1)}px vs natural ${g.label.natural.toFixed(1)}px` })
+    const badIcons = g.icons.filter(([iw, ih]: number[]) => Math.abs(iw - 28) > 0.5 || Math.abs(ih - 28) > 0.5).length
+    if (badIcons) issues.push({ step, kind: 'plan', detail: `${badIcons} icon(s) not 28×28` })
+    if (g.segRight.some((r: number) => Math.abs(r - g.axisRight) > 1)) issues.push({ step, kind: 'plan', detail: `band right edge ${g.segRight.map((r: number) => r.toFixed(1)).join('/')} vs axis right ${g.axisRight.toFixed(1)}` })
+    expect(Math.abs(w.spark - w.container), `${width}: sparkline width = container width`).toBeLessThanOrEqual(1)
+    expect(bandOk, `${width}: band rows = container width`).toBeTruthy()
+    expect(w.sparkH, `${width}: sparkline is 120 px tall`).toBe(120)
+    expect(g.par + g.viewBoxes + g.transforms, `${width}: nothing scaled inside the timeline`).toBe(0)
+    expect(Math.abs(g.label.rendered - g.label.natural), `${width}: axis label at natural width`).toBeLessThanOrEqual(1)
+    expect(badIcons, `${width}: icons are 28×28`).toBe(0)
+    expect(g.segRight.every((r: number) => Math.abs(r - g.axisRight) <= 1), `${width}: bands end at the axis end`).toBeTruthy()
+    expect(g.segH[0], `${width}: band segments 14 px tall`).toBe(14); expect(g.segH[1]).toBe(14)
+    if (!g.inside) issues.push({ step, kind: 'plan', detail: `timeline overflows its card (${g.tlRight.toFixed(0)} > ${g.cardRight.toFixed(0)})` })
+    expect(g.inside, `${width}: timeline stays inside its card`).toBeTruthy()
+    await planCheck(step)
+    await snap(page, step)
+  }
+  fs.writeFileSync(path.join(OUT, 'plan_geometry_v5.json'), JSON.stringify(geometry, null, 2))
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.waitForTimeout(600)
   await expect(page.locator('.plan-head .headline')).toContainText(/\d{1,2}:\d{2} (am|pm)/)
   await page.getByRole('button', { name: 'Suggest my day' }).click()
   await page.waitForTimeout(800)
@@ -253,7 +320,7 @@ test('GlucoPilot UI audit v4', async ({ page }) => {
       if (after === before) issues.push({ step: 'plan-dragged', kind: 'plan', detail: `dragging the workout did not move it (${before})` })
     }
     await snap(page, 'plan-dragged')
-    await page.locator('rect.pt-seg').last().hover()
+    await page.locator('.pt-seg').last().hover()
     await page.waitForTimeout(300)
     await expect(page.locator('.pt-tip')).toBeVisible()
     await snap(page, 'plan-hover')

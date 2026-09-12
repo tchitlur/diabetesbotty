@@ -52,13 +52,14 @@ Remove `.env` (or set an invalid key) and text is read by the built-in reader in
 
 ## Screenshots
 
-From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v4/` after a run). A curated set is committed under `docs/screens/`:
+From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v5/` after a run). A curated set is committed under `docs/screens/`:
 
 | Screen | File |
 |---|---|
 | Home: glucose, tiles, coming up | `docs/screens/home.png` |
 | Chat answer card (pizza) | `docs/screens/chat-pizza.png` |
-| Plan: the day on one axis with suggestions | `docs/screens/plan.png` |
+| Plan: the day on one axis | `docs/screens/plan.png` |
+| Plan with a suggested workout and snack | `docs/screens/plan-suggested.png` |
 | Chat: the same question with and without personalisation | `docs/screens/chat-compared.png` |
 | Details | `docs/screens/details.png` |
 | Login and add profile | `docs/screens/login.png`, `docs/screens/add-profile.png` |

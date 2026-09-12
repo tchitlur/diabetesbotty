@@ -176,25 +176,38 @@ pre { white-space: pre-wrap; word-break: break-word; font-size: var(--fs-xs); ba
 .plan-head { display: flex; align-items: center; gap: var(--s3); }
 .plan-head .headline { font-size: var(--fs-lg); font-weight: 600; line-height: 1.3; }
 .plan-head .spacer { flex: 1; }
-.pt-wrap { position: relative; }
-.pt { width: 100%; height: 300px; display: block; touch-action: none; }
-.pt-lbl { font-size: 11px; fill: var(--muted); font-family: var(--font); }
-.pt-nowlbl { fill: var(--accent); font-weight: 600; }
-.pt-actual { fill: none; stroke: var(--text); stroke-width: 1.8; vector-effect: non-scaling-stroke; }
-.pt-forecast { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: .7; vector-effect: non-scaling-stroke; }
-.pt-now { stroke: var(--accent); stroke-dasharray: 3 3; stroke-width: 1; vector-effect: non-scaling-stroke; }
-.pt-axis { stroke: var(--border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.pt-seg { cursor: default; }
-.pt-stem { stroke: var(--border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.pt-item .pt-dot { fill: var(--panel); stroke: var(--border-strong); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-.pt-item.logged .pt-dot { fill: var(--accent-soft); stroke: var(--accent); }
-.pt-item.predicted .pt-dot { stroke-dasharray: 3 2; }
-.pt-item.suggested .pt-dot { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
-.pt-item.suggested { cursor: pointer; }
+/* Timeline: plain HTML/CSS, absolute pixel positions inside a measured container. No viewBox
+   scaling, no transforms anywhere inside .pt-root (the audit asserts this). */
+.pt-root { position: relative; min-width: 0; contain: inline-size; touch-action: none; user-select: none; }  /* contain: the SVG's pixel width must never hold the column open */
+.pt-gutter { position: absolute; left: 0; top: 0; bottom: 0; text-align: right; }
+.pt-gutter .pt-lbl { position: absolute; right: 0; line-height: 14px; }
+.pt-tl { position: relative; width: 100%; }
+.pt-lbl { font-size: 11px; color: var(--muted); font-family: var(--font); white-space: nowrap; }
+.pt-spark { display: block; overflow: hidden; }
+.pt-actual { fill: none; stroke: var(--text); stroke-width: 1.8; }
+.pt-forecast { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; opacity: .7; }
+.pt-now { position: absolute; top: 0; width: 0; border-left: 1px dashed var(--accent); pointer-events: none; }
+.pt-tick { position: absolute; top: 0; width: 60px; text-align: center; pointer-events: none; }
+.pt-tick i { display: block; width: 1px; height: 4px; margin: 0 auto; background: var(--border-strong); }
+.pt-tick .pt-axislbl { display: inline-block; font-size: 12px; line-height: 14px; }
+.pt-nowtick .pt-nowlbl { display: inline-block; color: var(--accent); font-weight: 600; background: var(--panel); padding: 0 3px; border-radius: 3px; }
+.pt-icons { position: absolute; left: 0; right: 0; }
+.pt-pill { position: absolute; top: 0; box-sizing: border-box; border: 1px solid var(--border-strong); border-radius: 14px; background: var(--panel); }
+.pt-item { position: absolute; top: 0; box-sizing: border-box; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--panel); border: 1.2px solid var(--border-strong); }
+.pt-item.logged { background: var(--accent-soft); border-color: var(--accent); }
+.pt-item.predicted { border-style: dashed; }
+.pt-item.suggested { border: 2px solid var(--accent); cursor: pointer; }
 .pt-item.suggested.workout { cursor: grab; }
-.pt-emoji { font-size: 15px; pointer-events: none; }
-.pt-tip { position: absolute; transform: translate(-50%, -130%); background: var(--text); color: #fff; font-size: var(--fs-xs); padding: 4px 8px; border-radius: 6px; pointer-events: none; white-space: nowrap; }
-.pt-pick { position: absolute; top: 44%; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); font-size: var(--fs-sm); box-shadow: 0 8px 24px rgba(20, 30, 30, .12); z-index: 5; }
+.pt-emoji { font-size: 15px; line-height: 1; pointer-events: none; }
+.pt-axis { position: absolute; left: 0; right: 0; border-top: 1px solid var(--border-strong); box-sizing: border-box; }
+.pt-band { position: absolute; left: 0; right: 0; }
+.pt-seg { position: absolute; top: 0; height: 100%; box-sizing: border-box; box-shadow: inset -1px 0 0 var(--panel); cursor: default; }
+.pt-seg:first-child { border-top-left-radius: 3px; border-bottom-left-radius: 3px; }
+.pt-seg:last-child { border-top-right-radius: 3px; border-bottom-right-radius: 3px; box-shadow: none; }
+.pt-tipwrap, .pt-pickwrap { position: absolute; width: 0; display: flex; justify-content: center; overflow: visible; z-index: 6; }
+.pt-tipwrap { pointer-events: none; }
+.pt-tip { background: var(--text); color: #fff; font-size: var(--fs-xs); padding: 4px 8px; border-radius: 6px; white-space: nowrap; }
+.pt-pick { background: var(--panel); border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: var(--s2) var(--s3); font-size: var(--fs-sm); box-shadow: 0 8px 24px rgba(20, 30, 30, .12); white-space: nowrap; }
 .pt-pick .actions { margin-top: var(--s1); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--s3); font-size: var(--fs-xs); color: var(--muted); }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
@@ -267,8 +280,3 @@ pre { white-space: pre-wrap; word-break: break-word; font-size: var(--fs-xs); ba
 .twin-row .track .mid { position: absolute; left: 50%; top: -3px; width: 1px; height: 14px; background: var(--border-strong); }
 .twin-row .track .dot { position: absolute; top: -3px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; box-shadow: var(--shadow); }
 .tile-detail .sentence { font-size: var(--fs-md); }
-.pt { height: 260px; }
-.pt-pill { fill: var(--panel); stroke: var(--border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
-.pt-emoji { font-size: 12px; }
-.pt-item .pt-dot { stroke-width: 1; }
-.pt-item.suggested .pt-dot { stroke-width: 1.6; }
