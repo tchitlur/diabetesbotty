@@ -13,10 +13,10 @@ if (-not (Test-Path $py)) {
 }
 try { & (Join-Path $root ".venv\Scripts\Activate.ps1") } catch { }
 
-# 1. synthetic cohort + demo patient
-if (-not (Test-Path (Join-Path $root "backend\data\demo_patient\cgm.csv"))) {
-    Write-Host "Generating synthetic cohort (first run only)..."
-    & $py -m backend.data.cohort --demo-only
+# 1. synthetic cohort (30 virtual people; new profiles are matched to them) + demo patient
+if (-not (Test-Path (Join-Path $root "backend\data\cohort\p01\cgm.csv"))) {
+    Write-Host "Generating the synthetic cohort (first run only, about 40 s)..."
+    & $py -m backend.data.cohort
 }
 # 2. personalised fit for the demo patient
 if (-not (Test-Path (Join-Path $root "backend\data\demo_patient\fit.json"))) {

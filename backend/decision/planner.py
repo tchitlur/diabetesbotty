@@ -161,4 +161,6 @@ def plan_day(twin, day: Optional[datetime] = None, blocks: Optional[List[Dict[st
                         snack_time=next((e.start_time for e in evs if e.source == "tap" and e.type == "meal"), None),
                         drink_cutoff=(day.replace(hour=co).isoformat(timespec="minutes") if co else None),
                         objective=round(float(obj[best_i]), 3), p_hypo=round(best_mc.p_hypo, 3) if best_mc else 0.0,
-                        tir=round(float(tir[best_i]), 3), notes=notes)
+                        tir=round(float(tir[best_i]), 3), notes=notes,
+                        glucose_times=list(best_mc.times) if best_mc else times, glucose_median=[round(float(x), 1) for x in (best_mc.median if best_mc else g)],
+                        glucose_p10=[round(float(x), 1) for x in best_mc.p10] if best_mc else [], glucose_p90=[round(float(x), 1) for x in best_mc.p90] if best_mc else [])

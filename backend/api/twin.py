@@ -30,9 +30,12 @@ from backend.safety.gate import GateContext, run_gate, GateDecision
 
 
 class Twin:
-    def __init__(self, patient_id: str = "demo", now: Optional[datetime] = None):
+    def __init__(self, patient_id: str = "demo", now: Optional[datetime] = None, profile: Optional[Dict[str, Any]] = None):
         self.now: datetime = now or datetime.fromisoformat(DEMO_NOW)
         self.pt: PatientData = load_patient(patient_id, until=self.now)
+        self.patient_id = patient_id
+        # the person's own settings (carb ratio, correction factor, target range); see api/profiles.py
+        self.profile: Dict[str, Any] = dict(profile or {})
         self.params: Dict[str, Any] = fitted_params(self.pt)
         self.posterior: Dict[str, Dict[str, float]] = load_posterior(self.pt)
         self.residual: Optional[ResidualModel] = load_residual_model(self.pt)
@@ -49,6 +52,8 @@ class Twin:
             self.params["carb_ratio_g_per_u"] = float(fast.calibrate_carb_ratio(self.params))
         except Exception:
             pass
+        if self.profile.get("carb_ratio_g_per_u"):
+            self.params["carb_ratio_g_per_u"] = float(self.profile["carb_ratio_g_per_u"])
         # per-session caches for the slow, deterministic views (plan, alerts, no_change baseline);
         # keyed by the accepted-events signature so they refresh when the plan changes
         self._cache: Dict[str, Any] = {}
@@ -256,17 +261,40 @@ class Twin:
         self.cards.append({"kind": kind, "at": self.now.isoformat(timespec="minutes"), "card": card.model_dump()})
 
 
-_TWIN: Optional[Twin] = None
+_TWINS: Dict[str, Twin] = {}
+_REG_LOCK = threading.Lock()
+
+
+def _active_profile() -> Dict[str, Any]:
+    from backend.api.profiles import active_id, get_profile
+    prof = get_profile(active_id())
+    return prof.model_dump() if prof else {"id": "demo", "patient_id": "demo"}
 
 
 def get_twin() -> Twin:
-    global _TWIN
-    if _TWIN is None:
-        _TWIN = Twin()
-    return _TWIN
+    """The twin of the active profile (one Twin per profile, built on first use)."""
+    prof = _active_profile()
+    key = prof["id"]
+    with _REG_LOCK:
+        tw = _TWINS.get(key)
+        if tw is None or tw.profile.get("patient_id") != prof["patient_id"]:
+            tw = Twin(prof["patient_id"], profile=prof)
+            _TWINS[key] = tw
+        return tw
 
 
 def reset_twin() -> Twin:
-    global _TWIN
-    _TWIN = Twin()
-    return _TWIN
+    prof = _active_profile()
+    with _REG_LOCK:
+        tw = Twin(prof["patient_id"], profile=prof)
+        _TWINS[prof["id"]] = tw
+        return tw
+
+
+def drop_twin(profile_id: str) -> None:
+    with _REG_LOCK:
+        _TWINS.pop(profile_id, None)
+
+
+def target_range(tw: Twin):
+    return float(tw.profile.get("target_low", 70)), float(tw.profile.get("target_high", 180))

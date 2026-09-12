@@ -10,13 +10,21 @@ async function req(path, opts = {}) {
   if (!res.ok) {
     let detail = res.statusText
     try { detail = (await res.json()).detail || detail } catch (e) { /* ignore */ }
-    throw new Error(`${res.status}: ${detail}`)
+    throw new Error(`${res.status}: ${typeof detail === 'string' ? detail : JSON.stringify(detail)}`)
   }
   return res.json()
 }
 
 export const api = {
   health: () => req('/health'),
+  // profiles (JSON files on the backend; nothing in the browser)
+  profiles: () => req('/profiles'),
+  activeProfile: () => req('/profiles/active'),
+  createProfile: (body) => req('/profiles', { method: 'POST', body: JSON.stringify(body) }),
+  selectProfile: (id) => req(`/profiles/${encodeURIComponent(id)}/select`, { method: 'POST' }),
+  // screens
+  home: () => req('/home'),
+  timeline: (body) => req('/plan/timeline', { method: 'POST', body: JSON.stringify(body || {}) }),
   state: (stale) => req(`/state${stale != null ? `?stale=${stale}` : ''}`),
   forecast: (h = 480) => req(`/forecast?horizon_min=${h}`),
   history: (hours = 12) => req(`/history?hours=${hours}`),
@@ -31,28 +39,21 @@ export const api = {
   permission: (event, stale) => req(`/permission${stale != null ? `?stale=${stale}` : ''}`, { method: 'POST', body: JSON.stringify({ event }) }),
   accept: (events) => req('/events/accept', { method: 'POST', body: JSON.stringify({ events }) }),
   planned: () => req('/events/planned'),
-  recent: (hours = 24) => req(`/events/recent?hours=${hours}`),
   plan: (drinks = 0) => req(`/plan?date=tomorrow&drinks=${drinks}`),
   change: (name) => req('/change', { method: 'POST', body: JSON.stringify({ name }) }),
-  changeOptions: () => req('/change/options'),
-  budget: () => req('/budget'),
   alerts: () => req('/alerts'),
   replayDays: () => req('/replay/days'),
   replaySuggest: () => req('/replay/suggest'),
   replay: (body) => req('/replay', { method: 'POST', body: JSON.stringify(body) }),
   drift: () => req('/drift'),
-  clinician: () => req('/clinician'),
   trends: () => req('/trends'),
   why: () => req('/why'),
-  cards: () => req('/cards'),
-  escalations: () => req('/escalations'),
   reset: () => req('/demo/reset', { method: 'POST' }),
 }
 
 // ------------------------------------------------------------ formatting rules
 // glucose: integer mg/dL · probabilities: whole percent · times: HH:MM · dates: weekday + date
 export const fmtTime = (iso) => (iso ? iso.slice(11, 16) : '')
-export const fmtDay = (iso) => (iso ? iso.slice(0, 10) : '')
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 export const fmtWhen = (iso) => {
   if (!iso) return ''
@@ -65,9 +66,34 @@ export const fmtDate = (iso) => {
   const d = new Date(iso.length === 10 ? iso + 'T00:00' : iso)
   return Number.isNaN(d.getTime()) ? iso : `${WD[d.getDay()]} ${iso.slice(0, 10)}`
 }
+// "today at 19:00" / "tonight at 22:00" / "tomorrow at 07:00", relative to the twin's clock
+export const fmtRel = (iso, nowIso) => {
+  if (!iso) return ''
+  const d = new Date(iso), n = new Date(nowIso || iso)
+  if (Number.isNaN(d.getTime())) return iso
+  const days = Math.round((new Date(d.toDateString()) - new Date(n.toDateString())) / 86400000)
+  const day = days === 0 ? (d.getHours() >= 17 ? 'tonight' : 'today') : days === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'long' })
+  return `${day} at ${iso.slice(11, 16)}`
+}
+// shift an ISO minute string by whole minutes without going through UTC
+export const shiftIso = (iso, minutes) => {
+  const d = new Date(iso)
+  d.setMinutes(d.getMinutes() + minutes)
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
+}
 export const pct = (x, d = 0) => (x == null || Number.isNaN(x) ? '–' : `${(100 * x).toFixed(d)}%`)
 export const mgdl = (x) => (x == null || Number.isNaN(x) ? '–' : `${Math.round(x)}`)
 export const num = (x, d = 1) => (x == null || Number.isNaN(x) ? '–' : Number(x).toFixed(d))
-export const verdictTone = (v) => ({ approved: 'good', merged: 'good', approved_with_condition: 'warn', merged_with_changes: 'warn', denied: 'bad', rejected: 'bad', escalate: 'bad', request_data: 'off' }[v] || 'off')
-export const riskTone = (p) => (p == null ? 'off' : p < 0.05 ? 'good' : p < 0.10 ? 'warn' : 'bad')
-export const RISK_THRESHOLDS = 'green < 5 % · amber 5–10 % · red > 10 % (10-year probability)'
+export const likely = (p) => (p == null ? 'uncertain' : p < 0.05 ? 'unlikely' : p < 0.2 ? 'possible' : p < 0.5 ? 'likely' : 'very likely')
+
+// plain phrase for an event: "2 beers", "a 30 min run"
+export const eventPhrase = (e) => {
+  if (!e) return 'that'
+  if (e.label) return e.label
+  if (e.type === 'exercise') return `a ${Math.round(e.duration_min || 30)} min workout`
+  if (e.type === 'alcohol') { const n = Math.max(1, Math.round((e.alcohol_g || 14) / 14)); return `${n} drink${n > 1 ? 's' : ''}` }
+  if (e.type === 'caffeine') return 'a coffee'
+  if (e.type === 'meal') return `a meal with ${Math.round(e.carbs_g || 0)} g carbs`
+  return e.type
+}

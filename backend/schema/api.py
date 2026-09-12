@@ -83,6 +83,7 @@ class PermissionCard(BaseModel):
     variants: List[Dict[str, Any]] = Field(default_factory=list)
     explanation: str = ""
     gate: Dict[str, Any] = Field(default_factory=dict)
+    plain: Dict[str, Any] = Field(default_factory=dict)   # headline / reason / tone in plain language (decision/plain.py)
 
 
 class TimelineBlock(BaseModel):
@@ -105,6 +106,11 @@ class PlanResponse(BaseModel):
     p_hypo: float = 0.0
     tir: float = 0.0
     notes: List[str] = Field(default_factory=list)
+    glucose_times: List[str] = Field(default_factory=list)     # Monte Carlo band for the chosen day (5-min steps)
+    glucose_median: List[float] = Field(default_factory=list)
+    glucose_p10: List[float] = Field(default_factory=list)
+    glucose_p90: List[float] = Field(default_factory=list)
+    plain: Dict[str, Any] = Field(default_factory=dict)
 
 
 class DiffRow(BaseModel):
@@ -124,6 +130,8 @@ class ChangeResponse(BaseModel):
     organ_risk_baseline: Dict[str, float]
     organ_risk_change: Dict[str, float]
     week_summary: Dict[str, Any] = Field(default_factory=dict)
+    summary_30d: List[Dict[str, Any]] = Field(default_factory=list)   # the four plain rows the UI shows (key, label, unit, before, after)
+    plain: Dict[str, Any] = Field(default_factory=dict)
 
 
 class BudgetResponse(BaseModel):

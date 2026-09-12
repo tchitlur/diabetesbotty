@@ -19,7 +19,11 @@ from backend.config import FRONTEND_ORIGIN, GEMINI_MODEL, gemini_available
 from backend.schema.events import Event
 from backend.schema.api import (Alert, BudgetResponse, ChangeResponse, ClinicianResponse, DriftStatus, Escalation, EventModel,
                                 ForecastResponse, ParsedEvent, PermissionCard, PlanResponse, ReplayResponse, StateNow)
-from backend.api.twin import get_twin, reset_twin
+from backend.api.twin import get_twin, reset_twin, drop_twin, target_range
+from backend.api import profiles as prof_store
+from backend.api.profiles import Profile, ProfileIn
+from backend.decision.plain import permission_plain, plan_plain, change_plain, understood_line
+from backend.decision import home as home_view
 from backend.decision.permission import evaluate_permission
 from backend.decision.planner import plan_day
 from backend.decision.change import evaluate_change, CHANGES
@@ -106,21 +110,28 @@ def permission(req: PermissionRequest, stale: Optional[float] = Query(default=No
         ev = Event.from_dict(d)
     except ValueError as ex:
         raise HTTPException(400, str(ex))
-    return heavy(lambda: evaluate_permission(tw, ev, stale_override=stale if stale is not None else req.stale))
+    card = heavy(lambda: evaluate_permission(tw, ev, stale_override=stale if stale is not None else req.stale))
+    card.plain = permission_plain(card, tw.now)
+    card.plain["understood"] = understood_line(card.proposed.model_dump() if card.proposed else {}, tw.now)
+    return card
 
 
 @app.get("/plan", response_model=PlanResponse)
 def plan_get(date: Optional[str] = None, drinks: int = 0) -> PlanResponse:
     tw = get_twin()
     day = datetime.fromisoformat(date) if date and date != "tomorrow" else None
-    return heavy(lambda: tw.cached(f"plan:{date}:{drinks}", lambda: plan_day(tw, day=day, drinks=drinks)))
+    plan = heavy(lambda: tw.cached(f"plan:{date}:{drinks}", lambda: plan_day(tw, day=day, drinks=drinks)))
+    plan.plain = plan_plain(plan, tw.now)
+    return plan
 
 
 @app.post("/plan", response_model=PlanResponse)
 def plan_post(req: PlanRequest) -> PlanResponse:
     tw = get_twin()
     day = datetime.fromisoformat(req.date) if req.date and req.date != "tomorrow" else None
-    return heavy(lambda: plan_day(tw, day=day, blocks=req.blocks, workout=req.workout, drinks=req.drinks))
+    plan = heavy(lambda: plan_day(tw, day=day, blocks=req.blocks, workout=req.workout, drinks=req.drinks))
+    plan.plain = plan_plain(plan, tw.now)
+    return plan
 
 
 @app.post("/change", response_model=ChangeResponse)
@@ -129,6 +140,7 @@ def change(req: ChangeRequest) -> ChangeResponse:
         raise HTTPException(400, f"unknown change {req.name!r}; choose one of {CHANGES}")
     tw = get_twin()
     resp = heavy(lambda: tw.cached("no_change", lambda: evaluate_change(tw, "no_change"), keyed=False) if req.name == "no_change" else evaluate_change(tw, req.name))
+    resp.plain = change_plain(resp)
     tw.cards.append({"kind": "change", "at": tw.now.isoformat(timespec="minutes"), "card": resp.model_dump()})
     tw.last_change = resp  # type: ignore[attr-defined]
     return resp
@@ -158,7 +170,10 @@ def replay_days() -> List[Dict[str, Any]]:
 
 @app.get("/replay/suggest")
 def replay_suggest() -> Dict[str, Any]:
-    return heavy(lambda: suggest_day(get_twin()))
+    tw = get_twin()
+    if getattr(tw, "_replay_suggest", None) is None:
+        return {"suggested": None, "checked": []}
+    return tw._replay_suggest
 
 
 @app.post("/replay", response_model=ReplayResponse)
@@ -235,7 +250,8 @@ def why() -> Dict[str, Any]:
     if tw.last_card is None:
         return {"message": "No card yet. Ask for permission first."}
     c = tw.last_card
-    return {"verdict": c.verdict, "condition": c.condition, "confidence": c.confidence, "factors": [f.model_dump() for f in c.factors],
+    plain = permission_plain(c, tw.now)
+    return {"plain": plain, "verdict": c.verdict, "condition": c.condition, "confidence": c.confidence, "factors": [f.model_dump() for f in c.factors],
             "data_used": c.data_used, "data_missing": c.data_missing, "explanation": c.explanation, "gate": c.gate, "variants": c.variants,
             "long_term_delta": c.long_term_delta}
 
@@ -293,6 +309,92 @@ def trends() -> Dict[str, Any]:
             proj.append({"day": i, "hba1c": round(s.hba1c, 3)})
     return {"daily": rows, "a1c_projection": proj, "a1c_steady": round(hba1c_steady_state(wk.mean("mean_glucose")), 2),
             "week_summary": wk.summary()}
+
+
+# ------------------------------------------------------------------ profiles (JSON files on the backend; no passwords, no browser storage)
+@app.get("/profiles", response_model=List[Profile])
+def profiles_list() -> List[Profile]:
+    return prof_store.list_profiles()
+
+
+@app.get("/profiles/active", response_model=Profile)
+def profiles_active() -> Profile:
+    p = prof_store.get_profile(prof_store.active_id())
+    assert p is not None
+    return p
+
+
+@app.post("/profiles", response_model=Profile)
+def profiles_create(body: ProfileIn) -> Profile:
+    """Create a profile, bind it to the closest unused cohort patient and fit that patient's twin (5-10 s)."""
+    if body.target_high <= body.target_low + 20:
+        raise HTTPException(400, "target range must be at least 20 mg/dL wide")
+    tw = get_twin()
+    with tw.heavy:
+        prof = prof_store.create_profile(body)
+    prof_store.set_active(prof.id)
+    get_twin()   # build the new twin now so the first screen is fast
+    return prof
+
+
+@app.post("/profiles/{pid}/select", response_model=Profile)
+def profiles_select(pid: str) -> Profile:
+    try:
+        prof = prof_store.set_active(pid)
+    except KeyError:
+        raise HTTPException(404, "no such profile")
+    get_twin()
+    return prof
+
+
+@app.delete("/profiles/{pid}")
+def profiles_delete(pid: str) -> Dict[str, Any]:
+    ok = prof_store.delete_profile(pid)
+    if not ok:
+        raise HTTPException(400, "cannot delete this profile")
+    drop_twin(pid)
+    return {"ok": True}
+
+
+# ------------------------------------------------------------------ home + plan views (plain language)
+@app.get("/home")
+def home() -> Dict[str, Any]:
+    """Everything the Home screen shows: glucose now + trend, 3 h back / 3 h ahead, the tiles, the coming-up cards."""
+    tw = get_twin()
+
+    def build():
+        s, std = tw.state_now()
+        lo, hi = target_range(tw)
+        mc = tw.cached("forecast:480", lambda: tw.forecast(horizon_min=480))
+        n = 3 * 12 + 1
+        g = float(s.glucose)
+        tone = "good" if lo <= g <= hi else ("bad" if g < lo else "warn")
+        return {"as_of": tw.now.isoformat(timespec="minutes"), "profile": tw.profile,
+                "glucose": {"value": round(g), "std": round(float(std.get("glucose", 0.0))), "tone": tone, "target_low": lo, "target_high": hi, **home_view.trend(tw)},
+                "history": home_view.history(tw, 3.0),
+                "forecast": {"times": list(mc.times[:n]), "median": [round(float(x), 1) for x in mc.median[:n]],
+                             "p10": [round(float(x), 1) for x in mc.p10[:n]], "p90": [round(float(x), 1) for x in mc.p90[:n]]},
+                "tiles": home_view.tiles(tw), "coming_up": home_view.coming_up(tw, mc),
+                "sensor": {"staleness_min": tw.staleness_min(), "data_quality": round(float(tw.pt.cgm.data_quality), 3)}}
+    return heavy(lambda: tw.cached("home", build))
+
+
+class TimelineRequest(BaseModel):
+    workout: Optional[Dict[str, Any]] = None
+    snack: Optional[str] = None
+    auto: bool = False
+
+
+@app.post("/plan/timeline")
+def plan_timeline(req: TimelineRequest) -> Dict[str, Any]:
+    """The Plan tab: now until bedtime with safe / caution / avoid bands for exercise, predicted meals, the planned workout."""
+    tw = get_twin()
+    workout, snack = req.workout, req.snack
+    if req.auto:
+        auto = heavy(lambda: home_view.auto_plan(tw))
+        workout, snack = auto["workout"], auto["snack"]
+    key = "timeline:%s:%s:%s" % ((workout or {}).get("start"), (workout or {}).get("duration_min"), snack)
+    return heavy(lambda: tw.cached(key, lambda: home_view.timeline(tw, workout, snack)))
 
 
 @app.post("/demo/reset")

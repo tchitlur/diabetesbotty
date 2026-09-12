@@ -8,7 +8,7 @@ export default function Status({ loading, error, empty, children, loadingText = 
   return children || null
 }
 
-export function ChartBox({ loading, error, children, height, loadingText = 'Computing…' }) {
+export function ChartBox({ loading, error, children, height, loadingText = 'Working…' }) {
   return (
     <div className="chart-wrap" style={{ minHeight: height }}>
       {children}
