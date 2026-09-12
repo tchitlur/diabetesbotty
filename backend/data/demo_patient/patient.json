@@ -40,12 +40,12 @@
   "days": 90,
   "data_quality": {
     "format": "dexcom",
-    "n_raw": 24486,
+    "n_raw": 25920,
     "n_grid": 25920,
-    "coverage": 0.9432484567901235,
-    "n_gaps": 236,
-    "n_artifacts": 38,
+    "coverage": 1.0,
+    "n_gaps": 0,
+    "n_artifacts": 0,
     "staleness_min": 0.0,
-    "data_quality": 0.981508487654321
+    "data_quality": 1.0
   }
 }

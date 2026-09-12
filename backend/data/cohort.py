@@ -267,6 +267,8 @@ def add_cgm_noise(g_true: np.ndarray, rng: np.random.Generator, protect_from: in
     g = g_true + sensor_noise(len(g_true), rng)
     n = len(g)
     lim = n if protect_from is None else int(protect_from)
+    if lim <= 0:   # a clean sensor history: noise only
+        return np.clip(g, 39, 401)
     # 5 % dropouts in short runs
     n_drop = int(0.05 * n)
     dropped = 0
@@ -313,6 +315,10 @@ def write_patient(out_dir: Path, meta: Dict[str, Any], ev_true: List[Event], ev_
     return meta["data_quality"]
 
 
+# the people behind the login personas (Priya p07, Marcus p13, Ken p16, Zara p17) plus the demo patient (Alex)
+CLEAN_PATIENTS = {"p07", "p13", "p16", "p17"}
+
+
 def generate(n_patients: int = N_PATIENTS, demo_only: bool = False, seed: int = COHORT_SEED, verbose: bool = True) -> None:
     rng = np.random.default_rng(seed)
     n = 1 if demo_only else n_patients
@@ -328,9 +334,8 @@ def generate(n_patients: int = N_PATIENTS, demo_only: bool = False, seed: int = 
     for i, m in enumerate(metas):
         out = DEMO_PATIENT_DIR if i == DEMO_INDEX else COHORT_DIR / m["patient_id"]
         protect = None
-        if i == DEMO_INDEX:   # the demo moment must sit on a clean sensor day: no dropouts in the 24 h before the anchor
-            from backend.config import DEMO_ANCHOR
-            protect = int((datetime.fromisoformat(DEMO_ANCHOR) - timedelta(hours=24) - START).total_seconds() // 60 // DT)
+        if i == DEMO_INDEX or m["patient_id"] in CLEAN_PATIENTS:
+            protect = 0   # the demo people carry no dropouts or artifacts at all (they add nothing to the demo); the validation cohort keeps them
         q = write_patient(out, m, ev_true[i], ev_logged[i], G[i], daily[i], np.random.default_rng(seed + 2000 + i), protect)
         if verbose:
             print(f"  {m['patient_id']}: mean glucose {np.mean(G[i]):.0f}  TIR {np.mean((G[i] >= 70) & (G[i] <= 180)):.2f}  quality {q['data_quality']:.2f} -> {out.relative_to(DATA_DIR.parent.parent)}")

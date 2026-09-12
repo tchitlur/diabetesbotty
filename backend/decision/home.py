@@ -63,36 +63,13 @@ def trend(twin) -> Dict[str, Any]:
 
 
 def history(twin, hours: float = 3.0, max_gap_min: int = 45) -> Dict[str, Any]:
-    """The display series for the chart: one array on the 5-minute grid from now-hours to now.
-    `raw` keeps the sensor's dropouts and flagged points as nulls; `display` fills gaps up to
-    `max_gap_min` by linear interpolation (display only). Longer gaps stay null and are listed."""
+    """The display series for the chart: one array on the 5-minute grid from now-hours to now, through
+    the one shared gap rule (data/series.py): `raw` keeps the sensor's dropouts and flagged points as
+    nulls, `display` is continuous except for gaps longer than `max_gap_min`, which are listed."""
+    from backend.data.series import series_for_display
     t = twin.pt.cgm.times
     m = (t > pd.Timestamp(twin.now - timedelta(hours=hours))) & (t <= pd.Timestamp(twin.now))
-    g, v = twin.pt.cgm.glucose[m], twin.pt.cgm.valid[m]
-    raw = np.where(v & ~np.isnan(g), g, np.nan).astype(float)
-    disp = raw.copy()
-    n = len(raw)
-    i = 0
-    gaps = []
-    while i < n:
-        if np.isnan(disp[i]):
-            j = i
-            while j < n and np.isnan(disp[j]):
-                j += 1
-            length = (j - i) * 5
-            if i > 0 and j < n and length <= max_gap_min:
-                disp[i:j] = np.linspace(disp[i - 1], disp[j], j - i + 2)[1:-1]
-            elif i > 0 and j == n and length <= max_gap_min:
-                disp[i:j] = disp[i - 1]           # trailing short gap: hold the last reading up to now
-            else:
-                gaps.append({"start": t[m][i].isoformat(timespec="minutes"), "end": (t[m][j - 1] if j - 1 < n else t[m][-1]).isoformat(timespec="minutes"), "minutes": length})
-            i = j
-        else:
-            i += 1
-    return {"times": [x.isoformat(timespec="minutes") for x in t[m]],
-            "raw": [None if np.isnan(x) else round(float(x), 1) for x in raw],
-            "display": [None if np.isnan(x) else round(float(x), 1) for x in disp],
-            "gaps": gaps}
+    return series_for_display(list(t[m]), list(twin.pt.cgm.glucose[m]), list(twin.pt.cgm.valid[m]), max_gap_min=max_gap_min)
 
 
 # ------------------------------------------------------------------ tiles

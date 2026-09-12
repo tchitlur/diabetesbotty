@@ -142,6 +142,7 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
         <button type="button" className={`pill-toggle ${aiOn ? 'on' : ''}`} onClick={toggleAi} disabled={aiBusy || !parser?.key_present} title={parser?.key_present ? 'Gemini reads your messages when on; the built-in reader when off' : 'No Gemini key: the built-in reader is used'} data-testid="ai-toggle">AI reader: {aiOn ? 'on' : 'off'}</button>
         {onHide && !mobile ? <button type="button" className="link hide-link" onClick={onHide} data-testid="hide-chat">hide ▸</button> : null}
         {onHide && mobile ? <button type="button" className="icon" aria-label="close" onClick={onHide} data-testid="chat-sheet-close">✕</button> : null}
+        <span className="pill reader-pill" data-testid="reader-pill"><svg className="spk" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 5.4 4.6 9.4 10 10-5.4.6-9.4 4.6-10 10-.6-5.4-4.6-9.4-10-10 5.4-.6 9.4-4.6 10-10z" fill="currentColor" /></svg>{aiOn ? 'Powered by Gemini' : 'Local parser'}</span>
       </div>
       <div className="log">
         {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "Can I have pizza for dinner?" or tap a button below.</div> : null}

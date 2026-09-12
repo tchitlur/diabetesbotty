@@ -24,7 +24,22 @@ async function snap(page: Page, name: string) {
   steps.push(file)
   await checkText(page, name)
   await checkCharts(page, name)
+  await checkGaps(page, name)
   return file
+}
+
+// no SVG line inside any chart may break into several subpaths (one moveTo per path), on every page
+async function checkGaps(page: Page, step: string) {
+  const bad = await page.evaluate(() => {
+    const out: string[] = []
+    document.querySelectorAll('path.recharts-line-curve, path.pt-actual, path.pt-forecast, .spark path').forEach((p) => {
+      const d = p.getAttribute('d') || ''
+      const moves = (d.match(/M/g) || []).length
+      if (d.length > 5 && moves !== 1) out.push(`${(p.closest('.card, .answer, .ccard, .tile-detail') as HTMLElement)?.querySelector('h3, .headline, .label, b')?.textContent?.trim().slice(0, 30) || p.getAttribute('class')}: ${moves} subpaths`)
+    })
+    return out
+  })
+  for (const b of bad) issues.push({ step, kind: 'chart', detail: `chart line breaks: ${b}` })
 }
 
 async function checkText(page: Page, step: string) {

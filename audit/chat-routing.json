@@ -41,8 +41,8 @@
   },
   {
     "msg": "how many carbs are still digesting",
-    "card": "state",
-    "tools": "checked: current state · routed by Gemini"
+    "card": "explain",
+    "tools": "checked: why now · routed by Gemini"
   },
   {
     "msg": "what was my glucose at 3pm",

@@ -9,26 +9,30 @@
   "trend": "steady",
   "trend_arrow": "\u2192",
   "position": "in range",
-  "tir7": 72,
+  "tir7": 71,
   "avg7": 100,
   "lows7": 21,
   "carb_ratio": 37,
   "carb_ratio_text": "1 unit covers 37 g",
   "insulin_working": 102,
   "recovery": 93,
-  "learned": "a short night hurts your insulin 36% less than average; your insulin works 47% better overnight than the average person with T1D",
+  "learned": "a short night hurts your insulin 35% less than average; your insulin works 48% better overnight than the average person with T1D",
   "learned_lines": [
-   "A short night hurts your insulin 36% less than average",
-   "Your insulin works 47% better overnight than the average person with T1D"
+   "A short night hurts your insulin 35% less than average",
+   "Your insulin works 48% better overnight than the average person with T1D"
+  ],
+  "learned_categories": [
+   "sleep",
+   "insulin"
   ],
   "params": {
-   "carb_ratio": 0.643,
-   "tau_carb": 35.436,
-   "si_tod0": 1.25,
-   "si_tod1": 1.026,
-   "si_tod2": 1.149,
+   "carb_ratio": 0.654,
+   "tau_carb": 35.361,
+   "si_tod0": 1.259,
+   "si_tod1": 1.04,
+   "si_tod2": 1.16,
    "sleep_debt_coef": 0.129,
-   "exercise_mult": 0.797
+   "exercise_mult": 0.806
   },
   "sparkline": {
    "times": [
@@ -168,8 +172,8 @@
     98,
     102,
     94,
-    null,
-    null,
+    90,
+    87,
     83,
     85,
     96,
@@ -186,7 +190,7 @@
     71,
     74,
     91,
-    null,
+    109,
     115,
     126,
     127,
@@ -201,7 +205,7 @@
     61,
     63,
     64,
-    null,
+    64,
     54,
     46,
     46,
@@ -249,19 +253,23 @@
   "carb_ratio_text": "1 unit covers 17 g",
   "insulin_working": 80,
   "recovery": 79,
-  "learned": "alcohol lowers you 150% more than most; exercise lowers your glucose 45% less than most",
+  "learned": "carbs hit your blood sugar fast (18 minutes sooner than average); 1 unit covers only 17 g; your insulin is working 21% below usual after short nights (a short night hurts your insulin 35% more than most)",
   "learned_lines": [
-   "Alcohol lowers you 150% more than most",
-   "Exercise lowers your glucose 45% less than most"
+   "Carbs hit your blood sugar fast (18 minutes sooner than average); 1 unit covers only 17 g",
+   "Your insulin is working 21% below usual after short nights (a short night hurts your insulin 35% more than most)"
+  ],
+  "learned_categories": [
+   "food",
+   "insulin"
   ],
   "params": {
-   "carb_ratio": 0.749,
+   "carb_ratio": 0.758,
    "tau_carb": 22.0,
    "si_tod0": 0.55,
    "si_tod1": 0.56,
    "si_tod2": 0.64,
-   "sleep_debt_coef": 0.276,
-   "exercise_mult": 0.545
+   "sleep_debt_coef": 0.271,
+   "exercise_mult": 0.543
   },
   "sparkline": {
    "times": [
@@ -365,7 +373,7 @@
    ],
    "values": [
     157,
-    null,
+    156,
     155,
     160,
     155,
@@ -439,8 +447,8 @@
     57,
     51,
     60,
-    null,
-    null,
+    70,
+    59,
     76,
     102,
     125,
@@ -476,16 +484,20 @@
   "trend_arrow": "\u2192",
   "position": "high",
   "tir7": 79,
-  "avg7": 103,
-  "lows7": 17,
+  "avg7": 104,
+  "lows7": 16,
   "carb_ratio": 25,
   "carb_ratio_text": "1 unit covers 25 g",
   "insulin_working": 78,
   "recovery": 86,
-  "learned": "alcohol lowers you 111% more than most; a short night hurts your insulin 90% more than average",
+  "learned": "your insulin is working 22% below usual after night shifts (a short night hurts your insulin much more than most); carbs hit your blood sugar about 8 minutes slower than average",
   "learned_lines": [
-   "Alcohol lowers you 111% more than most",
-   "A short night hurts your insulin 90% more than average"
+   "Your insulin is working 22% below usual after night shifts (a short night hurts your insulin much more than most)",
+   "Carbs hit your blood sugar about 8 minutes slower than average"
+  ],
+  "learned_categories": [
+   "insulin",
+   "food"
   ],
   "params": {
    "carb_ratio": 0.72,
@@ -494,7 +506,7 @@
    "si_tod1": 0.9,
    "si_tod2": 1.15,
    "sleep_debt_coef": 0.38,
-   "exercise_mult": 1.124
+   "exercise_mult": 1.165
   },
   "sparkline": {
    "times": [
@@ -633,8 +645,8 @@
     111,
     140,
     147,
-    null,
-    null,
+    155,
+    164,
     159,
     147,
     144,
@@ -648,7 +660,7 @@
     101,
     98,
     82,
-    null,
+    97,
     117,
     132,
     127,
@@ -693,7 +705,7 @@
     106,
     102,
     103,
-    null
+    100
    ]
   },
   "as_of": "2025-08-29T10:30"

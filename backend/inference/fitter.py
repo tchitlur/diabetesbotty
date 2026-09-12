@@ -202,9 +202,11 @@ def write_replay_suggestion(patient_id: str = "demo") -> None:
     (depends only on the fit; ~15 s), so the app never computes it at request time."""
     if patient_id != "demo":
         return
+    from datetime import datetime
     from backend.api.twin import Twin
+    from backend.config import DEMO_ANCHOR
     from backend.decision.replay import suggest_day
-    tw = Twin()
+    tw = Twin(now=datetime.fromisoformat(DEMO_ANCHOR))   # synthetic dates: the app shifts them onto the wall clock itself
     tw._replay_suggest = None
     out = suggest_day(tw)
     (tw.pt.path / "replay_suggest.json").write_text(json.dumps(out, indent=2), encoding="utf-8")

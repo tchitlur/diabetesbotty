@@ -126,7 +126,7 @@ def replay_day(twin, date: str, carbs_scale: float = 1.0, alcohol_scale: float =
         if j < len(twin.pt.cgm.times) and abs((twin.pt.cgm.times[j] - grid[i]).total_seconds()) < 150 and twin.pt.cgm.valid[j]:
             actual[i] = twin.pt.cgm.glucose[j]
     return ReplayResponse(
-        date=date, times=times, actual=[None if np.isnan(x) else round(float(x), 1) for x in actual],
+        date=date, times=times, actual=__import__("backend.data.series", fromlist=["display_values"]).display_values(times, actual),
         simulated=[round(float(x), 1) for x in g1], simulated_original=[round(float(x), 1) for x in g0],
         events=[EventModel(**e.to_dict()) for e in day_events if e.type != "water"],
         modified_events=[EventModel(**e.to_dict()) for e in modified if day <= e.start < day + timedelta(days=1) and e.type != "water"],

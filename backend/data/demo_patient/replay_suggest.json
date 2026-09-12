@@ -3,24 +3,24 @@
     "date": "2025-08-15",
     "weekday": "Fri",
     "drinks": 6,
-    "overnight_min_as_logged": 54.6,
-    "overnight_min_no_alcohol": 76.5
+    "overnight_min_as_logged": 55.2,
+    "overnight_min_no_alcohol": 76.6
   },
   "checked": [
     {
       "date": "2025-08-23",
-      "overnight_min_as_logged": 64.4,
-      "overnight_min_no_alcohol": 64.6
+      "overnight_min_as_logged": 64.6,
+      "overnight_min_no_alcohol": 64.8
     },
     {
       "date": "2025-08-22",
-      "overnight_min_as_logged": 57.8,
-      "overnight_min_no_alcohol": 65.4
+      "overnight_min_as_logged": 57.3,
+      "overnight_min_no_alcohol": 65.3
     },
     {
       "date": "2025-08-15",
-      "overnight_min_as_logged": 54.6,
-      "overnight_min_no_alcohol": 76.5
+      "overnight_min_as_logged": 55.2,
+      "overnight_min_no_alcohol": 76.6
     }
   ]
 }

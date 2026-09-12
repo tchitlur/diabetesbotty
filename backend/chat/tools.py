@@ -361,7 +361,9 @@ def query_history(twin, start: str, end: str, metric: str = "glucose") -> Dict[s
     gv = g[ok & ~np.isnan(g)]
     span_h = (b - a).total_seconds() / 3600.0
     step = 1 if span_h <= 12 else 3 if span_h <= 72 else 6
-    series = {"times": [_iso(x) for x in tt[::step]], "values": [None if (not o or np.isnan(v)) else _r(v) for v, o in zip(g[::step], ok[::step])]}
+    from backend.data.series import series_for_display
+    disp = series_for_display(tt, g, ok)["display"]     # the shared gap rule, before any downsampling
+    series = {"times": [_iso(x) for x in tt[::step]], "values": [None if v is None else _r(v) for v in disp[::step]]}
     lows = _low_episodes(tt, g, ok)
     nearest = None
     if len(tt):

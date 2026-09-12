@@ -106,3 +106,20 @@ Every phone screen (login, home, coming-up scroll, tile sheet, plan, ask sheet, 
 | 1920 | 146 ms | 1026–1034 ms | 95, 78, 120, 82, 80, 95 | 2, 2, 1, 3, 2, 3 | 0 |
 
 Initial state, key 1, summary strip, Average (three identical verdicts and one curve), back to Personalized (they differ), Escape (initial layout back), then every chip diverged (two verdicts or a 40+ peak spread), and `?prompt=3` pre-fired the run. Found on the way: the toggle re-rendered the hidden profile columns instead of the panels (both carried the same data attribute; selectors are now scoped), the ask bar stayed visible in the answer state (the state class lived on `main` while the bar is its sibling; it is on `body` now), and two wording defects (a denial that quoted the with-advice probability, and a summary that said "yes, with a snack" for a "yes, but less"). The divergence tuning is recorded in `audit/compare_divergence.md`.
+
+## Gap-free charts, loading state, reader pill, learned facts (`audit/screens_compare_v2/`)
+
+Root cause of the recurring chart gaps: three surfaces each did their own gap handling, so synthetic dropouts leaked into whichever chart lacked it. One rule now (`backend/data/series.py`), every glucose series routed through it, and the five demo people regenerated with no dropouts, warm-up gaps or compression lows at all. A no-gap assertion (one moveTo per chart line, full-day sparklines, 73-point forecast lines) runs on every screenshot of both audits: zero chart gaps across the main app (31 screens, only the time-of-day note) and the compare page at 1440 and 1920 (initial, loading, answer, average, personal, six chips).
+
+| width | page ready | Enter → summary | peak spread per chip | console errors |
+|---|---|---|---|---|
+| 1440 | 258 ms | 2026–2037 ms | 96, 81, 122, 82, 82, 95 | 0 |
+| 1920 | 180 ms | 2029–2038 ms | 96, 81, 122, 82, 82, 95 | 0 |
+
+The 1 s loading phase (skeleton cards, "Simulating three bodies…", rotating status per column) sits inside the budget. Learned facts, two each, distinct lead categories:
+
+- **Alex** (sleep / insulin): A short night hurts your insulin 35% less than average; Your insulin works 48% better overnight than the average person with T1D.
+- **Priya** (food / insulin): Carbs hit your blood sugar fast (18 minutes sooner than average); 1 unit covers only 17 g; Your insulin is working 21% below usual after short nights (a short night hurts your insulin 35% more than most).
+- **Marcus** (insulin / food): Your insulin is working 22% below usual after night shifts (a short night hurts your insulin much more than most); Carbs hit your blood sugar about 8 minutes slower than average.
+
+Found on the way: the demo's replay suggestion had been written under the live clock and was shifted twice (fitter now freezes the synthetic clock for it); the reader pill's icon shared a class with the sparklines and tripped the point-count check (renamed).

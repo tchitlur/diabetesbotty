@@ -359,7 +359,9 @@ def history(hours: float = 24.0) -> Dict[str, Any]:
     m = (t > pd.Timestamp(tw.now) - pd.Timedelta(hours=hours)) & (t <= pd.Timestamp(tw.now))
     g = tw.pt.cgm.glucose[m]
     v = tw.pt.cgm.valid[m]
-    return {"times": [x.isoformat(timespec="minutes") for x in t[m]], "glucose": [None if (not ok or np.isnan(x)) else round(float(x), 1) for x, ok in zip(g, v)]}
+    from backend.data.series import series_for_display
+    d = series_for_display(list(t[m]), list(g), list(v))
+    return {"times": d["times"], "glucose": d["display"], "gaps": d["gaps"]}
 
 
 @app.get("/trends")
@@ -552,7 +554,9 @@ def _compare_bundle() -> Dict[str, Any]:
     cache = ce.load_cache()
     personas_path = ce.CACHE_DIR / "personas.json"
     personas = json.loads(personas_path.read_text(encoding="utf-8")) if personas_path.exists() else []
-    return {"personas": personas, "results": cache, "bank": [{"slug": b["slug"], "text": b["text"]} for b in ce.BANK], "now": ce.COMPARE_NOW.isoformat(timespec="minutes")}
+    from backend.config import gemini_available, GEMINI_MODEL
+    return {"personas": personas, "results": cache, "bank": [{"slug": b["slug"], "text": b["text"]} for b in ce.BANK], "now": ce.COMPARE_NOW.isoformat(timespec="minutes"),
+            "parser": {"gemini": gemini_available(), "model": GEMINI_MODEL}}
 
 
 @app.get("/compare", response_class=HTMLResponse)

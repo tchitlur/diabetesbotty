@@ -1,5 +1,5 @@
 {
-  "loadMs": 146,
+  "loadMs": 180,
   "chips": [
     {
       "chip": 1,
@@ -10,12 +10,12 @@
         "Yes, but less"
       ],
       "peaks": [
-        182,
-        276,
-        181
+        184,
+        280,
+        185
       ],
-      "spread": 95,
-      "total_ms": 1029
+      "spread": 96,
+      "total_ms": 2032
     },
     {
       "chip": 2,
@@ -26,12 +26,12 @@
         "Yes, but less"
       ],
       "peaks": [
-        147,
-        219,
-        225
+        149,
+        220,
+        230
       ],
-      "spread": 78,
-      "total_ms": 1030
+      "spread": 81,
+      "total_ms": 2033
     },
     {
       "chip": 3,
@@ -42,12 +42,12 @@
         "Yes, with a snack"
       ],
       "peaks": [
-        72,
-        143,
-        192
+        73,
+        144,
+        195
       ],
-      "spread": 120,
-      "total_ms": 1029
+      "spread": 122,
+      "total_ms": 2029
     },
     {
       "chip": 4,
@@ -58,12 +58,12 @@
         "Yes, but less"
       ],
       "peaks": [
-        169,
-        237,
-        251
+        171,
+        239,
+        253
       ],
       "spread": 82,
-      "total_ms": 1030
+      "total_ms": 2033
     },
     {
       "chip": 5,
@@ -76,26 +76,26 @@
       "peaks": [
         130,
         106,
-        186
+        188
       ],
-      "spread": 80,
-      "total_ms": 1034
+      "spread": 82,
+      "total_ms": 2035
     },
     {
       "chip": 6,
       "text": "Big bowl of pasta at 9 pm?",
       "verdicts": [
-        "Yes, with one change",
+        "Better to wait",
         "Better to wait",
         "Go ahead"
       ],
       "peaks": [
-        189,
-        283,
-        188
+        191,
+        286,
+        191
       ],
       "spread": 95,
-      "total_ms": 1026
+      "total_ms": 2038
     }
   ],
   "errors": []

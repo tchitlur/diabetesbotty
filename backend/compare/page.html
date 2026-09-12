@@ -74,6 +74,16 @@ button.ghost { border-color: transparent; color: var(--accent); }
 .summary ul { margin: 0; padding-left: 20px; font-size: var(--fs-lg); display: grid; gap: 6px; }
 .summary .same { font-size: var(--fs-xl); color: var(--muted); }
 .hidden { display: none !important; }
+.skel { padding: var(--s4) var(--s5) var(--s5); display: grid; gap: var(--s3); min-height: 420px; }
+.skel .bar { height: 3px; background: var(--panel-2); border-radius: 2px; overflow: hidden; }
+.skel .bar i { display: block; height: 100%; width: 30%; background: var(--accent); border-radius: 2px; animation: prog 1.1s ease-in-out infinite; }
+@keyframes prog { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+.skel .blk { background: var(--panel-2); border-radius: var(--radius-sm); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+.skel .sim { font-size: var(--fs-md); font-weight: 600; color: var(--muted); }
+.skel .st { font-size: var(--fs-sm); color: var(--faint); min-height: 1.3em; transition: opacity .15s; }
+.pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-strong); border-radius: 999px; padding: 6px 12px; font-size: var(--fs-sm); color: var(--muted); background: var(--panel); white-space: nowrap; }
+.pill .spk { width: 14px; height: 14px; }
 
 /* ---- the ask bar, pinned at the bottom in the initial state */
 .ask { position: fixed; left: 0; right: 0; bottom: 0; padding: var(--s3) var(--s6) var(--s5); background: linear-gradient(to top, var(--bg) 70%, rgba(247,247,244,0)); transition: opacity .25s ease, transform .3s ease; }
@@ -99,6 +109,7 @@ button.ghost { border-color: transparent; color: var(--accent); }
   <section id="qbar" class="qbar" data-testid="qbar">
     <div class="q" id="qtext"></div>
     <span class="tagc hidden" id="qtag">cached</span>
+    <span class="pill" id="pill-q" data-testid="pill-q"></span>
     <label class="switch on" id="toggle" data-testid="toggle" title="Off: the population model, the same for everyone. On: each person's own twin.">
       <span>Average</span><span class="track"></span><b>Personalized</b>
     </label>
@@ -110,7 +121,7 @@ button.ghost { border-color: transparent; color: var(--accent); }
 <footer class="ask" id="ask" data-testid="ask">
   <div class="inner">
     <div class="chips" id="chips"></div>
-    <form class="askrow" id="form"><input id="input" type="text" placeholder="Ask all three the same question…" aria-label="question" autocomplete="off" /><button type="submit" class="primary">Ask</button></form>
+    <form class="askrow" id="form"><input id="input" type="text" placeholder="Ask all three the same question…" aria-label="question" autocomplete="off" /><span class="pill" id="pill-a" data-testid="pill-a"></span><button type="submit" class="primary">Ask</button></form>
     <div class="status" id="status"><span class="kbd">1–6 fire a prompt · Enter asks · Esc resets</span></div>
   </div>
 </footer>
@@ -130,6 +141,13 @@ button.ghost { border-color: transparent; color: var(--accent); }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
   const timing = { start: 0, summary: 0 }
   window.__compare = { timing, get data() { return data }, get current() { return current }, get personalized() { return personalized } }
+
+  // ------------------------------------------------------------ the reader pill
+  const SPARK = '<svg class="spk" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.6 5.4 4.6 9.4 10 10-5.4.6-9.4 4.6-10 10-.6-5.4-4.6-9.4-10-10 5.4-.6 9.4-4.6 10-10z" fill="#5f6a70"/></svg>'
+  function renderPill() {
+    const on = !!(data.parser && data.parser.gemini)
+    for (const id of ['#pill-q', '#pill-a']) { const el = $(id); if (el) el.innerHTML = on ? `${SPARK}Powered by Gemini` : `${SPARK}Local parser` }
+  }
 
   // ------------------------------------------------------------ initial columns
   function sparkline(sp) {
@@ -158,7 +176,7 @@ button.ghost { border-color: transparent; color: var(--accent); }
           <span class="k">Insulin working today</span><span class="v">${p.insulin_working}%</span>
           <span class="k">Recovery</span><span class="v">${p.recovery} / 100</span>
         </div>
-        <div class="learned"><b>What the twin learned:</b> ${esc(p.learned)}.</div>
+        <div class="learned" data-testid="learned-${p.id}"><b>What the twin learned:</b> ${(p.learned_lines && p.learned_lines.length ? p.learned_lines : [p.learned]).map((l) => esc(l[0].toLowerCase() + l.slice(1))).join('; ')}.</div>
         <div>${sparkline(p.sparkline)}</div>`
       cols.appendChild(col)
       const mini = document.createElement('div'); mini.className = 'card mini'
@@ -337,6 +355,28 @@ button.ghost { border-color: transparent; color: var(--accent); }
   }
 
   // ------------------------------------------------------------ flow
+  const LOAD_MS = 1000
+  const STATUSES = (name) => [`reading ${name}'s last 90 days`, 'running 200 futures', 'checking safety rules']
+  let loadTimer = null
+  function renderSkeleton() {
+    const host = $('#panels')
+    host.classList.remove('hidden')
+    host.innerHTML = ''
+    ORDER.forEach((who, i) => {
+      const person = data.personas.find((x) => x.id === who)
+      const el = document.createElement('div'); el.className = 'card skel'; el.dataset.testid = `skeleton-${who}`
+      el.innerHTML = `<div class="who" style="display:flex;align-items:center;gap:8px"><span class="avatar sm">${person.avatar}</span><b>${esc(person.name)}</b></div>
+        <div class="bar"><i></i></div><div class="sim">Simulating three bodies…</div><div class="st" data-st="${who}">${esc(STATUSES(person.name)[0])}</div>
+        <div class="blk" style="height:180px"></div><div class="blk" style="height:34px;width:55%"></div><div class="blk" style="height:16px;width:80%"></div>`
+      host.appendChild(el)
+    })
+    let k = 0
+    const tick = () => {
+      k += 1
+      ORDER.forEach((who, i) => { const el = host.querySelector(`[data-st=${who}]`); if (el) { const person = data.personas.find((x) => x.id === who); const st = STATUSES(person.name); el.textContent = st[(k + i) % st.length] } })
+    }
+    return setInterval(tick, 300)
+  }
   function show(res, tag) {
     current = res
     timing.start = timing.start || performance.now()
@@ -344,10 +384,14 @@ button.ghost { border-color: transparent; color: var(--accent); }
     $('#qtext').textContent = res.asked || res.text
     $('#qtag').classList.toggle('hidden', !tag)
     if (tag) $('#qtag').textContent = tag
-    renderPanels(res, true)
-    renderSummary(res, true)
+    $('#summary').classList.add('hidden'); $('#summary').classList.remove('in')
+    if (loadTimer) { clearInterval(loadTimer.iv); clearTimeout(loadTimer.to) }
+    const iv = renderSkeleton()
+    const to = setTimeout(() => { clearInterval(iv); if (current !== res) return; renderPanels(res, true); renderSummary(res, true) }, LOAD_MS)
+    loadTimer = { iv, to }
   }
   function reset() {
+    if (loadTimer) { clearInterval(loadTimer.iv); clearTimeout(loadTimer.to); loadTimer = null }
     document.body.classList.remove('state-answer'); document.body.classList.add('state-initial')
     $('#summary').classList.remove('in'); $('#panels').querySelectorAll('.panel').forEach((p) => p.classList.remove('in'))
     setTimeout(() => { $('#panels').classList.add('hidden'); $('#panels').innerHTML = ''; $('#summary').classList.add('hidden') }, 600)
@@ -399,7 +443,7 @@ button.ghost { border-color: transparent; color: var(--accent); }
   }
 
   // ------------------------------------------------------------ wiring
-  renderColumns(); renderChips()
+  renderColumns(); renderChips(); renderPill()
   $('#form').addEventListener('submit', (e) => { e.preventDefault(); ask($('#input').value) })
   $('#toggle').addEventListener('click', () => setPersonalized(!personalized))
   $('#again').addEventListener('click', reset)
@@ -414,7 +458,7 @@ button.ghost { border-color: transparent; color: var(--accent); }
     try {
       const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 1500)
       const r = await fetch('/compare/data', { signal: ctrl.signal }); clearTimeout(tm)
-      if (r.ok) { const d = await r.json(); if (d && d.personas && d.results) { data = d; if (!current) { renderColumns(); renderChips() } } }
+      if (r.ok) { const d = await r.json(); if (d && d.personas && d.results) { data = d; renderPill(); if (!current) { renderColumns(); renderChips() } } }
     } catch (e) { /* API down: the bundled copy stands */ }
     const m = location.search.match(/[?&]prompt=(\d)/)
     if (m) { const b = data.bank[+m[1] - 1]; if (b) ask(b.text) } else $('#input').focus()

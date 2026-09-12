@@ -24,7 +24,7 @@ from backend.engine import fast
 from backend.engine.simulate import initial_vector, state_params
 from backend.decision.permission import evaluate_permission
 from backend.decision.plain import permission_plain, condition_plain, likelihood, fmt12, event_phrase
-from backend.decision.personal import population_params, twin_summary
+from backend.decision.personal import population_params, twin_summary, fact_candidates, assign_facts
 from backend.decision import home as home_view
 from backend.chat.tools import get_current_state, query_history, _when
 from backend.adapters.parse import parse_text
@@ -82,6 +82,16 @@ def apply_overrides(tw: Twin, over: Dict[str, float]) -> None:
     tw.invalidate()
 
 
+def ensure_fit(pid: str, patient_id: str) -> None:
+    """A person's twin needs their fit; fit on demand and apply the demo tuning record."""
+    from backend.data.store import patient_dir
+    from backend.api.profiles import apply_demo_tuning
+    if patient_id != "demo" and not (patient_dir(patient_id) / "fit.json").exists():
+        from backend.inference.fitter import fit_patient
+        fit_patient(patient_id, verbose=False)
+    apply_demo_tuning(pid, patient_id)
+
+
 def get_twins() -> Dict[str, Twin]:
     """The three people, frozen at COMPARE_NOW (built once, about 10 s)."""
     with _LOCK:
@@ -89,6 +99,7 @@ def get_twins() -> Dict[str, Twin]:
             over = load_overrides()
             for pid in PERSONA_IDS:
                 spec = _persona(pid)
+                ensure_fit(pid, spec["patient_id"])
                 tw = Twin(spec["patient_id"], now=COMPARE_NOW, profile=dict(spec))
                 if over.get(NAME_OF[pid]):
                     apply_overrides(tw, over[NAME_OF[pid]])
@@ -325,13 +336,26 @@ def nearest_cached(text: str) -> Optional[Dict[str, Any]]:
 def persona_stats() -> List[Dict[str, Any]]:
     """The initial columns: who they are, the numbers that differ, one learned line, yesterday's sparkline."""
     out = []
-    for pid, tw in get_twins().items():
+    twins = get_twins()
+    # exactly two facts each; no two people lead with the same category (see personal.assign_facts)
+    cands = {pid: fact_candidates(tw) for pid, tw in twins.items()}
+    for pid, tw in twins.items():
+        spec = _persona(pid)
+        if any(f["category"] == "food" for f in cands[pid]):
+            pop_ratio = 29
+            if float(spec["carb_ratio_g_per_u"]) < pop_ratio * 0.8:
+                for f in cands[pid]:
+                    if f["key"] == "tau_carb" and "faster" in f["text"]:
+                        mins = re.search(r"(\d+) minutes", f["text"])
+                        f["text"] = f"Carbs hit your blood sugar fast ({mins.group(1) if mins else 'well'} minutes sooner than average); 1 unit covers only {int(spec['carb_ratio_g_per_u'])} g"
+    facts = assign_facts(cands, 2)
+    for pid, tw in twins.items():
         spec = _persona(pid)
         st = get_current_state(tw)
         by = {t["key"]: t for t in st["tiles"]}
         wk = query_history(tw, (tw.now - timedelta(days=7)).isoformat(timespec="minutes"), tw.now.isoformat(timespec="minutes"), "average")
         ts = twin_summary(tw)
-        lines = [l["text"] for l in ts["lines"][:2]]
+        lines = [f["text"] for f in facts.get(pid, [])[:2]]
         learned = "; ".join(l[0].lower() + l[1:] for l in lines) if lines else ts["summary"]
         # yesterday, 15-minute points
         day0 = (tw.now - timedelta(days=1)).replace(hour=0, minute=0)
@@ -342,7 +366,7 @@ def persona_stats() -> List[Dict[str, Any]]:
             "tir7": wk["time_in_range_pct"], "avg7": wk["average"], "lows7": wk["n_lows"],
             "carb_ratio": _r(spec["carb_ratio_g_per_u"]), "carb_ratio_text": f"1 unit covers {_r(spec['carb_ratio_g_per_u'])} g",
             "insulin_working": by["insulin"]["value"] if "insulin" in by else None, "recovery": by["recovery"]["value"] if "recovery" in by else None,
-            "learned": learned, "learned_lines": lines, "params": {k: _r(tw.params.get(k, 0), 3) for k in ("carb_ratio", "tau_carb", "si_tod0", "si_tod1", "si_tod2", "sleep_debt_coef", "exercise_mult")},
+            "learned": learned, "learned_lines": lines, "learned_categories": [f["category"] for f in facts.get(pid, [])[:2]], "params": {k: _r(tw.params.get(k, 0), 3) for k in ("carb_ratio", "tau_carb", "si_tod0", "si_tod1", "si_tod2", "sleep_debt_coef", "exercise_mult")},
             "sparkline": {"times": y["series"]["times"], "values": y["series"]["values"]}, "as_of": tw.now.isoformat(timespec="minutes"),
         })
     return out
