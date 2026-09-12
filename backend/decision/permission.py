@@ -181,7 +181,11 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
     else:
         ok = [v for v in variants if v.passes(p_hypo_max)]
         if ok:
-            best = max(ok, key=lambda s: s.score())
+            # a condition that adds something (a snack) beats one that takes away (half as much, an hour later)
+            keeps = [v for v in ok if any(x.type == proposed.type and abs(x.alcohol_g - proposed.alcohol_g) < 1e-6 and abs(x.carbs_g - proposed.carbs_g) < 1e-6
+                                            and abs(x.caffeine_mg - proposed.caffeine_mg) < 1e-6 and abs(x.duration_min - proposed.duration_min) < 1e-6
+                                            and x.start_time == proposed.start_time for x in v.events)]
+            best = max(keeps or ok, key=lambda s: s.score())
             verdict, condition = "approved_with_condition", best.condition
         elif adds_no_risk and do_nothing.p_hypo >= p_hypo_max:
             carb = next((v for v in variants if v.name.startswith("fast_carbs")), None)
