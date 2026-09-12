@@ -50,13 +50,18 @@ def patient_dir(patient_id: str) -> Path:
     return COHORT_DIR / patient_id
 
 
-def load_patient(patient_id: str = "demo") -> PatientData:
+def load_patient(patient_id: str = "demo", until: Optional[datetime] = None) -> PatientData:
+    """Load a patient. `until` truncates CGM and events to that moment (the twin
+    must never see the future when the demo clock is set inside the data)."""
     d = patient_dir(patient_id)
     meta = json.loads((d / "patient.json").read_text(encoding="utf-8"))
     events = events_from_dicts(json.loads((d / "events.json").read_text(encoding="utf-8")))
     et_path = d / "events_true.json"
     events_true = events_from_dicts(json.loads(et_path.read_text(encoding="utf-8"))) if et_path.exists() else events
-    cgm = ingest_csv(d / "cgm.csv")
+    if until is not None:
+        events = [e for e in events if e.start <= until]
+        events_true = [e for e in events_true if e.start <= until]
+    cgm = ingest_csv(d / "cgm.csv", now=until, until=until)
     daily = pd.read_csv(d / "daily.csv", parse_dates=["date"])
     truth = pd.read_csv(d / "truth_glucose.csv", parse_dates=["time"]) if (d / "truth_glucose.csv").exists() else None
     fit = json.loads((d / "fit.json").read_text(encoding="utf-8")) if (d / "fit.json").exists() else None

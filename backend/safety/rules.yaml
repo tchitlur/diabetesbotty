@@ -1,0 +1,26 @@
+# Hard safety rules. The gate evaluates these before any decision function runs.
+# Every threshold here is a clinical guardrail, not a model output.
+
+hard_rules:
+  no_exercise_below_glucose_mgdl: 90        # ADA 2016 exercise consensus: do not start if < 90 without carbs
+  no_alcohol_above_ketones_mmol: 0.6        # ketosis + alcohol = DKA risk; ADA sick-day guidance uses 0.6 as "elevated"
+  no_approval_if_staleness_min: 20          # a decision needs a CGM value from the last 20 minutes
+  min_data_quality_for_approval: 0.3        # below this the twin is guessing
+  hypo_probability_max_for_approval: 0.05   # P(glucose < 70 within horizon)
+  hyper_breach_mgdl: 250
+
+escalation:
+  dka_ketones_mmol: 1.5
+  dka_glucose_mgdl: 250
+  severe_hypo_mgdl: 54
+  severe_hypo_count_24h: 3                  # distinct episodes (a run of consecutive readings counts once)
+  drift_flagged_days: 5
+
+messages:
+  request_cgm: "I need a fresh CGM reading (last one is {staleness:.0f} min old). Check the sensor and try again."
+  request_quality: "Data quality is {quality:.2f}; too many gaps or artifacts in the last 24 h to decide safely."
+  escalate_dka: "Ketones {ketones:.1f} mmol/L with glucose {glucose:.0f} mg/dL: possible DKA. Check ketones, take correction insulin per your sick-day plan and contact your care team now."
+  escalate_hypos: "{count} readings under 54 mg/dL in the last 24 h. Treat, then contact your care team today about your insulin doses."
+  escalate_drift: "The twin has disagreed with your CGM for {days} days. Something changed (illness, new insulin, sensor). Review with your care team."
+  exercise_low: "Glucose is {glucose:.0f} mg/dL: eat 15 g fast carbs and wait until above 90 before exercising."
+  alcohol_ketones: "Ketones are {ketones:.1f} mmol/L: no alcohol until they are under 0.6."

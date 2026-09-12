@@ -121,8 +121,10 @@ def _parse_generic(text: str) -> pd.DataFrame:
 # ------------------------------------------------------------------ validation
 
 def validate_series(raw: pd.DataFrame, now: Optional[datetime] = None, source_format: str = "generic",
-                    sensor_starts: Optional[List[datetime]] = None) -> GlucoseSeries:
+                    sensor_starts: Optional[List[datetime]] = None, until: Optional[datetime] = None) -> GlucoseSeries:
     raw = raw.sort_values("time").drop_duplicates("time")
+    if until is not None:
+        raw = raw[raw["time"] <= pd.Timestamp(until)]
     raw = raw[(raw["glucose"].isna()) | ((raw["glucose"] >= 20) & (raw["glucose"] <= 500))]
     if raw.empty:
         raise ValueError("no glucose readings")
@@ -183,14 +185,14 @@ def validate_series(raw: pd.DataFrame, now: Optional[datetime] = None, source_fo
                          staleness_min=float(staleness), data_quality=quality, source_format=source_format, n_raw=int(len(raw)))
 
 
-def ingest_csv(path_or_text: Union[str, Path], now: Optional[datetime] = None) -> GlucoseSeries:
+def ingest_csv(path_or_text: Union[str, Path], now: Optional[datetime] = None, until: Optional[datetime] = None) -> GlucoseSeries:
     if isinstance(path_or_text, Path) or (isinstance(path_or_text, str) and len(path_or_text) < 512 and Path(path_or_text).exists()):
         text = Path(path_or_text).read_text(encoding="utf-8-sig")
     else:
         text = str(path_or_text)
     fmt = _detect_format(text)
     raw = {"dexcom": _parse_dexcom, "libre": _parse_libre, "generic": _parse_generic}[fmt](text)
-    return validate_series(raw, now=now, source_format=fmt)
+    return validate_series(raw, now=now, source_format=fmt, until=until)
 
 
 # ------------------------------------------------------------------ writers (for synthetic data)

@@ -60,6 +60,18 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - Each `dmg_*` accumulator is the cumulative hazard of that complication, so P(10 y) = 1 - exp(-dmg). The weekly increment is h0/52 x exp(beta x (A1c_eq - 7)) x (1 + weighted extra exposures); A1c_eq comes from the ADAG map of the week's mean glucose plus a variability term. Retinopathy beta is 0.714 so the A1c 9 -> 7 hazard ratio is exactly 0.24 (DCCT 76 %); the probability ratio comes out at 73.7 % because of the 1 - exp(-H) mapping. Other betas follow UKPDS 35. All in `params.yaml` with sources.
 - HbA1c ODE constant k = 4.072e-6 per (mg/dL x day) reproduces A1c 7.0 at a steady 154 mg/dL (closed form checked in tests).
 
+## Decision / safety / API decisions (checkpoint 6)
+
+- **The demo clock** is `config.DEMO_NOW = 2025-08-29T19:00` (a Friday, just after dinner, glucose ~91 and drifting). The twin is built with `load_patient(until=now)` so CGM and events after that moment are invisible to it. Scanned every weekend evening of the last month: this is the moment where "two more beers" is conditional (15 g carbs before bed), a fasted 07:00 run is denied with a safe alternative window (10:00), and the do-nothing forecast has P(hypo) ~ 0.2.
+- **Escalation rule "3+ readings < 54 in 24 h"** is implemented as 3+ distinct *episodes* (a run of consecutive readings counts once; a new episode needs 30 min above 54). Literal readings would escalate on a single 15-minute dip because CGM samples every 5 minutes.
+- **Permission** simulates do-nothing, the event, and variants (delay 1 h, halve, +15 g fast carbs, +20 g pre-workout snack; for alcohol the carbs go at bedtime) with 200-sample Monte Carlo each; alcohol uses a 12 h horizon so the delayed low is inside it. `plan_events` on the card lists everything the approved scenario adds (event + condition extras) and the frontend commits *those* when the user taps "add to plan"; showing a card does not change the forecast. For exercise that is not approved, a batched search over later start times (30-min steps, 12 h) returns an alternative window with its own Monte Carlo P(hypo).
+- **Alerts** use per-step crossing probabilities (window = steps with P >= 0.15). The responsible past event is found by re-simulating the last 12 h with each recent event removed (one batch) and taking the largest change in the future extreme.
+- **Planner** batches every candidate day (workout slot x snack option x drink cutoff, ~50-150 candidates) through one RK4 pass, ranks deterministically, then Monte Carlo on the top 4. The P(hypo) < 0.05 constraint applies to the window the decision controls (1 h before to 5 h after the workout); a 26-hour window with a full-day posterior spread is never under 5 %. Tomorrow's routine meals are the patient's 14-day median meals bolused with the *twin's own* titrated carb ratio (`calibrate_carb_ratio(fitted params)`), not the hidden true one.
+- **Change requests** rewrite the last full Monday-Sunday week of logged events (`morning_workouts` moves every workout to 07:00 and tops up to 3/week keeping durations; `cut_caffeine` also gives +0.5 h sleep; `drink_fridays_only` caps at 3 drinks; `fasting_16_8` drops meals before 12:00 and their boluses and pulls late dinners to 19:45). Baseline and changed week are one batched 7-day simulation (5-min RK4 without substeps); the medium layer loops the week for 30 days; the slow layer for 10 years. The diff table has all 22 State variables.
+- **Budget** baseline = the *current* lifestyle (last 4 weeks of alcohol, caffeine, unbolused meals). Each item receives one third of the 5 % risk headroom with the other two held at current levels, so the three allowances are jointly feasible. Marginal effects per unit come from one batched simulation of a typical day with the item added. An earlier zero-alcohol baseline gave 5 g of alcohol per week, which is not a useful answer.
+- **Replay** anchors two segments (06:00 and 18:00) on UKF-filtered hidden states from the real day, then simulates original vs modified events; a single 32-hour open-loop run drifted too far to overlay on the actual CGM. Days where the twin shows the alcohol effect most clearly: Sat 2025-08-09 (overnight nadir 69 -> 125 with alcohol at zero) and Fri 2025-07-18 (56 -> 71). Setting alcohol to zero also removes the drinks' carbs, so on some nights the counterfactual is lower, which is physically right for beer.
+- The API is one FastAPI app (`backend/api/app.py`) over a singleton `Twin` (`backend/api/twin.py`) that holds data, fit, posterior, residual model, drift, the cached UKF state and the session (accepted events, cards, escalations). `?stale=30` on `/permission` (or `/state`) overrides staleness for the acceptance test.
+
 ## Checkpoint status
 
 - [x] 1. Environment + contracts (stub simulator)
@@ -67,7 +79,7 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - [x] 3. Synthetic cohort
 - [x] 4. Inference
 - [x] 5. Medium + slow layers
-- [ ] 6. Decision + safety + API
+- [x] 6. Decision + safety + API
 - [ ] 7. Parsers
 - [ ] 8. Frontend
 - [ ] 9. Validation + docs
@@ -75,4 +87,4 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 
 ## Next
 
-Checkpoint 6: decision engine (permission, planner, change, budget, alerts, replay), safety gate/explain, FastAPI routes.
+Checkpoint 7: Gemini text + vision parsers (`gemini-2.5-flash-lite`) with the local fallback and the parser badge.

@@ -26,6 +26,11 @@ load_dotenv(REPO_ROOT / ".env")
 # The only LLM in the project. Change it here and nowhere else.
 GEMINI_MODEL = "gemini-2.5-flash-lite"
 
+# The demo clock: the synthetic data runs to 2025-08-31 00:00; the twin lives at this
+# moment and never sees anything after it. A Friday evening just after dinner, glucose
+# in the low 90s: the interesting regime for "two more beers" and a fasted run.
+DEMO_NOW = "2025-08-29T19:00"
+
 DT_MIN = 5  # fast-layer step, minutes
 FORECAST_HORIZON_MIN = 8 * 60
 MC_SAMPLES = 200

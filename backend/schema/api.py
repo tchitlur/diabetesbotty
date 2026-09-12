@@ -68,6 +68,7 @@ class PermissionCard(BaseModel):
     condition: str = ""
     proposed: Optional[EventModel] = None
     best_variant: Optional[EventModel] = None
+    plan_events: List[EventModel] = Field(default_factory=list)   # everything the best scenario adds (event + condition extras)
     variant_name: str = ""
     p_hypo: float = 0.0
     p_hyper: float = 0.0
@@ -160,7 +161,7 @@ class DriftStatus(BaseModel):
 class ReplayResponse(BaseModel):
     date: str
     times: List[str]
-    actual: List[float]
+    actual: List[Optional[float]]
     simulated: List[float]
     simulated_original: List[float]
     events: List[EventModel]
