@@ -45,13 +45,28 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - Basal `insulin` events with `insulin_kind=basal` are emitted once per day (total units over 1440 min) as the patient's pump setting; the fitted `basal_drift` multiplies whatever basal is active.
 - Cohort spread after tuning: mean glucose 93-203 mg/dL, TIR 0.34-0.83. The demo patient (p00) drinks on ~60 % of weekend nights by design so the replay tab has Fridays to show.
 
+## Inference decisions (checkpoint 4)
+
+- **Fitting windows, not whole days.** The fitter scores 6-hour windows (48 stratified across days 0-59 at 00/07/12/18 h, plus up to 8 windows anchored on drinks and 8 on workouts so `alcohol_gain` and `exercise_mult` are identifiable). Each window has a 3-hour warm-up from a steady-state guess with the preceding logged events replayed. All windows integrate as one batch; the finite-difference Jacobian for the 9 parameters is one batched pass of 10 x windows. A fit takes ~5 s (cohort mean 4.7 s, max 9 s) against the 60 s budget.
+- **Bootstrap.** 30 resamples of windows, each solved with the Gauss-Newton linearisation at the optimum (using the Jacobian already in hand). This is a linearised bootstrap; a full re-optimisation per resample would cost ~30x more for the same posterior width at this noise level. Posterior std has a floor of 5 % of the prior sd.
+- `tau_carb` is applied inside the ODE (the event input carries only the fat/fibre multiplier) so it is fittable and so Monte Carlo can sample it. Days 60-89 are never used for fitting (held out for RESULTS.md).
+- **UKF** is a self-contained Merwe-scaled implementation whose 43 sigma points are propagated through the batched RK4 in one call (filterpy's weights are reused, its per-point loop is not). 12 h of CGM filters in ~0.6 s; innovation RMSE ~9 mg/dL (CGM noise is 8).
+- **Residual model** is LightGBM (falls back to sklearn HistGradientBoosting if the import fails). Demo patient, held-out days: 60-min RMSE 15.3 (ODE) -> 14.6 (ODE + residual). The HRV feature is a proxy from logged sleep debt, alcohol and stress; a real HRV feed would replace one line.
+- **Drift** = daily RMSE of the combined 60-min forecast over the last 30 days, flagged after 3 consecutive rising days (3-day smoothed). The clinician page's parameter-drift chart comes from sliding 14-day refits every 7 days (8 iterations each).
+- Fitted artifacts (`fit.json`, `residual.pkl`, `drift.json`) for the demo patient are committed so a fresh clone starts in seconds; `run_demo.ps1` regenerates them only if missing.
+
+## Slow-layer decisions (checkpoint 5)
+
+- Each `dmg_*` accumulator is the cumulative hazard of that complication, so P(10 y) = 1 - exp(-dmg). The weekly increment is h0/52 x exp(beta x (A1c_eq - 7)) x (1 + weighted extra exposures); A1c_eq comes from the ADAG map of the week's mean glucose plus a variability term. Retinopathy beta is 0.714 so the A1c 9 -> 7 hazard ratio is exactly 0.24 (DCCT 76 %); the probability ratio comes out at 73.7 % because of the 1 - exp(-H) mapping. Other betas follow UKPDS 35. All in `params.yaml` with sources.
+- HbA1c ODE constant k = 4.072e-6 per (mg/dL x day) reproduces A1c 7.0 at a steady 154 mg/dL (closed form checked in tests).
+
 ## Checkpoint status
 
 - [x] 1. Environment + contracts (stub simulator)
 - [x] 2. Fast-layer physiology
 - [x] 3. Synthetic cohort
-- [ ] 4. Inference
-- [ ] 5. Medium + slow layers
+- [x] 4. Inference
+- [x] 5. Medium + slow layers
 - [ ] 6. Decision + safety + API
 - [ ] 7. Parsers
 - [ ] 8. Frontend
@@ -60,4 +75,4 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 
 ## Next
 
-Checkpoint 4: fitter (batched least squares + bootstrap), UKF state estimator, LightGBM residual model, drift monitor, parameter-recovery plot.
+Checkpoint 6: decision engine (permission, planner, change, budget, alerts, replay), safety gate/explain, FastAPI routes.

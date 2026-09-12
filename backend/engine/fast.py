@@ -28,7 +28,7 @@ HIDDEN_KEYS = ["Q2", "S1", "S2", "x1", "x2", "x3", "Agut", "Cgut", "ex", "anaer"
 
 UIDX: Dict[str, int] = {
     "carb": 0,      # g/min
-    "tau_g": 1,     # min (effective carb absorption time constant)
+    "tau_g": 1,     # multiplier on p["tau_carb"] (fat/fiber slow absorption)
     "bolus": 2,     # mU/min
     "basal": 3,     # mU/min (0 => use params basal)
     "alc": 4,       # g/min
@@ -98,7 +98,7 @@ def rhs(x: np.ndarray, u: np.ndarray, p: Dict) -> np.ndarray:
     dx3 = -p["ka3"] * x3 + p["ka3"] * p["SIE"] * si * I
 
     # ---------------- gut absorption (two compartments; fat/fiber scale tau via input)
-    tau_g = np.maximum(u[:, UIDX["tau_g"]], 5.0)
+    tau_g = np.maximum(u[:, UIDX["tau_g"]] * p["tau_carb"], 5.0)
     carb_in = u[:, UIDX["carb"]] * p["carb_ratio"]  # bioavailable g/min
     dD1 = carb_in - D1 / tau_g
     dD2 = D1 / tau_g - D2 / tau_g

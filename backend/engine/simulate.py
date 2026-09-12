@@ -74,10 +74,10 @@ def events_to_inputs(events: List[Event], t0: datetime, n_steps: int, dt_min: in
     minutes = np.arange(total_min)
     hours = ((t0.hour * 60 + t0.minute + minutes) // 60) % 24
     u[:, UIDX["tod"]] = np.minimum(hours // 8, 2)
-    u[:, UIDX["tau_g"]] = float(p["tau_carb"])
+    u[:, UIDX["tau_g"]] = 1.0   # multiplier on the (fitted) tau_carb; fat/fiber raise it
 
-    tau_default = float(p["tau_carb"])
-    meal_windows = []  # (start_min, carbs, tau)
+    tau_default = 1.0
+    meal_windows = []  # (start_min, carbs, tau multiplier)
 
     for e in events:
         start = (e.start - t0).total_seconds() / 60.0
@@ -85,7 +85,7 @@ def events_to_inputs(events: List[Event], t0: datetime, n_steps: int, dt_min: in
             continue
         if e.type == "meal":
             spread = max(e.duration_min, p["gut_meal_spread_min"])
-            tau = tau_default * (1.0 + p["gut_fat_tau_gain"] * e.fat_g / 50.0 + p["gut_fiber_tau_gain"] * e.fiber_g / 10.0)
+            tau = 1.0 + p["gut_fat_tau_gain"] * e.fat_g / 50.0 + p["gut_fiber_tau_gain"] * e.fiber_g / 10.0
             _add_rate(u, UIDX["carb"], start, spread, e.carbs_g, total_min)
             meal_windows.append((start, e.carbs_g, tau))
         elif e.type == "insulin":
