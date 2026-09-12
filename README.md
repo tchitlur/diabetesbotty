@@ -40,11 +40,11 @@ All data are synthetic. There is no real patient. Decision support only; nothing
 The clock is frozen at **Friday 2025-08-29 19:00** (just after dinner, glucose in the low 90s) inside 90 days of synthetic data. Everything on screen is as of that moment.
 
 1. **Login.** Tap **Alex** (the demo person) or **Add profile**: name, age, sex, weight, height, carb ratio, correction factor, target range. A new profile is matched to the closest virtual person in the 30-patient cohort and that person's model is fitted on the spot (about 10 s). Profiles are JSON files on the backend; no passwords, nothing in the browser.
-2. **Home.** One big number with a trend word, coloured by your target range; 3 hours of sensor and 3 hours of forecast. Under it the **Right now** tiles (carbs digesting, liver energy stores, ketones, hydration, energy, body composition, training load, how well insulin is working; alcohol and caffeine only when you have had some). Tap a tile for its next 3 hours. **Coming up**: next meal, next workout, the next risk, the best window for what you do most.
-3. **Chat: `can I have two more beers tonight?`** The line "Understood: 2 beers tonight at 19:00" appears under your message (JSON behind *details*), then the answer card: a headline (**Go ahead** / **Yes, with a snack** / **Better not tonight**), one or two plain sentences, and the next 6 hours as a shaded band with a marker for the beers. **Add to plan** commits the beers (and the snack if there is one) to the forecast and the Plan tab.
-4. **`fasted run tomorrow at 7 for 30 min`** (approved: "Go for it"), **`large coffee now`** ("Yes, with a snack": the coffee is harmless but you are already heading low), the **Workout** button with **Lift 45 min** and **`two shots of vodka at 11pm`** ("Better not tonight") show the other paths.
+2. **Home.** One big number with a trend word, coloured by your target range; 3 hours of sensor and 3 hours of forecast starting where the sensor left off. Under it the **Right now** tiles (carbs digesting, liver stores, ketones, energy, recovery, insulin working; alcohol and caffeine only when you have had some), all the same shape. Tap a tile for its next 3 hours. **Coming up**: next meal, next workout, the next risk, the best window for what you do most.
+3. **Chat: `Can I have pizza for dinner?`** The line "Understood: pizza tonight at 19:00" appears under your message (JSON behind *details*), then the answer card: a headline (**Enjoy it** / **Yes, with a snack** / **Better to wait**), one or two plain sentences, and the next 6 hours as a shaded band with a marker. **Add to plan** commits it (and the snack if there is one) to the forecast and the Plan tab. The **?** button next to the input lists examples and the commands in plain words.
+4. **`Run at 7 tomorrow?`** ("Go for it"), **`Large coffee now`** ("Yes, with a snack": the coffee is harmless but you are already heading low) and the **Workout** button with **Lift 45 min** (a condition plus a better time) show the other paths; drinks work the same way through the **Drink** button or free text.
 5. **Quick-log buttons** (chat panel and the header's **Log something**): Meal (describe it, type the carbs, or a photo when a Gemini key is set), Snack, Coffee, Drink (how many, beer / wine / spirit), Workout.
-6. **Plan tab.** One vertical timeline from now until bedtime (through tomorrow when the evening is nearly over): green / amber / red bands for exercising, dashed predicted meals, planned workouts. **Plan my day** places the workout and a snack if one is needed; tap the workout, then a time, to move it and the bands recompute; tap an amber or red band for the one-sentence reason ("insulin from lunch still active").
+6. **Plan tab.** Your day at a glance: one headline ("Eat by 22:40, a light workout with a snack first would be safest, watch for a low around 22:55."), one horizontal axis from wake time to bedtime with a glucose sparkline, icons for meals, snacks, coffee, workouts, insulin and sleep (solid = logged, dashed = your usual, outlined = suggested), and two thin bands: when exercise is safe / needs care / better avoided, and where glucose is or will be in range. **Suggest my day** places a workout and a snack; tap a suggestion to add it, drag the workout to move it and the bands recompute; hover anything for a one-line reason ("insulin from lunch still active").
 7. **`/plan tomorrow`** and **`/change morning_workouts`** (also `cut_caffeine`, `drink_fridays_only`, `fasting_16_8`) answer as cards too; `/change` shows the 30-day comparison for time in range, predicted lows per week, average energy and how well insulin works. **`/why`** repeats the reason for the last answer in plain words.
 8. **Details tab.** The numbers behind the tiles, the 8-hour chances of a low or a high, what is still in your body (insulin, caffeine, alcohol decay), sensor data quality, whether the model is still in sync with your sensor, your settings. **I'm nerdy** at the bottom opens Replay (re-run a past day with the sliders; on Sat 2025-08-09 set Alcohol to 0 and the overnight low rises from 69 to about 125 mg/dL) and Trends.
 
@@ -52,13 +52,13 @@ Remove `.env` (or set an invalid key) and text is read by the built-in reader in
 
 ## Screenshots
 
-From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v2/` after a run). A curated set is committed under `docs/screens/`:
+From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v3/` after a run). A curated set is committed under `docs/screens/`:
 
 | Screen | File |
 |---|---|
 | Home: glucose, tiles, coming up | `docs/screens/home.png` |
-| Chat answer card (beers) | `docs/screens/chat-beers.png` |
-| Plan: bands and the planned workout | `docs/screens/plan.png` |
+| Chat answer card (pizza) | `docs/screens/chat-pizza.png` |
+| Plan: the day on one axis with suggestions | `docs/screens/plan.png` |
 | Details | `docs/screens/details.png` |
 | Login and add profile | `docs/screens/login.png`, `docs/screens/add-profile.png` |
 

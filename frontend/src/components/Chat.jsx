@@ -3,8 +3,10 @@ import { api, fmtTime, fmtRel, eventPhrase, shiftIso } from '../api.js'
 import AnswerCard from './AnswerCard.jsx'
 import ChangeCard from './ChangeCard.jsx'
 import QuickLog from './QuickLog.jsx'
+import HelpPopover, { CHANGES } from './HelpPopover.jsx'
 
-const HELP = 'Ask before you eat, drink or move: "can I have two more beers tonight?", "fasted run tomorrow at 7 for 30 min", "large coffee now". Or use the buttons below. Commands: /plan tomorrow, /change morning_workouts (cut_caffeine, drink_fridays_only, fasting_16_8), /why.'
+const PLACEHOLDER = 'Ask before you eat, drink, or move…'
+const changeLabel = (name) => (CHANGES.find(([n]) => n === name) || [name, name])[1]
 
 function Understood({ event, nowIso, parsed }) {
   return (
@@ -16,7 +18,8 @@ function Understood({ event, nowIso, parsed }) {
 }
 
 const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twinNow }, ref) {
-  const [log, setLog] = useState([{ id: 0, role: 'bot', node: <span>{HELP}</span> }])
+  const [log, setLog] = useState([])
+  const [help, setHelp] = useState(false)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
   const endRef = useRef(null)
@@ -66,7 +69,7 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
         try {
           const r = await api.change(name)
           replace(id, <ChangeCard resp={r} />)
-        } catch (e) { replace(id, <span className="err">{String(e.message)}. Options: morning_workouts, cut_caffeine, drink_fridays_only, fasting_16_8.</span>) }
+        } catch (e) { replace(id, <span className="err">{String(e.message)}. Options: {CHANGES.map(([n, l]) => `${l} (/change ${n})`).join(', ')}.</span>) }
       } else if (t.startsWith('/plan')) {
         const m = t.match(/(\d+)\s*drink/); const drinks = m ? +m[1] : 0
         const id = push('bot', <span className="status"><span className="spinner" />Trying every workout time tomorrow…</span>)
@@ -81,7 +84,7 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
       } else if (t.startsWith('/why')) {
         await runWhy()
       } else if (t.startsWith('/help')) {
-        push('bot', <span>{HELP}</span>)
+        setHelp(true)
       } else {
         const id = push('bot', <span className="status"><span className="spinner" />Reading that…</span>)
         try {
@@ -112,21 +115,23 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
   useImperativeHandle(ref, () => ({
     quick: onQuick,
     ask: (t) => submit(t),
-    reset: () => { setLog([{ id: 0, role: 'bot', node: <span>{HELP}</span> }]); setText('') },
+    reset: () => { setLog([]); setText('') },
   }))
 
   return (
     <div className="chat">
       <div className="log">
+        {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "Can I have pizza for dinner?" or tap a button below.</div> : null}
         {log.map((m) => (m.role === 'user' ? <div key={m.id} className="msg user">{m.node}</div> : <div key={m.id} className={m.node?.props?.className === 'msg plain' ? '' : 'msg bot'}>{m.node}</div>))}
         <div ref={endRef} />
       </div>
       <QuickLog onAction={onQuick} disabled={busy} parser={parser} />
       <form onSubmit={(e) => { e.preventDefault(); submit() }}>
-        <input type="text" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} placeholder="can I have two more beers tonight?" disabled={busy} aria-label="chat message" />
+        <input type="text" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} placeholder={PLACEHOLDER} disabled={busy} aria-label="chat message" />
+        <button type="button" className="icon" aria-label="help" title="Examples and commands" onClick={() => setHelp((x) => !x)}>?</button>
         <button type="submit" className="primary" disabled={busy}>Ask</button>
+        {help ? <HelpPopover onPick={(x) => { setHelp(false); setText(x) }} onClose={() => setHelp(false)} /> : null}
       </form>
-      <div className="hint">/plan tomorrow · /change morning_workouts · /why · /help</div>
     </div>
   )
 })

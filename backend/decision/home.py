@@ -27,7 +27,7 @@ from backend.decision.alerts import compute_alerts
 from backend.decision.plain import likelihood
 
 DT = 5
-TILE_ORDER = ["carbs", "liver", "ketones", "hydration", "energy", "body", "training", "insulin", "alcohol", "caffeine"]
+TILE_ORDER = ["carbs", "liver", "ketones", "energy", "recovery", "insulin", "alcohol", "caffeine"]
 
 
 def _iso(d: datetime) -> str:
@@ -59,12 +59,37 @@ def trend(twin) -> Dict[str, Any]:
     return {"word": word, "arrow": arrow, "slope_mgdl_per_min": round(slope, 2)}
 
 
-def history(twin, hours: float = 3.0) -> Dict[str, List]:
+def history(twin, hours: float = 3.0, max_gap_min: int = 20) -> Dict[str, Any]:
+    """The display series for the chart: one array on the 5-minute grid from now-hours to now.
+    `raw` keeps the sensor's dropouts and flagged points as nulls; `display` fills gaps up to
+    `max_gap_min` by linear interpolation (display only). Longer gaps stay null and are listed."""
     t = twin.pt.cgm.times
     m = (t > pd.Timestamp(twin.now - timedelta(hours=hours))) & (t <= pd.Timestamp(twin.now))
     g, v = twin.pt.cgm.glucose[m], twin.pt.cgm.valid[m]
+    raw = np.where(v & ~np.isnan(g), g, np.nan).astype(float)
+    disp = raw.copy()
+    n = len(raw)
+    i = 0
+    gaps = []
+    while i < n:
+        if np.isnan(disp[i]):
+            j = i
+            while j < n and np.isnan(disp[j]):
+                j += 1
+            length = (j - i) * 5
+            if i > 0 and j < n and length <= max_gap_min:
+                disp[i:j] = np.linspace(disp[i - 1], disp[j], j - i + 2)[1:-1]
+            elif i > 0 and j == n and length <= max_gap_min:
+                disp[i:j] = disp[i - 1]           # trailing short gap: hold the last reading up to now
+            else:
+                gaps.append({"start": t[m][i].isoformat(timespec="minutes"), "end": (t[m][j - 1] if j - 1 < n else t[m][-1]).isoformat(timespec="minutes"), "minutes": length})
+            i = j
+        else:
+            i += 1
     return {"times": [x.isoformat(timespec="minutes") for x in t[m]],
-            "glucose": [None if (not ok or np.isnan(x)) else round(float(x), 1) for x, ok in zip(g, v)]}
+            "raw": [None if np.isnan(x) else round(float(x), 1) for x in raw],
+            "display": [None if np.isnan(x) else round(float(x), 1) for x in disp],
+            "gaps": gaps}
 
 
 # ------------------------------------------------------------------ tiles
@@ -76,7 +101,14 @@ def _status(v: float, cuts: List[Tuple[float, str, str]], last: Tuple[str, str])
     return last
 
 
+def recovery_score(load: float, debt: float) -> float:
+    """0-100: 100 when rested with a normal training load; sleep debt and a heavy load pull it down."""
+    return float(np.clip(100.0 - 10.0 * debt - 1.5 * max(load - 12.0, 0.0), 0.0, 100.0))
+
+
 def tiles(twin) -> List[Dict[str, Any]]:
+    """The "right now" tiles. Every tile has the same four rows: label, value + unit, fill level,
+    status word. Hydration and body composition are computed elsewhere but not shown here."""
     s, _ = twin.state_now()
     tr = twin.deterministic(horizon_min=180)
     times = tr.times()
@@ -90,104 +122,63 @@ def tiles(twin) -> List[Dict[str, Any]]:
         return {"times": times, "values": [round(float(x), digits) for x in arr]}
 
     def rate(arr: np.ndarray, scale: float) -> float:
-        # change over the next hour relative to the tile's full scale
         k = min(12, len(arr) - 1)
         return abs(float(arr[k] - arr[0])) / max(scale, 1e-9)
 
+    def tile(key, icon, label, value, unit, level, status, tone, forecast, note, score):
+        return {"key": key, "icon": icon, "label": label, "value": value, "unit": unit, "value_text": f"{value} {unit}".strip(),
+                "level": round(float(np.clip(level, 0, 1)), 3), "status": status, "tone": tone, "forecast": forecast, "note": note, "score": round(float(score), 3)}
+
     out: List[Dict[str, Any]] = []
-    # carbs still digesting
     carbs = ser["gut_carbs_1"] + ser["gut_carbs_2"]
     v = float(carbs[0])
     word, tone = _status(v, [(3, "none left", "good"), (15, "a little", "good"), (40, "some", "good")], ("a lot", "warn"))
-    out.append({"key": "carbs", "icon": "🍞", "label": "Carbs digesting", "value": round(v), "unit": "g", "value_text": f"{v:.0f} g",
-                "level": min(v / 60.0, 1.0), "status": word, "tone": tone, "visual": "bar", "forecast": fc(carbs, 0),
-                "note": "Carbs from recent food that are still being absorbed. They push glucose up over the next hour or two.",
-                "score": max(min(v / 60.0, 1.0) * 0.8, rate(carbs, 60.0) * 2)})
-    # liver energy stores
+    out.append(tile("carbs", "🍞", "Carbs digesting", round(v), "g", v / 60.0, word, tone, fc(carbs, 0),
+                    "Carbs from recent food still being absorbed. They push glucose up over the next hour or two.",
+                    max(min(v / 60.0, 1.0) * 0.8, rate(carbs, 60.0) * 2)))
     lmax = float(p.get("liver_L_max", 120.0))
     v = float(ser["liver_glycogen"][0])
     lvl = v / lmax
     word, tone = _status(lvl, [(0.3, "running low", "bad"), (0.6, "half full", "warn")], ("well stocked", "good"))
-    out.append({"key": "liver", "icon": "🫀", "label": "Liver energy stores", "value": round(v), "unit": "g", "value_text": f"{v:.0f} g", "sub": f"of {lmax:.0f} g",
-                "level": lvl, "status": word, "tone": tone, "visual": "level", "forecast": fc(ser["liver_glycogen"], 0),
-                "note": "Sugar your liver keeps in reserve. It releases it between meals and overnight; alcohol and long gaps run it down.",
-                "score": max(max(0.0, 0.6 - lvl) * 2, rate(ser["liver_glycogen"], lmax) * 2)})
-    # ketones
+    out.append(tile("liver", "🫀", "Liver stores", round(v), "g", lvl, word, tone, fc(ser["liver_glycogen"], 0),
+                    f"Sugar your liver keeps in reserve (up to about {lmax:.0f} g). It releases it between meals and overnight; alcohol and long gaps run it down.",
+                    max(max(0.0, 0.6 - lvl) * 2, rate(ser["liver_glycogen"], lmax) * 2)))
     v = float(ser["ketones"][0])
     word, tone = _status(v, [(0.6, "normal", "good"), (1.5, "raised", "warn")], ("high", "bad"))
-    out.append({"key": "ketones", "icon": "🧪", "label": "Ketones", "value": round(v, 2), "unit": "mmol/L", "value_text": f"{v:.1f}", "sub": "mmol/L",
-                "level": min(v / 1.5, 1.0), "status": word, "tone": tone, "visual": "gauge", "forecast": fc(ser["ketones"], 2),
-                "note": "Made when the body burns fat instead of sugar. Above 0.6 with high glucose means you need more insulin.",
-                "score": max(min(v / 1.5, 1.0), rate(ser["ketones"], 1.5) * 2)})
-    # hydration
-    v = float(ser["hydration"][0])
-    word, tone = _status(v, [(0.6, "dehydrated", "bad"), (0.8, "drink some water", "warn")], ("well hydrated", "good"))
-    out.append({"key": "hydration", "icon": "💧", "label": "Hydration", "value": round(100 * v), "unit": "%", "value_text": f"{100 * v:.0f}%",
-                "level": v, "status": word, "tone": tone, "visual": "level", "forecast": fc(100 * ser["hydration"], 0),
-                "note": "How much water your body has on board. High glucose and alcohol both dry you out.",
-                "score": max(max(0.0, 0.85 - v) * 2, rate(ser["hydration"], 1.0) * 2)})
-    # energy / readiness
+    out.append(tile("ketones", "🧪", "Ketones", round(v, 1), "mmol/L", v / 1.5, word, tone, fc(ser["ketones"], 2),
+                    "Made when the body burns fat instead of sugar. Above 0.6 with high glucose means you need more insulin.",
+                    max(min(v / 1.5, 1.0), rate(ser["ketones"], 1.5) * 2)))
     v = float(ser["energy_score"][0])
     word, tone = _status(v, [(45, "low", "bad"), (70, "okay", "warn")], ("good", "good"))
-    out.append({"key": "energy", "icon": "⚡", "label": "Energy & readiness", "value": round(v), "unit": "/100", "value_text": f"{v:.0f}", "sub": "out of 100",
-                "level": v / 100.0, "status": word, "tone": tone, "visual": "gauge", "forecast": fc(ser["energy_score"], 0),
-                "note": "How ready you are right now: steady glucose, enough sleep, not too much caffeine, well hydrated.",
-                "score": max(max(0.0, 0.7 - v / 100.0) * 1.5, rate(ser["energy_score"], 100.0) * 2)})
-    # body composition
-    fat, lean = float(s.fat_mass), float(s.lean_mass)
-    frac = fat / max(fat + lean, 1e-6)
-    daily = list(twin._daily.values())
-    d30 = (fat - float(daily[-31].fat_mass)) if len(daily) > 31 else 0.0
-    word, tone = ("stable", "good") if abs(d30) < 0.3 else ("trimming", "good") if d30 < 0 else ("gaining", "warn")
-    out.append({"key": "body", "icon": "🧍", "label": "Body composition", "value": round(100 * frac, 1), "unit": "% fat", "value_text": f"{100 * frac:.0f}% fat", "sub": f"{fat + lean:.0f} kg body weight",
-                "level": min(frac / 0.4, 1.0), "status": word, "tone": tone, "visual": "bar",
-                "forecast": {"times": times, "values": [round(100 * frac, 1)] * len(times)},
-                "note": f"Fat {fat:.1f} kg, muscle and the rest {lean:.1f} kg. Changes slowly: {d30:+.1f} kg of fat over the last 30 days.",
-                "score": min(abs(d30) / 2.0, 1.0) * 0.5})
-    # training load & recovery
+    out.append(tile("energy", "⚡", "Energy", round(v), "/ 100", v / 100.0, word, tone, fc(ser["energy_score"], 0),
+                    "How ready you are right now: steady glucose, enough sleep, not too much caffeine, well hydrated.",
+                    max(max(0.0, 0.7 - v / 100.0) * 1.5, rate(ser["energy_score"], 100.0) * 2)))
     load, debt = float(s.training_load), float(s.sleep_debt)
-    if debt > 3:
-        word, tone = "needs rest", "warn"
-    elif load > 25:
-        word, tone = "heavy week", "warn"
-    elif load < 5:
-        word, tone = "light week", "good"
-    else:
-        word, tone = "recovered", "good"
-    out.append({"key": "training", "icon": "🏃", "label": "Training load & recovery", "value": round(load), "unit": "", "value_text": f"load {load:.0f}", "sub": f"sleep debt {debt:.1f} h",
-                "level": min(load / 40.0, 1.0), "status": word, "tone": tone, "visual": "bar",
-                "forecast": {"times": times, "values": [round(load, 1)] * len(times)},
-                "note": "Recent exercise adds to the load; sleep pays it back. A heavy week or a short night makes insulin work harder.",
-                "score": max(debt / 6.0, abs(load - 12.0) / 30.0)})
-    # how well insulin is working today
+    rec = recovery_score(load, debt)
+    word, tone = ("recovered", "good") if rec >= 70 else ("tired", "warn") if rec >= 45 else ("run down", "bad")
+    out.append(tile("recovery", "🛌", "Recovery", round(rec), "/ 100", rec / 100.0, word, tone,
+                    {"times": times, "values": [round(rec)] * len(times)},
+                    f"Sleep pays back what training takes out. Sleep debt {debt:.1f} h, training load {load:.0f}.",
+                    max(0.0, 0.7 - rec / 100.0) * 1.5))
     v = float(s.insulin_sensitivity) * (1 - p.get("sleep_debt_coef", 0.2) * min(debt, 3.0) / 2.5)
-    word, tone = ("working less well", "warn") if v < 0.9 else ("better than usual", "good") if v > 1.1 else ("as usual", "good")
-    out.append({"key": "insulin", "icon": "💉", "label": "How well insulin is working", "value": round(100 * v), "unit": "% of usual", "value_text": f"{100 * v:.0f}%", "sub": "of your usual",
-                "level": float(np.clip((v - 0.6) / 0.8, 0, 1)), "status": word, "tone": tone, "visual": "gauge",
-                "forecast": {"times": times, "values": [round(100 * v)] * len(times)},
-                "note": "Compared with your normal. Short sleep, a hard week and illness make insulin work less well; exercise makes it work better.",
-                "score": abs(v - 1.0) * 3})
-    # alcohol in system (only when relevant)
+    word, tone = ("less than usual", "warn") if v < 0.9 else ("better than usual", "good") if v > 1.1 else ("as usual", "good")
+    out.append(tile("insulin", "💉", "Insulin working", round(100 * v), "% of usual", (v - 0.6) / 0.8, word, tone,
+                    {"times": times, "values": [round(100 * v)] * len(times)},
+                    "Compared with your normal. Short sleep, a hard week and illness make insulin work less well; exercise makes it work better.",
+                    abs(v - 1.0) * 3))
     if alcohol_recent:
         v = float(ser["blood_alcohol"][0])
         word, tone = _status(v, [(0.01, "almost gone", "good"), (0.05, "clearing", "warn")], ("in your blood", "bad"))
         gone = next((times[i] for i, x in enumerate(ser["blood_alcohol"]) if x < 0.005), None)
-        out.append({"key": "alcohol", "icon": "🍺", "label": "Alcohol in system", "value": round(v, 3), "unit": "% BAC", "value_text": f"{v:.3f}%", "sub": "blood alcohol",
-                    "level": min(v / 0.10, 1.0), "status": word, "tone": tone, "visual": "level", "forecast": fc(ser["blood_alcohol"], 3),
-                    "note": "While your liver is busy clearing alcohol it releases less sugar, so a low can come hours later, often overnight." + (f" Gone by about {gone[11:16]}." if gone else ""),
-                    "score": min(v / 0.10, 1.0) * 2 + 0.3})
-    # caffeine in system (only when relevant)
+        out.append(tile("alcohol", "🍺", "Alcohol", round(v, 3), "% BAC", v / 0.10, word, tone, fc(ser["blood_alcohol"], 3),
+                        "While your liver clears alcohol it releases less sugar, so a low can come hours later, often overnight." + (f" Gone by about {gone[11:16]}." if gone else ""),
+                        min(v / 0.10, 1.0) * 2 + 0.3))
     if caffeine_recent:
         v = float(ser["caffeine"][0])
         word, tone = _status(v, [(25, "almost gone", "good"), (100, "some left", "good")], ("plenty left", "warn"))
-        out.append({"key": "caffeine", "icon": "☕", "label": "Caffeine in system", "value": round(v), "unit": "mg", "value_text": f"{v:.0f} mg",
-                    "level": min(v / 200.0, 1.0), "status": word, "tone": tone, "visual": "level", "forecast": fc(ser["caffeine"], 0),
-                    "note": "Caffeine halves about every 5 hours. It makes insulin work a little less well and can spoil sleep.",
-                    "score": min(v / 200.0, 1.0) + 0.2})
-    for t in out:
-        t["level"] = round(float(np.clip(t["level"], 0, 1)), 3)
-        t["score"] = round(float(t["score"]), 3)
-    # dynamic order: anything far from normal or moving fast first, then the fixed order
+        out.append(tile("caffeine", "☕", "Caffeine", round(v), "mg", v / 200.0, word, tone, fc(ser["caffeine"], 0),
+                        "Caffeine halves about every 5 hours. It makes insulin work a little less well and can spoil sleep.",
+                        min(v / 200.0, 1.0) + 0.2))
     hot = sorted([t for t in out if t["score"] >= 0.35], key=lambda t: -t["score"])
     rest = sorted([t for t in out if t["score"] < 0.35], key=lambda t: TILE_ORDER.index(t["key"]))
     return hot + rest
@@ -393,73 +384,169 @@ def bedtime(twin) -> datetime:
     return bt
 
 
-def timeline(twin, workout: Optional[Dict[str, Any]] = None, snack: Optional[str] = None) -> Dict[str, Any]:
+def wake_time(twin) -> datetime:
+    """This morning's wake-up: the last logged sleep that started before today's noon, plus its hours; else 07:00."""
     now = twin.now
-    bt = bedtime(twin)
-    end = bt if (bt - now) >= timedelta(hours=6) else bt + timedelta(days=1)
-    routine = [e for e in routine_future(twin) if e.start <= end]
-    accepted = [e for e in twin.future_events() if e.start <= end]
-    ctx_base = twin.context_events() + routine
+    noon = now.replace(hour=12, minute=0)
+    sleeps = [e for e in twin.pt.events if e.type == "sleep" and e.start < noon and e.start >= now - timedelta(hours=30)]
+    if sleeps:
+        e = sleeps[-1]
+        w = e.start + timedelta(hours=float(e.sleep_hours or 7.5))
+        if now.replace(hour=3, minute=0) <= w <= noon:
+            return w.replace(minute=(w.minute // 5) * 5)
+    return now.replace(hour=7, minute=0)
+
+
+def _band_color_glucose(seg: np.ndarray) -> Tuple[str, str]:
+    lo, hi = float(np.nanmin(seg)), float(np.nanmax(seg))
+    if lo < 70:
+        return "red", "a low here"
+    if hi > 250:
+        return "red", "well above range here"
+    if lo < 85:
+        return "amber", "close to a low here"
+    if hi > 180:
+        return "amber", "above range here"
+    return "green", "in range"
+
+
+def _kind(e: Event) -> Optional[str]:
+    if e.type == "meal":
+        return "snack" if e.carbs_g < 25 else "meal"
+    if e.type == "insulin":
+        return None if e.insulin_kind == "basal" else "insulin"
+    return {"exercise": "workout", "alcohol": "drink", "caffeine": "coffee"}.get(e.type)
+
+
+def _label(e: Event) -> str:
+    return (e.label or e.type).replace("bolus for ", "insulin for ")
+
+
+def timeline(twin, workout: Optional[Dict[str, Any]] = None, snacks: Optional[List[str]] = None) -> Dict[str, Any]:
+    """The Plan tab: today from wake time to bedtime on one horizontal axis. Past = what happened
+    (logged events, sensor trace); future = what is predicted and suggested (bands, usual meals,
+    the suggested workout and snacks)."""
+    now = twin.now
+    wake, bt = wake_time(twin), bedtime(twin)
+    routine = [e for e in routine_future(twin) if e.start <= bt]
+    accepted = [e for e in twin.future_events() if e.start <= bt]
     w_ev = None
     if workout and workout.get("start"):
         w_ev = Event(type="exercise", start_time=workout["start"], duration_min=float(workout.get("duration_min", 30)),
                      exercise_kind=workout.get("kind", "aerobic"), intensity=float(workout.get("intensity", 0.6)), uncertainty=0.15,
-                     source="tap", label=workout.get("label") or f"{int(workout.get('duration_min', 30))} min workout")
-    s_ev = Event(type="meal", start_time=snack, carbs_g=15, duration_min=5, uncertainty=0.1, source="tap", label="small snack (15 g)") if snack else None
-    extras = [e for e in (w_ev, s_ev) if e is not None]
-    starts = _slots(twin, now, end - timedelta(minutes=30))
-    # each slot is judged with everything else in place; the slot holding the planned workout is judged with that workout alone
+                     source="tap", label=workout.get("label") or "30 min workout")
+    s_evs = [Event(type="meal", start_time=t, carbs_g=15, duration_min=5, uncertainty=0.1, source="tap", label="small snack") for t in (snacks or []) if t]
+    suggestions = ([w_ev] if w_ev else []) + s_evs
+    ctx_base = twin.context_events() + routine
+
+    # ---- sparkline: sensor trace since wake (display series), then the predicted path to bedtime
+    past = history(twin, hours=max((now - wake).total_seconds() / 3600.0, 0.5))
+    fut = twin.deterministic(extra=accepted + suggestions, horizon_min=max(int((bt - now).total_seconds() // 60), 30))
+    fut_times, fut_g = fut.times(), [round(float(x), 1) for x in fut.series["glucose"]]
+    spark_t = past["times"] + fut_times[1:]
+    spark_v = past["display"] + fut_g[1:]
+    spark_kind = ["actual"] * len(past["times"]) + ["forecast"] * (len(fut_times) - 1)
+
+    # ---- glucose band (30-min slots over the whole window)
+    g_by_t = {t: v for t, v in zip(spark_t, spark_v)}
+    slot = wake.replace(minute=(wake.minute // 30) * 30)
+    glucose_band = []
+    while slot < bt:
+        seg = np.array([np.nan if g_by_t.get(_iso(slot + timedelta(minutes=k * 5))) is None else g_by_t.get(_iso(slot + timedelta(minutes=k * 5))) for k in range(7)], dtype=float)
+        if np.all(np.isnan(seg)):
+            color, reason = "none", "no sensor data"
+        else:
+            color, reason = _band_color_glucose(seg)
+        glucose_band.append({"start": _iso(slot), "end": _iso(slot + timedelta(minutes=30)), "color": color, "reason": reason, "past": slot < now})
+        slot += timedelta(minutes=30)
+
+    # ---- exercise band (future slots only; each judged with everything else in place)
+    starts = _slots(twin, now, bt - timedelta(minutes=30))
     per = []
     for st in starts:
-        base = list(ctx_base) + list(accepted) + ([s_ev] if s_ev else [])
+        base = list(ctx_base) + list(accepted) + list(s_evs)
         if w_ev is not None and abs((st - w_ev.start).total_seconds()) >= 30 * 60:
             base.append(w_ev)
         per.append(base)
-    scan = scan_starts(twin, "exercise", starts, ctx_base + accepted + extras, per_start_ctx=per)
-    slots = [{"start": r["start"], "end": _iso(datetime.fromisoformat(r["start"]) + timedelta(minutes=30)), "color": r["color"], "reason": r["reason"]} for r in scan]
-    items: List[Dict[str, Any]] = []
-    for e in routine:
-        if e.type == "meal":
-            items.append({"time": e.start_time, "kind": "meal", "label": (e.label or "meal").replace("usual ", "usual "), "predicted": True, "movable": False, "carbs_g": round(e.carbs_g)})
+    scan = scan_starts(twin, "exercise", starts, ctx_base + accepted + suggestions, per_start_ctx=per) if starts else []
+    exercise_band = [{"start": r["start"], "end": _iso(datetime.fromisoformat(r["start"]) + timedelta(minutes=30)), "color": r["color"], "reason": r["reason"] or "a good time to exercise"} for r in scan]
+
+    # ---- items on the axis
+    items: List[Dict[str, Any]] = [{"time": _iso(wake), "kind": "wake", "label": "woke up", "state": "logged", "reason": "when you got up"}]
+    for e in twin.pt.events:
+        if wake <= e.start <= now:
+            k = _kind(e)
+            if k:
+                items.append({"time": e.start_time, "kind": k, "label": _label(e), "state": "logged", "reason": _label(e) + " (logged)"})
     for e in accepted:
-        kind = {"meal": "meal", "exercise": "workout", "alcohol": "drink", "caffeine": "coffee"}.get(e.type)
-        if kind:
-            items.append({"time": e.start_time, "kind": kind, "label": e.label or e.type, "predicted": False, "movable": False})
-    if w_ev is not None:
-        items.append({"time": w_ev.start_time, "kind": "workout", "label": w_ev.label, "predicted": False, "movable": True, "duration_min": w_ev.duration_min})
-    if s_ev is not None:
-        items.append({"time": s_ev.start_time, "kind": "snack", "label": s_ev.label, "predicted": False, "movable": False})
-    items.append({"time": _iso(bt), "kind": "sleep", "label": "bedtime", "predicted": True, "movable": False})
-    if end > bt:
-        items.append({"time": _iso(bt + timedelta(days=1)), "kind": "sleep", "label": "bedtime", "predicted": True, "movable": False})
+        k = _kind(e)
+        if k:
+            items.append({"time": e.start_time, "kind": k, "label": _label(e), "state": "logged", "reason": _label(e) + " (added to your plan)"})
+    for e in routine:
+        if e.type == "meal" and e.start > now:
+            items.append({"time": e.start_time, "kind": "meal", "label": _label(e), "state": "predicted", "reason": "your usual " + (e.label or "meal").replace("usual ", "") + " time"})
+    for e in suggestions:
+        items.append({"time": e.start_time, "kind": _kind(e), "label": e.label, "state": "suggested", "event": e.to_dict(),
+                      "reason": "suggested workout: tap to accept, drag to move" if e.type == "exercise" else "suggested snack before the workout: tap to accept"})
+    items.append({"time": _iso(bt), "kind": "sleep", "label": "bedtime", "state": "predicted", "reason": "your usual bedtime"})
     items.sort(key=lambda x: x["time"])
-    days = [{"date": now.date().isoformat(), "label": "Tonight" if now.hour >= 17 else "Today"}]
-    if end.date() > now.date():
-        days.append({"date": (now + timedelta(days=1)).date().isoformat(), "label": "Tomorrow"})
-    return {"start": _iso(now), "end": _iso(end), "bedtime": _iso(bt), "days": days, "slots": slots, "items": items,
+
+    # ---- headline
+    mc = twin.cached("forecast:480", lambda: twin.forecast(horizon_min=480))
+    med = np.asarray(mc.median)
+    low_i = next((i for i, g in enumerate(med) if g < 80), None)
+    parts = []
+    if low_i is not None and now + timedelta(minutes=5 * low_i) <= bt + timedelta(hours=2):
+        t_eat = max(now + timedelta(minutes=15), now + timedelta(minutes=5 * low_i) - timedelta(minutes=45))
+        parts.append("eat by " + _hhmm(t_eat))
+    else:
+        nm = next((e for e in routine if e.type == "meal" and e.start > now), None)
+        parts.append(("next meal around " + _hhmm(nm.start)) if nm else "no more meals needed today")
+    greens = _runs(scan, "green") if scan else []
+    planned_ex = next((e for e in accepted if e.type == "exercise"), None)
+    if planned_ex is not None:
+        parts.append("your workout at " + _hhmm(planned_ex.start))
+    elif w_ev is not None:
+        parts.append("suggested workout at " + _hhmm(w_ev.start) + (" after a small snack" if s_evs else ""))
+    elif greens:
+        a, b, _ = max(greens, key=lambda r: r[2])
+        parts.append("best workout window " + _hhmm(datetime.fromisoformat(a)) + "–" + _hhmm(datetime.fromisoformat(b)))
+    elif any(r["color"] == "amber" for r in scan):
+        parts.append("a light workout with a snack first would be safest")
+    else:
+        parts.append("no good workout window left today")
+    alerts = twin.cached("alerts", lambda: compute_alerts(twin))
+    if alerts:
+        a0 = alerts[0]
+        what = "low" if a0.kind == "hypo" else "high" if a0.kind == "hyper" else "ketone problem"
+        parts.append("watch for a " + what + " around " + a0.window_start[11:16])
+    else:
+        parts.append("no lows or highs expected before bed")
+    headline = ", ".join(parts) + "."
+    headline = headline[0].upper() + headline[1:]
+
+    return {"start": _iso(wake), "end": _iso(bt), "now": _iso(now), "headline": headline,
+            "sparkline": {"times": spark_t, "values": spark_v, "kind": spark_kind, "gaps": past["gaps"]},
+            "glucose_band": glucose_band, "exercise_band": exercise_band, "items": items,
             "workout": ({"start": w_ev.start_time, "duration_min": w_ev.duration_min, "kind": w_ev.exercise_kind, "label": w_ev.label} if w_ev else None),
-            "snack": snack}
+            "snacks": [e.start_time for e in s_evs]}
 
 
 def auto_plan(twin) -> Dict[str, Any]:
-    """'Plan my day': place the workout (and a snack if the planner wants one) automatically."""
-    from backend.decision.planner import plan_day
+    """'Suggest my day': place a workout in what is left of today and a snack before it when needed."""
     now = twin.now
     bt = bedtime(twin)
-    end = bt if (bt - now) >= timedelta(hours=6) else bt + timedelta(days=1)
-    if end.date() > now.date():
-        plan = twin.cached("plan:tomorrow:0", lambda: plan_day(twin, day=None, drinks=0))
-        w = {"start": plan.workout_start, "duration_min": 30, "kind": "aerobic", "label": "30 min workout"} if plan.workout_start else None
-        return {"workout": w, "snack": plan.snack_time}
+    if (bt - now) < timedelta(hours=1, minutes=30):
+        return {"workout": None, "snacks": []}
     ctx = twin.context_events() + routine_future(twin)
-    scan = scan_starts(twin, "exercise", _slots(twin, now, end - timedelta(hours=1)), ctx)
+    scan = scan_starts(twin, "exercise", _slots(twin, now, bt - timedelta(hours=1)), ctx)
     greens = [r for r in scan if r["color"] == "green"]
     if greens:
         best = max(greens, key=lambda r: r["min_glucose"])
-        return {"workout": {"start": best["start"], "duration_min": 30, "kind": "aerobic", "label": "30 min workout"}, "snack": None}
+        return {"workout": {"start": best["start"], "duration_min": 30, "kind": "aerobic", "label": "30 min workout"}, "snacks": []}
     ambers = [r for r in scan if r["color"] == "amber"]
     if ambers:
         best = max(ambers, key=lambda r: r["min_glucose"])
         return {"workout": {"start": best["start"], "duration_min": 30, "kind": "aerobic", "label": "30 min workout"},
-                "snack": _iso(datetime.fromisoformat(best["start"]) - timedelta(minutes=20))}
-    return {"workout": None, "snack": None}
+                "snacks": [_iso(datetime.fromisoformat(best["start"]) - timedelta(minutes=20))]}
+    return {"workout": None, "snacks": []}

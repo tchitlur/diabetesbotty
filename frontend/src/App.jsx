@@ -58,6 +58,7 @@ export default function App() {
     const p = await api.selectProfile(id)
     chatRef.current?.reset()
     setTab('Home')
+    setHome(idle)      // drop the previous person's data before the new one loads
     setProfile(p)
   }, [profile])
 
@@ -74,7 +75,7 @@ export default function App() {
           <div className="inner">
             {error ? <div className="card"><div className="status error">Backend not reachable ({error}). Start it with <code>.\run_demo.ps1</code> (API on port 8000).</div></div> : null}
             {tab === 'Home' ? <Home home={home} onTile={null} nowIso={health?.now} /> : null}
-            {tab === 'Plan' ? <PlanTab version={version} nowIso={health?.now} /> : null}
+            {tab === 'Plan' ? <PlanTab version={version} nowIso={health?.now} onAccepted={onAccepted} /> : null}
             {tab === 'Details' ? <DetailsTab profile={profile} parser={parser} health={health} home={home} /> : null}
           </div>
         </div>

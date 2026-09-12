@@ -73,13 +73,18 @@ def test_profiles_home_timeline(client):
     h = client.get("/home").json()
     assert h["glucose"]["word"] in ("rising", "steady", "falling") and len(h["forecast"]["times"]) == 37
     keys = [t["key"] for t in h["tiles"]]
-    assert {"carbs", "liver", "ketones", "hydration", "energy", "body", "training", "insulin"} <= set(keys)
+    assert {"carbs", "liver", "ketones", "energy", "recovery", "insulin"} <= set(keys) and not {"hydration", "body"} & set(keys)
     assert all(t["status"] and t["tone"] in ("good", "warn", "bad") and len(t["forecast"]["values"]) == 37 for t in h["tiles"])
     assert [c["key"] for c in h["coming_up"]] == ["meal", "workout", "risk", "best"]
+    hist = h["history"]
+    assert len(hist["times"]) == len(hist["raw"]) == len(hist["display"]) == 36
+    assert sum(v is None for v in hist["display"]) <= sum(v is None for v in hist["raw"])   # display only fills short gaps
     tl = client.post("/plan/timeline", json={"workout": {"start": h["forecast"]["times"][-1], "duration_min": 30}}).json()
-    assert tl["slots"] and all(s["color"] in ("green", "amber", "red") for s in tl["slots"])
-    assert all(s["reason"] for s in tl["slots"] if s["color"] != "green")
-    assert any(i["movable"] for i in tl["items"])
+    assert tl["headline"] and tl["start"] < tl["now"] < tl["end"]
+    assert tl["glucose_band"] and all(b["color"] in ("green", "amber", "red", "none") for b in tl["glucose_band"])
+    assert all(b["reason"] for b in tl["exercise_band"])
+    assert any(i["state"] == "suggested" and i["kind"] == "workout" and i["event"] for i in tl["items"])
+    assert len(tl["sparkline"]["times"]) == len(tl["sparkline"]["values"]) == len(tl["sparkline"]["kind"])
     card = client.get("/why").json()
     assert "plain" in card and card["plain"]["headline"]
 

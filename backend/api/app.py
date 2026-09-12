@@ -381,20 +381,20 @@ def home() -> Dict[str, Any]:
 
 class TimelineRequest(BaseModel):
     workout: Optional[Dict[str, Any]] = None
-    snack: Optional[str] = None
+    snacks: List[str] = Field(default_factory=list)
     auto: bool = False
 
 
 @app.post("/plan/timeline")
 def plan_timeline(req: TimelineRequest) -> Dict[str, Any]:
-    """The Plan tab: now until bedtime with safe / caution / avoid bands for exercise, predicted meals, the planned workout."""
+    """The Plan tab: today from wake time to bedtime; bands for exercise and glucose, items, suggestions, a headline."""
     tw = get_twin()
-    workout, snack = req.workout, req.snack
+    workout, snacks = req.workout, list(req.snacks)
     if req.auto:
         auto = heavy(lambda: home_view.auto_plan(tw))
-        workout, snack = auto["workout"], auto["snack"]
-    key = "timeline:%s:%s:%s" % ((workout or {}).get("start"), (workout or {}).get("duration_min"), snack)
-    return heavy(lambda: tw.cached(key, lambda: home_view.timeline(tw, workout, snack)))
+        workout, snacks = auto["workout"], auto["snacks"]
+    key = "timeline:%s:%s:%s" % ((workout or {}).get("start"), (workout or {}).get("duration_min"), ",".join(snacks))
+    return heavy(lambda: tw.cached(key, lambda: home_view.timeline(tw, workout, snacks)))
 
 
 @app.post("/demo/reset")

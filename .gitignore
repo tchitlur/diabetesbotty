@@ -36,3 +36,4 @@ frontend/playwright-report/
 # profiles are created at runtime (the demo seed is regenerated on first start)
 backend/data/profiles/
 audit/screens_v2/
+audit/screens_v3/

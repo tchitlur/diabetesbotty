@@ -35,7 +35,7 @@ export default function QuickLog({ onAction, disabled, parser }) {
 
       {sub === 'meal' ? (
         <form className="sub" onSubmit={submitMeal}>
-          <input type="text" value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="what did you eat? e.g. chicken burrito and a coke" aria-label="meal description" autoFocus />
+          <input type="text" value={meal} onChange={(e) => setMeal(e.target.value)} placeholder="what did you eat? e.g. pasta with chicken" aria-label="meal description" autoFocus />
           <span className="muted">or carbs</span>
           <input type="number" value={carbs} onChange={(e) => setCarbs(e.target.value)} placeholder="g" min={1} max={300} aria-label="carbs in grams" />
           <button type="submit" className="small primary" disabled={!meal.trim() && !(Number(carbs) > 0)}>Log meal</button>

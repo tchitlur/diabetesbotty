@@ -3,7 +3,7 @@
 30 virtual Type 1 patients, each with Hovorka parameters sampled from the
 published ranges in params.yaml, 90 days of realistic events, the *true*
 model run day by day (all patients batched through the vectorised RK4), CGM
-noise (sd 8 mg/dL, 5 % dropouts, compression lows), and +-30 % error on the
+noise (AR(1) sensor error, rho 0.7, sd 6 mg/dL; 5 % dropouts; compression lows), and +-30 % error on the
 logged meal carbs.
 
 Usage:
@@ -255,8 +255,22 @@ def simulate_cohort(metas: List[Dict[str, Any]], events_true: List[List[Event]],
     return G, daily_rows, K
 
 
+CGM_NOISE_SD = 6.0     # mg/dL, marginal sd of the sensor error
+CGM_NOISE_RHO = 0.7    # lag-1 autocorrelation of the sensor error (5-min samples): real CGM error is smooth, not white
+
+
+def sensor_noise(n: int, rng: np.random.Generator, sd: float = CGM_NOISE_SD, rho: float = CGM_NOISE_RHO) -> np.ndarray:
+    """AR(1) sensor error with marginal sd `sd` and lag-1 correlation `rho`."""
+    e = np.empty(n)
+    e[0] = rng.normal(0, sd)
+    innov = rng.normal(0, sd * np.sqrt(1 - rho ** 2), size=n)
+    for i in range(1, n):
+        e[i] = rho * e[i - 1] + innov[i]
+    return e
+
+
 def add_cgm_noise(g_true: np.ndarray, rng: np.random.Generator) -> np.ndarray:
-    g = g_true + rng.normal(0, 8.0, size=g_true.shape)
+    g = g_true + sensor_noise(len(g_true), rng)
     n = len(g)
     # 5 % dropouts in short runs
     n_drop = int(0.05 * n)
@@ -270,12 +284,12 @@ def add_cgm_noise(g_true: np.ndarray, rng: np.random.Generator) -> np.ndarray:
     for start_day in range(10, N_DAYS, 10):
         a = start_day * STEPS_PER_DAY + int(rng.integers(0, 60))
         g[a:a + 24] = np.nan
-    # compression lows: ~1 per 5 nights, 20-40 min, -30..-50 mg/dL
+    # compression lows: ~1 per 5 nights, 20-40 min, -30..-50 mg/dL, ramping in and out (half-sine) like a real one
     for d in range(N_DAYS):
         if rng.random() < 0.2:
             a = d * STEPS_PER_DAY + int(rng.integers(12, 60))  # 01:00-05:00
             ln = int(rng.integers(4, 9))
-            g[a:a + ln] -= rng.uniform(30, 50)
+            g[a:a + ln] -= rng.uniform(30, 50) * np.sin(np.linspace(0, np.pi, ln))[: len(g[a:a + ln])]
     return np.clip(g, 39, 401)
 
 
