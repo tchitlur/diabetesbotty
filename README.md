@@ -39,7 +39,7 @@ All data are synthetic. There is no real patient. Decision support only; nothing
 
 The app is live: the demo person's 90 days of synthetic data are lined up with the real clock (the anchor day becomes today), so the number, the "now" marker and the plan move as the day goes on. The screens refresh every minute.
 
-1. **Login.** Tap **Alex** (the demo person) or **Add profile**: name, age, sex, weight, height, carb ratio, correction factor, target range. A new profile is matched to the closest virtual person in the 30-patient cohort and that person's model is fitted on the spot (about 10 s). Profiles are JSON files on the backend; no passwords, nothing in the browser.
+1. **Login.** Tap one of the five people (Alex, Priya, Ken, Marcus, Zara: each a virtual patient with 90 days of sensor data and a fitted twin), **🎲 Random new person**, or **Add someone by hand**: name, age, sex, weight, height, carb ratio, correction factor, target range. A new profile is matched to the closest virtual person in the 30-patient cohort and that person's model is fitted on the spot (about 10 s). Profiles are JSON files on the backend; no passwords, nothing in the browser.
 2. **Home.** One big number with a trend word, coloured by your target range; 3 hours of sensor and 3 hours of forecast starting where the sensor left off. Under it the **Right now** tiles (carbs digesting, liver stores, ketones, energy, recovery, insulin working; alcohol and caffeine only when you have had some), all the same shape. Tap a tile for its next 3 hours. **Coming up**: next meal, next workout, the next risk, the best window for what you do most.
 3. **Chat.** Ask anything about your body, history, forecast or plan, log what you did, or propose something: `What's my glucose?`, `Why isn't my sugar rising after lunch?`, `How many lows did I have this week?`, `I just had a large coffee`, `What if I skip dinner?`, `/plan tomorrow`. Gemini only routes and phrases: it picks from ten backend tools (current state, forecast, why-now, history, permission engine, log, planner, 30-day change, average person, what-if) and every number in the answer is checked against the tool results before it is shown; the chips under each answer say which tools were checked. Without a key a built-in reader does the routing with template sentences.
 4. **Chat: `Can I have pizza for dinner?`** The line "Understood: pizza tonight at 19:00" appears under your message (JSON behind *details*), then the answer card: a headline (**Enjoy it** / **Yes, with a snack** / **Better to wait**), one or two plain sentences, and the next 6 hours as a shaded band with a marker. **Add to plan** commits it (and the snack if there is one) to the forecast and the Plan tab. The **?** button next to the input lists examples and the commands in plain words.
@@ -65,7 +65,8 @@ From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v5/
 | Plan with a suggested workout and snack | `docs/screens/plan-suggested.png` |
 | Chat: the same question with and without personalisation | `docs/screens/chat-compared.png` |
 | Details | `docs/screens/details.png` |
-| Login and add profile | `docs/screens/login.png`, `docs/screens/add-profile.png` |
+| Login (five people) and the switcher | `docs/screens/login.png`, `docs/screens/switcher.png` |
+| Phone: Home, the Ask sheet, Plan | `docs/screens/phone-home.png`, `docs/screens/phone-chat.png`, `docs/screens/phone-plan.png` |
 
 ## What is in the box
 

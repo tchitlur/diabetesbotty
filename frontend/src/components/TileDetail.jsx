@@ -5,14 +5,14 @@ import { TICK, TIP, GRID, COLORS } from './chart.js'
 
 // The view under a tapped tile. Fast quantities: last 3 h (model estimate) + next 3 h forecast on a
 // fixed axis. Slow quantities: the last 7 days as bars, today highlighted, the normal zone shaded.
-export default function TileDetail({ tile, nowIso, onClose }) {
+export default function TileDetail({ tile, nowIso, onClose, bare = false }) {
   const d = tile.detail
   if (!d) return null
   const [y0, y1] = d.y
   const unit = (tile.unit || '').replace('/ ', 'out of ')
   return (
-    <div className="card tile-detail">
-      <div className="tile-detail-head"><span>{tile.icon} <b>{tile.label}</b> · {d.kind === 'fast' ? 'last 3 hours and next 3 hours' : 'last 7 days'}</span><button className="small ghost" onClick={onClose}>close</button></div>
+    <div className={bare ? 'tile-detail' : 'card tile-detail'} data-testid="tile-detail">
+      <div className="tile-detail-head"><span>{bare ? null : <>{tile.icon} <b>{tile.label}</b> · </>}{d.kind === 'fast' ? 'last 3 hours and next 3 hours' : 'last 7 days'}</span>{bare ? null : <button type="button" className="small ghost" onClick={onClose}>close</button>}</div>
       <div className="sentence">{d.sentence}</div>
       {d.kind === 'fast' ? <FastChart d={d} y0={y0} y1={y1} unit={unit} nowIso={nowIso} label={tile.label} /> : <SlowChart d={d} y0={y0} y1={y1} unit={unit} label={tile.label} />}
     </div>

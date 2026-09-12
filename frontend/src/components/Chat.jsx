@@ -19,12 +19,14 @@ function Understood({ text, parser }) {
 // Every message goes to /chat: Gemini (or the built-in reader) picks backend tools, the backend
 // phrases and ground-checks the answer, and the card that comes back is rendered by type. The
 // quick buttons and photos still go straight to the permission engine (same card as before).
-const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twinNow }, ref) {
+const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twinNow, onHide, onAiReader, mobile = false, signature }, ref) {
   const [log, setLog] = useState([])
   const [help, setHelp] = useState(false)
   const [text, setText] = useState('')
   const [busy, setBusy] = useState(false)
+  const [aiBusy, setAiBusy] = useState(false)
   const endRef = useRef(null)
+  const inputRef = useRef(null)
   const idRef = useRef(1)
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [log, busy])
   const push = (role, node) => { const id = idRef.current++; setLog((l) => [...l, { id, role, node }]); return id }
@@ -126,20 +128,33 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
     reset: () => { setLog([]); setText(''); api.chatReset().catch(() => {}) },
   }))
 
+  const aiOn = !!parser?.ai_reader && !!parser?.key_present
+  const toggleAi = async () => {
+    if (aiBusy || !onAiReader) return
+    setAiBusy(true)
+    try { await onAiReader(!parser?.ai_reader) } finally { setAiBusy(false) }
+  }
   return (
-    <div className="chat">
-      <div className="chat-head"><span className="bot-icon" aria-hidden="true">🩺</span><b>Diabetes Bot</b><span className="faint xs">asks the model, not a chatbot</span></div>
+    <div className={`chat ${mobile ? 'mobile' : ''}`}>
+      <div className="chat-head" data-testid="chat-head">
+        <b>Ask your twin</b>
+        <span className="chat-sub faint">{PLACEHOLDER}</span>
+        <button type="button" className={`pill-toggle ${aiOn ? 'on' : ''}`} onClick={toggleAi} disabled={aiBusy || !parser?.key_present} title={parser?.key_present ? 'Gemini reads your messages when on; the built-in reader when off' : 'No Gemini key: the built-in reader is used'} data-testid="ai-toggle">AI reader: {aiOn ? 'on' : 'off'}</button>
+        {onHide && !mobile ? <button type="button" className="link hide-link" onClick={onHide} data-testid="hide-chat">hide ▸</button> : null}
+        {onHide && mobile ? <button type="button" className="icon" aria-label="close" onClick={onHide} data-testid="chat-sheet-close">✕</button> : null}
+      </div>
       <div className="log">
-        {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "What's my glucose?", "Can I have pizza for dinner?" or tap a button below.</div> : null}
+        {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "Can I have pizza for dinner?" or tap a button below.</div> : null}
         {log.map((m) => (m.role === 'user' ? <div key={m.id} className="msg user">{m.node}</div> : <div key={m.id} className={m.node?.props?.className === 'msg plain' || m.node?.type === Understood ? '' : 'msg bot'}>{m.node}</div>))}
         <div ref={endRef} />
       </div>
       <QuickLog onAction={onQuick} disabled={busy} parser={parser} />
       <form onSubmit={(e) => { e.preventDefault(); submit() }}>
-        <input type="text" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} placeholder={PLACEHOLDER} disabled={busy} aria-label="chat message" />
+        <input ref={inputRef} type="text" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submit() } }} placeholder={PLACEHOLDER} disabled={busy} aria-label="chat message"
+               onFocus={() => { if (mobile) setTimeout(() => inputRef.current?.scrollIntoView({ block: 'nearest' }), 250) }} />
         <button type="button" className="icon" aria-label="help" title="Examples and commands" onClick={() => setHelp((x) => !x)}>?</button>
         <button type="submit" className="primary" disabled={busy}>Ask</button>
-        {help ? <HelpPopover onPick={(x) => { setHelp(false); setText(x) }} onClose={() => setHelp(false)} /> : null}
+        {help ? <HelpPopover signature={signature} onPick={(x) => { setHelp(false); setText(x) }} onClose={() => setHelp(false)} /> : null}
       </form>
     </div>
   )

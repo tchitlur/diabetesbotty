@@ -96,7 +96,7 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
   await snap(page, 'login')
 
   // ---- add a profile (matched to a cohort patient and fitted)
-  await page.getByRole('button', { name: 'Add profile' }).click()
+  await page.getByRole('button', { name: 'Add someone by hand' }).click()
   await page.getByLabel('Name').fill('Jordan')
   await page.getByLabel('Age').fill('29')
   await page.getByLabel('Weight (kg)').fill('64')
@@ -110,8 +110,9 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
   const jordan = created.find((p: any) => p.name === 'Jordan')
 
   // ---- back to the demo person
-  await page.locator('header select').selectOption('demo')
-  await page.waitForFunction(() => document.querySelector('.header .avatar')?.textContent === 'A' && !!document.querySelector('.hero .num') && document.querySelectorAll('.spinner').length === 0, null, { timeout: 60_000 })
+  await page.getByTestId('who-pill').click()
+  await page.getByTestId('switch-demo').click()
+  await page.waitForFunction(() => (document.querySelector('[data-testid=who-pill]') as HTMLElement)?.innerText.includes('Alex') && !!document.querySelector('.hero .num') && document.querySelectorAll('.spinner').length === 0, null, { timeout: 60_000 })
   await page.waitForTimeout(800)
   await snap(page, 'home')
 
@@ -176,7 +177,7 @@ test('GlucoPilot UI audit v5', async ({ page }) => {
   await page.waitForTimeout(200)
 
   // ---- chat header, four quick buttons, "?" popover
-  await expect(page.locator('.chat-head')).toContainText('Diabetes Bot')
+  await expect(page.locator('.chat-head')).toContainText('Ask your twin')
   const quick = await page.locator('.chat .quick > button').allTextContents()
   expect(quick.map((t) => t.replace(/^\S+\s/, ''))).toEqual(['Meal', 'Snack', 'Coffee', 'Workout'])
   await page.getByRole('button', { name: 'help' }).click()

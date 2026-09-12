@@ -65,5 +65,18 @@ def gemini_api_key() -> str | None:
     return key
 
 
+# the "AI reader" toggle in the chat header: off = the built-in reader even when a key is present
+_AI_READER = {"on": True}
+
+
+def set_ai_reader(on: bool) -> bool:
+    _AI_READER["on"] = bool(on)
+    return _AI_READER["on"]
+
+
+def ai_reader_on() -> bool:
+    return _AI_READER["on"]
+
+
 def gemini_available() -> bool:
-    return gemini_api_key() is not None
+    return gemini_api_key() is not None and _AI_READER["on"]

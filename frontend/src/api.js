@@ -22,6 +22,8 @@ export const api = {
   activeProfile: () => req('/profiles/active'),
   createProfile: (body) => req('/profiles', { method: 'POST', body: JSON.stringify(body) }),
   selectProfile: (id) => req(`/profiles/${encodeURIComponent(id)}/select`, { method: 'POST' }),
+  randomProfile: () => req('/profiles/random', { method: 'POST' }),
+  parserMode: (on) => req('/parser/mode', { method: 'POST', body: JSON.stringify({ ai_reader: !!on }) }),
   // screens
   home: () => req('/home'),
   timeline: (body) => req('/plan/timeline', { method: 'POST', body: JSON.stringify(body || {}) }),

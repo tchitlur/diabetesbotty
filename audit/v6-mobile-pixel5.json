@@ -1,0 +1,83 @@
+{
+  "project": "pixel5",
+  "viewport": {
+    "width": 393,
+    "height": 727
+  },
+  "screens": {
+    "login": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "home": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "coming-up": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "tile-sheet": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "plan": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "chat-sheet": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "chat-answer": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "switcher-sheet": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    },
+    "zara-home": {
+      "scrollWidth": 393,
+      "innerWidth": 393,
+      "smallTargets": [],
+      "smallFonts": []
+    }
+  },
+  "plan": {
+    "offset": 0.265625,
+    "atStart": false,
+    "atEnd": false,
+    "scrollLeft": 274,
+    "scrollWidth": 988,
+    "clientWidth": 343,
+    "icon": [
+      28,
+      28
+    ],
+    "seg": 14,
+    "headline": "Your usual dinner around 6:15 pm, then a good window for a workout from 8:00 pm to 11:00 pm, and no lows or highs expected before bed."
+  },
+  "chatAnswer": {
+    "cardWidth": 377,
+    "logWidth": 393,
+    "stripHeight": 60
+  },
+  "issues": []
+}

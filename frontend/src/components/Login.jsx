@@ -1,24 +1,32 @@
 import React, { useState } from 'react'
 import { api } from '../api.js'
+import { describe, detailLine, avatarOf } from '../personas.js'
 
 const EMPTY = { name: '', age: 34, sex: 'F', weight_kg: 70, height_cm: 170, carb_ratio_g_per_u: 12, correction_factor_mgdl_per_u: 50, target_low: 70, target_high: 180 }
 
-// First screen: tap a profile, or add one. Profiles live on the backend as JSON files.
-export default function Login({ profiles, error, onEnter, onCreated }) {
-  const [adding, setAdding] = useState(false)
+// First screen: the wordmark, "WHO IS THIS?" with one row per person, then Random / Add by hand.
+export default function Login({ profiles, error, onEnter, onCreated, startAdding = false }) {
+  const [adding, setAdding] = useState(startAdding)
   const [form, setForm] = useState(EMPTY)
-  const [busy, setBusy] = useState(false)
+  const [busy, setBusy] = useState(null)   // 'create' | 'random' | profile id
   const [err, setErr] = useState(null)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.type === 'number' ? Number(e.target.value) : e.target.value }))
 
   const submit = async (e) => {
     e.preventDefault()
     if (busy) return
-    setBusy(true); setErr(null)
-    try {
-      const p = await api.createProfile(form)
-      onCreated(p)
-    } catch (ex) { setErr(String(ex.message)) } finally { setBusy(false) }
+    setBusy('create'); setErr(null)
+    try { onCreated(await api.createProfile(form)) } catch (ex) { setErr(String(ex.message)) } finally { setBusy(null) }
+  }
+  const random = async () => {
+    if (busy) return
+    setBusy('random'); setErr(null)
+    try { onCreated(await api.randomProfile()) } catch (ex) { setErr(String(ex.message)) } finally { setBusy(null) }
+  }
+  const enter = async (p) => {
+    if (busy) return
+    setBusy(p.id); setErr(null)
+    try { await onEnter(p) } catch (ex) { setErr(String(ex.message)); setBusy(null) }
   }
 
   return (
@@ -32,16 +40,25 @@ export default function Login({ profiles, error, onEnter, onCreated }) {
         {!adding ? (
           <div className="card">
             <h3>Who is this?</h3>
-            <div className="profiles">
+            <div className="persona-list" data-testid="login-list">
               {profiles.map((p) => (
-                <button key={p.id} className="profile-btn" onClick={() => onEnter(p)}>
-                  <span className="avatar lg">{p.initial}</span>
-                  <span>{p.name}<small>{p.age} · {p.sex === 'F' ? 'female' : p.sex === 'M' ? 'male' : 'other'} · {Math.round(p.weight_kg)} kg · target {Math.round(p.target_low)}–{Math.round(p.target_high)} mg/dL</small></span>
+                <button key={p.id} type="button" className="persona-row" onClick={() => enter(p)} disabled={!!busy} data-testid={`login-${p.id}`}>
+                  <span className="avatar lg emoji">{avatarOf(p)}</span>
+                  <span className="lines">
+                    <b>{p.name}</b>
+                    {describe(p) ? <small>{describe(p)}</small> : null}
+                    <small>{detailLine(p)}</small>
+                  </span>
+                  {busy === p.id ? <span className="spinner" /> : null}
                 </button>
               ))}
-              {profiles.length === 0 && !error ? <div className="status"><span className="spinner" />Loading profiles…</div> : null}
+              {profiles.length === 0 && !error ? <div className="status"><span className="spinner" />Loading people…</div> : null}
             </div>
-            <div className="actions"><button className="primary" onClick={() => setAdding(true)}>Add profile</button></div>
+            <div className="actions two">
+              <button type="button" className="primary" onClick={random} disabled={!!busy}>{busy === 'random' ? 'Making someone up and fitting their twin…' : '🎲 Random new person'}</button>
+              <button type="button" onClick={() => setAdding(true)} disabled={!!busy}>Add someone by hand</button>
+            </div>
+            {err ? <div className="status error">{err}</div> : null}
             <div className="note">This is a demo: no passwords. Each profile is matched to a virtual person with 90 days of sensor data, and a model of that person is fitted when you add one.</div>
           </div>
         ) : (
@@ -60,9 +77,9 @@ export default function Login({ profiles, error, onEnter, onCreated }) {
             </div>
             {err ? <div className="status error">{err}</div> : null}
             <div className="actions">
-              <button type="submit" className="primary" disabled={busy}>{busy ? 'Setting up your twin (about 10 s)…' : 'Create profile'}</button>
-              <button type="button" onClick={() => setAdding(false)} disabled={busy}>Back</button>
-              {busy ? <span className="status"><span className="spinner" />Matching you to a virtual person and fitting the model to their data</span> : null}
+              <button type="submit" className="primary" disabled={!!busy}>{busy === 'create' ? 'Setting up your twin (about 10 s)…' : 'Create profile'}</button>
+              <button type="button" onClick={() => setAdding(false)} disabled={!!busy}>Back</button>
+              {busy === 'create' ? <span className="status"><span className="spinner" />Matching you to a virtual person and fitting the model to their data</span> : null}
             </div>
           </form>
         )}

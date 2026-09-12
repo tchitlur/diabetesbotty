@@ -83,3 +83,17 @@ Diagnosed before fixing (`audit/plan_diagnosis.md`): the squish was a fixed 5:1 
 ## Tool-routed chat (v5 audit, `audit/screens_chat/`)
 
 The 24 reference messages run through the live chat: every answer rendered the expected card type (state x3, forecast x2, explain x4, history x6, logged x3, permission x2, what-if x2, plan, general text), every answer carried the "checked: ..." chips, and the explain card after "I ate 15 minutes ago" showed pending carbs above zero. Gemini routed all 23 tool questions to the intended tool (`audit/chat-routing.json`; the transcript with answers and zero grounding violations is `audit/chat_transcript.md`). Found on the way: Gemini logged "large coffee now" instead of judging it (prompt rule added: a bare food or workout with "now" is a proposal); the coming-up window text printed "10:00-11:10 am" (both ends now carry am/pm); the history mini chart keyed ticks by formatted time, so a 7-day series repeated "1:20 pm" (ticks now keyed by ISO time and labelled with the day); the audit's 24-hour-time check was reading Recharts' off-screen measurement span. Final run: 1 note (no safe workout slot left that afternoon), 31 screenshots; pytest green.
+
+## v6: people, header, Home, chat header, phones (`audit/screens_v6/`, `audit/screens_mobile_v6/`)
+
+Desktop at 1440: the login list shows Alex, Priya, Ken, Marcus, Zara in order with avatar, description and detail lines; the header pill, 12-hour clock with the date under it and "+ Log something" are in place; no +15 / +30 buttons exist; the chat header reads "Ask your twin" with the "AI reader: on / off" pill (toggling changes the label and the backend parser mode) and "hide ▸" (the panel collapses and comes back); the switcher lists the same five in order with the current one highlighted, then Random new person and Add someone. Zero console errors.
+
+Phones (Playwright device descriptors, real scale factor, touch, mobile user agent; iPhone 13 runs on WebKit):
+
+| project | viewport | issues | "now" offset from centre on Plan open | Plan scroll width / view | icon / band | pizza card / chat width | strip |
+|---|---|---|---|---|---|---|---|
+| iphone13 | 390x664 | 0 | 0.8 px | 988 / 340 | 28x28 / 14 px | 374 / 390 | 60 px |
+| pixel5 | 393x727 | 0 | 0.3 px | 988 / 343 | 28x28 / 14 px | 377 / 393 | 60 px |
+| bare375 | 375x667 | 0 | 0.3 px | 988 / 325 | 28x28 / 14 px | 359 / 375 | 60 px |
+
+Every phone screen (login, home, coming-up scroll, tile sheet, plan, ask sheet, pizza answer, switcher sheet, Zara's home) passed: no horizontal overflow except the Plan timeline, every tappable element at least 44x44, no visible text under 13 px, the floating Ask button present (absent at 1440), zero console errors. The first phone run found two things, both fixed: the "?" help button was 30 px wide, and the pizza card was narrower than the sheet because of the message-bubble padding (on phones the bubble padding is dropped so cards run edge to edge). The 60 px permission strip needed a compact mode (ticks every 2 hours, no marker label) to stay readable. The v5 audit was updated for the new login button and the switcher and still passes.

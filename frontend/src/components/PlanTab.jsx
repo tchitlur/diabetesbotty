@@ -12,6 +12,7 @@ export const GEOM = {
   sparkH: 120,     // sparkline height
   gap: 16,         // sparkline → icon row → axis
   icon: 28,        // icon marker diameter
+  hit: 44,         // the tappable box around an icon (touch target)
   step: 32,        // icon spacing inside a cluster pill
   axisH: 18,       // axis line + 12 px labels
   bandH: 14,       // band segment height
@@ -31,7 +32,7 @@ T.total = T.gl + GEOM.bandH
 // (clustered when close together), a glucose sparkline on top, two bands below. Plain HTML/CSS
 // absolute positioning inside a ResizeObserver-measured container; the sparkline is an SVG sized
 // in pixels (width = container width, height = 120) with no viewBox.
-export default function PlanTab({ version, nowIso, onAccepted }) {
+export default function PlanTab({ version, nowIso, onAccepted, mobile = false }) {
   const [tl, setTl] = useState(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
@@ -41,7 +42,10 @@ export default function PlanTab({ version, nowIso, onAccepted }) {
   const [pick, setPick] = useState(null)
   const [drag, setDrag] = useState(null)
   const [cw, setCw] = useState(0)
+  const [tapTip, setTapTip] = useState(null)   // phones: a tapped segment or icon keeps its tooltip until the next tap
   const tlRef = useRef(null)
+  const scrollRef = useRef(null)
+  const centred = useRef(false)
 
   const fetchTl = useCallback(async (body) => {
     setBusy(true); setErr(null)
@@ -60,6 +64,16 @@ export default function PlanTab({ version, nowIso, onAccepted }) {
     ro.observe(el)
     return () => ro.disconnect()
   }, [ready])
+
+  // phones: the timeline scrolls sideways; on open, put "now" in the middle of the view
+  useEffect(() => {
+    if (!mobile || !tl || cw <= 0 || centred.current || !scrollRef.current) return
+    const span = Math.max(minutesBetween(tl.start, tl.end), 60)
+    const nowPx = (Math.min(Math.max(minutesBetween(tl.start, tl.now), 0), span) / span) * cw
+    const el = scrollRef.current
+    el.scrollLeft = Math.max(0, GEOM.gutter + nowPx - el.clientWidth / 2)
+    centred.current = true
+  }, [mobile, tl, cw])
 
   if (!tl && !err) return <div className="card"><Status loading loadingText="Laying out your day…" /></div>
   if (err && !tl) return <div className="card"><Status error={err} /></div>
@@ -88,7 +102,7 @@ export default function PlanTab({ version, nowIso, onAccepted }) {
 
   const tlX = (e) => { const r = tlRef.current.getBoundingClientRect(); return e.clientX - r.left }
   const show = (e, text) => { const r = tlRef.current.getBoundingClientRect(); setTip({ x: e.clientX - r.left, y: e.clientY - r.top, text }) }
-  const hide = () => setTip(null)
+  const hide = () => { if (!mobile || !tapTip) setTip(null) }
 
   // ---- clusters: items within 20 minutes of each other share one pill (pixel units)
   const half = GEOM.icon / 2
@@ -143,20 +157,23 @@ export default function PlanTab({ version, nowIso, onAccepted }) {
     <div className={`pt-band ${cls}`} style={{ top, height: GEOM.bandH }} data-testid={`band-${cls}`}>
       {rows.map((b) => {
         const left = x(b.start), width = Math.max(x(b.end) - left, 1)
+        const text = `${fmtTime(b.start)}: ${b.past && verb ? verb + ' ' : ''}${b.reason}`
         return <div key={b.start} className={`pt-seg ${cls}`} style={{ left, width, background: BAND[b.color], opacity: b.past ? 0.4 : 1 }}
-                    onMouseMove={(e) => show(e, `${fmtTime(b.start)}: ${b.past && verb ? verb + ' ' : ''}${b.reason}`)} onMouseLeave={hide} />
+                    onMouseMove={(e) => { if (!mobile) show(e, text) }} onMouseLeave={() => { if (!mobile) hide() }}
+                    onClick={(e) => { if (mobile) { setTapTip(text === tapTip ? null : text); show(e, text) } }} />
       })}
     </div>
   )
 
   return (
     <div className="card plan-card">
-      <div className="plan-head">
+      <div className={`plan-head ${mobile ? 'stack' : ''}`}>
         <div className="headline">{tl.headline}</div>
         <div className="spacer" />
         <button className="primary" onClick={() => { setPick(null); fetchTl({ auto: true }) }} disabled={busy} title="Places a workout and, if needed, a snack as outlined icons. Solid icons are logged; dashed ones are your usual times; outlined ones are suggestions: tap to accept, drag a workout to move it.">Suggest my day</button>
         <button onClick={() => { setPick(null); fetchTl({}) }} disabled={busy || (!workout && !snacks.length)}>Clear suggestions</button>
       </div>
+      <div className={`pt-scroll ${mobile ? 'mobile' : ''}`} ref={scrollRef} data-testid="plan-scroll">
       <div className="pt-root" style={{ opacity: busy ? 0.6 : 1, height: T.total, paddingLeft: GEOM.gutter }} data-testid="plan-timeline">
         <div className="pt-gutter" style={{ width: GEOM.gutter - 8 }}>
           <span className="pt-lbl" style={{ top: gy(180) - 7 }}>180</span>
@@ -181,11 +198,16 @@ export default function PlanTab({ version, nowIso, onAccepted }) {
                   {c.items.map((it, j) => {
                     const ox = (j - (c.items.length - 1) / 2) * GEOM.step
                     const left = (dragging(it) ? drag.x : c.cx + ox) - half
+                    const text = `${fmtTime(it.time)} · ${it.reason}`
                     return (
-                      <div key={j} className={`pt-item ${it.state} ${it.kind}`} style={{ left, width: GEOM.icon, height: GEOM.icon }} data-kind={it.kind} data-state={it.state} data-time={it.time}
-                           onMouseMove={(e) => { e.stopPropagation(); show(e, `${fmtTime(it.time)} · ${it.reason}`) }} onMouseLeave={hide}
-                           onPointerDown={(e) => onPointerDown(e, it)} onClick={() => { if (it.state === 'suggested' && it.kind !== 'workout') setPick({ item: it, x: c.cx + ox }) }}>
-                        <span className="pt-emoji">{ICON[it.kind] || '•'}</span>
+                      <div key={j} className={`pt-hit ${it.state} ${it.kind}`} style={{ left: left - (GEOM.hit - GEOM.icon) / 2, width: GEOM.hit, height: GEOM.hit, top: -(GEOM.hit - GEOM.icon) / 2 }}
+                           role="button" tabIndex={0} aria-label={text}
+                           onMouseMove={(e) => { e.stopPropagation(); if (!mobile) show(e, text) }} onMouseLeave={() => { if (!mobile) hide() }}
+                           onPointerDown={(e) => onPointerDown(e, it)}
+                           onClick={(e) => { if (it.state === 'suggested' && it.kind !== 'workout') setPick({ item: it, x: c.cx + ox }); else if (mobile) { setTapTip(text === tapTip ? null : text); show(e, text) } }}>
+                        <div className={`pt-item ${it.state} ${it.kind}`} style={{ width: GEOM.icon, height: GEOM.icon }} data-kind={it.kind} data-state={it.state} data-time={it.time}>
+                          <span className="pt-emoji">{ICON[it.kind] || '•'}</span>
+                        </div>
                       </div>
                     )
                   })}
@@ -211,6 +233,7 @@ export default function PlanTab({ version, nowIso, onAccepted }) {
             ) : null}
           </> : null}
         </div>
+      </div>
       </div>
       <div className="legend"><span><i className="good" />safe · in range</span><span><i className="warn" />caution · near the edge</span><span><i className="bad" />avoid · out of range</span></div>
     </div>

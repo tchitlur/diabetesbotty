@@ -36,6 +36,14 @@ class Profile(ProfileIn):
     created_at: str
     fitted: bool = False
     fit_seconds: float = 0.0
+    # who they are, in one line each (the login list and the switcher show these)
+    avatar: str = ""            # one emoji
+    occupation: str = ""
+    habit: str = ""             # "runs before work"
+    t1d_years: int = 0
+    sensor_days: int = 90
+    signature: str = ""         # the one question that shows what is special about this person
+    random: bool = False
 
 
 def _slug(name: str) -> str:
@@ -95,25 +103,56 @@ def set_active(pid: str) -> Profile:
 
 
 def ensure_seed() -> None:
-    """The demo profile (bound to the committed demo patient) always exists."""
+    """The five demo people always exist (Alex is bound to the committed demo patient and is
+    already fitted; the others are fitted on first selection or by the startup prefit)."""
+    from backend.api.personas import PERSONAS
     PROFILES_DIR.mkdir(parents=True, exist_ok=True)
-    if _path("demo").exists():
-        return
-    meta = json.loads((DEMO_PATIENT_DIR / "patient.json").read_text(encoding="utf-8"))
-    # the demo person's carb ratio is the one the twin titrates on its own fitted physiology
-    try:
-        from backend.data.store import load_patient
-        from backend.inference.fitter import fitted_params
-        from backend.engine import fast
-        cr = float(fast.calibrate_carb_ratio(fitted_params(load_patient("demo"))))
-    except Exception:
-        cr = float(meta["true_params"].get("carb_ratio_g_per_u", 12.0))
-    prof = Profile(id="demo", patient_id="demo", initial="A", name="Alex", age=34, sex=meta.get("sex", "M"),
-                   weight_kg=round(float(meta["body_weight_kg"]), 1), height_cm=180.0,
-                   carb_ratio_g_per_u=round(cr, 1),
-                   correction_factor_mgdl_per_u=50.0, target_low=70.0, target_high=180.0,
-                   created_at="2025-08-01T00:00", fitted=True)
+    for spec in PERSONAS:
+        path = _path(spec["id"])
+        if path.exists():
+            cur = json.loads(path.read_text(encoding="utf-8"))
+            if cur.get("occupation") == spec["occupation"] and cur.get("avatar") == spec["avatar"] and cur.get("patient_id") == spec["patient_id"]:
+                continue
+            fitted = bool(cur.get("fitted")) and cur.get("patient_id") == spec["patient_id"]
+        else:
+            fitted = spec["patient_id"] == "demo"
+        if spec["patient_id"] != "demo":
+            from backend.data.store import patient_dir
+            fitted = fitted or (patient_dir(spec["patient_id"]) / "fit.json").exists()
+        prof = Profile(initial=spec["name"][0].upper(), fitted=fitted, **spec)
+        save_profile(prof)
+    # earlier single-seed installs left a profile file per created person; they stay
+
+
+def fit_persona(pid: str) -> Profile:
+    """Fit the twin of an unfitted person (about 10 s) and mark the profile fitted."""
+    prof = get_profile(pid)
+    if prof is None:
+        raise KeyError(pid)
+    if prof.fitted:
+        return prof
+    from backend.data.store import patient_dir
+    from backend.inference.fitter import fit_patient
+    t0 = time.time()
+    if prof.patient_id != "demo" and not (patient_dir(prof.patient_id) / "fit.json").exists():
+        fit_patient(prof.patient_id, verbose=False)
+    prof.fitted = True
+    prof.fit_seconds = round(time.time() - t0, 1)
     save_profile(prof)
+    return prof
+
+
+def create_random(seed: Optional[int] = None) -> Profile:
+    """"Random new person": a plausible new person bound to an unused cohort patient, fitted now."""
+    import random as _random
+    from backend.api.personas import random_body
+    rng = _random.Random(seed if seed is not None else time.time_ns())
+    used = [p.name for p in list_profiles()]
+    body = random_body(rng, used)
+    fields = {k: v for k, v in body.items() if k in ProfileIn.model_fields}
+    extra = {k: v for k, v in body.items() if k not in ProfileIn.model_fields}
+    prof = create_profile(ProfileIn(**fields), fit=True, extra={**extra, "random": True})
+    return prof
 
 
 def _cohort_ids() -> List[str]:
@@ -137,14 +176,14 @@ def assign_patient(body: ProfileIn) -> str:
     return best or "demo"
 
 
-def create_profile(body: ProfileIn, fit: bool = True) -> Profile:
+def create_profile(body: ProfileIn, fit: bool = True, extra: Optional[Dict[str, Any]] = None) -> Profile:
     pid = _slug(body.name)
     base, k = pid, 2
     while _path(pid).exists():
         pid, k = f"{base}-{k}", k + 1
     patient = assign_patient(body)
-    prof = Profile(id=pid, patient_id=patient, initial=body.name.strip()[0].upper(), created_at=time.strftime("%Y-%m-%dT%H:%M"),
-                   **body.model_dump())
+    prof = Profile(id=pid, patient_id=patient, initial=body.name.strip()[0].upper(), created_at=time.strftime("%Y-%m-%dT%H:%M:%S"),
+                   **body.model_dump(), **(extra or {}))
     t0 = time.time()
     if fit and patient != "demo":
         from backend.data.store import patient_dir
@@ -158,7 +197,8 @@ def create_profile(body: ProfileIn, fit: bool = True) -> Profile:
 
 
 def delete_profile(pid: str) -> bool:
-    if pid == "demo":
+    from backend.api.personas import PERSONA_IDS
+    if pid in PERSONA_IDS:
         return False
     p = _path(pid)
     if p.exists():

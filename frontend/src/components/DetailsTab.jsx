@@ -8,7 +8,7 @@ import TrendsTab from './TrendsTab.jsx'
 
 // Details: for people who want more than Home. Numbers, the decay of what is in the body,
 // forecast chances, data quality and the model's sync status, your settings. "I'm nerdy" at the bottom.
-export default function DetailsTab({ profile, parser, health, home }) {
+export default function DetailsTab({ profile, parser, health, home, mobile = false }) {
   const [fc, setFc] = useState(null)
   const [state, setState] = useState(null)
   const [drift, setDrift] = useState(null)
@@ -24,7 +24,7 @@ export default function DetailsTab({ profile, parser, health, home }) {
   const sync = drift ? (drift.days_flagged >= 5 ? ['bad', 'needs a check'] : drift.flagged ? ['warn', 'drifting'] : ['good', 'in sync']) : ['off', 'checking…']
   const q = state?.data_quality
   return (
-    <>
+    <div className="details-tab" style={{ display: 'contents' }}>
       <div className="card" data-testid="your-twin">
         <h3>Your twin</h3>
         <Status loading={!twin && !err} error={err} loadingText="Comparing your fit with the average…">
@@ -118,6 +118,6 @@ export default function DetailsTab({ profile, parser, health, home }) {
           <TrendsTab />
         </div>
       </details>
-    </>
+    </div>
   )
 }

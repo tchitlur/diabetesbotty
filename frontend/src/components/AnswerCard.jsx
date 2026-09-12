@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { api, fmtTime } from '../api.js'
 import Strip from './Strip.jsx'
+import { useMobile } from '../hooks.js'
 
 // Every chat answer is this card, in this order: (a) the recommendation, one line, coloured by
 // verdict; (b) the reason in plain sentences; (c) a 6-hour strip with the predicted band and a
@@ -12,6 +13,7 @@ export default function AnswerCard({ plain, strip, card, onAccepted, onWhy, deta
   const [pop, setPop] = useState(null)       // null | 'loading' | card (population parameters)
   const [showPop, setShowPop] = useState(false)
   const tone = plain?.tone || 'off'
+  const mobile = useMobile()
   const compare = async () => {
     const next = !showPop
     setShowPop(next)
@@ -29,7 +31,7 @@ export default function AnswerCard({ plain, strip, card, onAccepted, onWhy, deta
     <div className={`answer ${tone}`}>
       <div className="headline">{plain?.headline}</div>
       <div className="reason">{plain?.reason}</div>
-      {strip ? <div><div className="strip-title">{strip.title || 'Next 6 hours'}</div><Strip {...strip} /></div> : null}
+      {strip ? <div className="strip-box"><div className="strip-title">{strip.title || 'Next 6 hours'}</div><Strip {...strip} height={mobile ? 60 : 120} compact={mobile} /></div> : null}
       <div className="foot">
         {canAdd ? <button className="small primary" disabled={busy || added} onClick={add}>{added ? 'Added to your plan' : card.plan_events.length > 1 ? 'Add to plan (with the snack)' : 'Add to plan'}</button> : null}
         {onWhy ? <button className="small ghost" onClick={onWhy}>why?</button> : null}

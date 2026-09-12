@@ -83,6 +83,16 @@ class AcceptRequest(BaseModel):
 
 
 # ------------------------------------------------------------------ routes
+@app.on_event("startup")
+def _prefit_personas() -> None:
+    from backend.api.personas import prefit_in_background
+
+    def fit_one(pid: str) -> None:
+        with get_twin().heavy:
+            prof_store.fit_persona(pid)
+    prefit_in_background(fit_one)
+
+
 @app.get("/health")
 def health() -> Dict[str, Any]:
     tw = get_twin()
@@ -272,7 +282,11 @@ async def parse_img(file: UploadFile = File(...), hint: str = Form(default="")) 
 
 @app.get("/parser/status")
 def parser_stat() -> Dict[str, Any]:
-    return parser_status()
+    from backend.config import ai_reader_on, gemini_api_key
+    st = parser_status()
+    st["key_present"] = gemini_api_key() is not None
+    st["ai_reader"] = ai_reader_on()
+    return st
 
 
 @app.get("/drift", response_model=DriftStatus)
@@ -411,11 +425,40 @@ def profiles_create(body: ProfileIn) -> Profile:
 @app.post("/profiles/{pid}/select", response_model=Profile)
 def profiles_select(pid: str) -> Profile:
     try:
+        prof = prof_store.get_profile(pid)
+        if prof is None:
+            raise KeyError(pid)
+        if not prof.fitted:   # first visit to this person: fit their twin (about 10 s)
+            with get_twin().heavy:
+                prof = prof_store.fit_persona(pid)
         prof = prof_store.set_active(pid)
     except KeyError:
         raise HTTPException(404, "no such profile")
     get_twin()
     return prof
+
+
+@app.post("/profiles/random", response_model=Profile)
+def profiles_random() -> Profile:
+    """"Random new person": a plausible new person bound to an unused cohort patient, fitted now (about 10 s), then selected."""
+    tw = get_twin()
+    with tw.heavy:
+        prof = prof_store.create_random()
+    prof_store.set_active(prof.id)
+    get_twin()
+    return prof
+
+
+class ParserMode(BaseModel):
+    ai_reader: bool
+
+
+@app.post("/parser/mode")
+def parser_mode(body: ParserMode) -> Dict[str, Any]:
+    """The chat header's "AI reader" toggle: Gemini (when a key is configured) or the built-in reader."""
+    from backend.config import set_ai_reader
+    set_ai_reader(body.ai_reader)
+    return parser_stat()
 
 
 @app.delete("/profiles/{pid}")

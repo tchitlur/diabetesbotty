@@ -15,7 +15,7 @@ export const CHANGES = [
 ]
 
 // The "?" popover next to the chat input: grouped examples to tap, and the /change options with plain labels.
-export default function HelpPopover({ onPick, onClose }) {
+export default function HelpPopover({ onPick, onClose, signature }) {
   const ref = useRef(null)
   useEffect(() => {
     const h = (e) => { if (ref.current && !ref.current.contains(e.target)) onClose() }
@@ -25,12 +25,12 @@ export default function HelpPopover({ onPick, onClose }) {
   }, [onClose])
   return (
     <div className="help" ref={ref} role="dialog" aria-label="help">
-      {GROUPS.map(([title, xs]) => (
+      {GROUPS.map(([title, xs0]) => { const xs = title === 'Ask' && signature && !xs0.includes(signature) ? [signature, ...xs0] : xs0; return (
         <React.Fragment key={title}>
           <div className="help-title">{title}</div>
           <div className="help-list">{xs.map((x) => <button key={x} type="button" className="small" onClick={() => onPick(x)}>{x}</button>)}</div>
         </React.Fragment>
-      ))}
+      ) })}
       <div className="help-title">What if I changed…</div>
       <div className="help-list">{CHANGES.map(([name, label]) => <button key={name} type="button" className="small" onClick={() => onPick(`/change ${name}`)}>{label}</button>)}</div>
       <div className="faint xs">Every answer comes from your model; the chips under it show which parts were checked.</div>
