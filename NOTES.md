@@ -72,6 +72,14 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - **Replay** anchors two segments (06:00 and 18:00) on UKF-filtered hidden states from the real day, then simulates original vs modified events; a single 32-hour open-loop run drifted too far to overlay on the actual CGM. Days where the twin shows the alcohol effect most clearly: Sat 2025-08-09 (overnight nadir 69 -> 125 with alcohol at zero) and Fri 2025-07-18 (56 -> 71). Setting alcohol to zero also removes the drinks' carbs, so on some nights the counterfactual is lower, which is physically right for beer.
 - The API is one FastAPI app (`backend/api/app.py`) over a singleton `Twin` (`backend/api/twin.py`) that holds data, fit, posterior, residual model, drift, the cached UKF state and the session (accepted events, cards, escalations). `?stale=30` on `/permission` (or `/state`) overrides staleness for the acceptance test.
 
+## Parser decisions (checkpoint 7)
+
+- `adapters/parse.py` is the only entry point: Gemini (`gemini-2.5-flash-lite`, JSON response mode, temperature 0.1, 20 s timeout) when `GEMINI_API_KEY` is set and the call + JSON validation succeed; otherwise the deterministic local parser. The API reports which one answered last (`/parser/status`) and the UI shows the badge. The key is read once in `config.py` and never logged; the exception *type* (not message) is logged on fallback.
+- Gemini output is coerced through `Event(...)` so bad enums (an unknown event type, exercise_kind) raise and trigger the fallback rather than reaching the simulator.
+- Vision: items -> per-item macros -> cross-check: when an item name matches the ~55-row food table (aliases included), the table's per-serving values x count replace Gemini's numbers if they deviate by more than 40 %; unknown items keep Gemini's numbers. Per-item uncertainty is averaged into the event's `uncertainty`, which Monte Carlo samples.
+- The local parser handles the five required phrasings and more (insulin units, sleep hours, illness, stress, water, multi-item meals). "tonight" resolves to *now* when it is already evening (after 17:00), otherwise 20:00.
+- No key is configured in this environment, so the Gemini path is tested with a monkeypatched `generate()` (fenced JSON, prose-wrapped JSON, garbage -> fallback); the local path is exercised for real.
+
 ## Checkpoint status
 
 - [x] 1. Environment + contracts (stub simulator)
@@ -80,11 +88,11 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - [x] 4. Inference
 - [x] 5. Medium + slow layers
 - [x] 6. Decision + safety + API
-- [ ] 7. Parsers
+- [x] 7. Parsers
 - [ ] 8. Frontend
 - [ ] 9. Validation + docs
 - [ ] 10. Final release
 
 ## Next
 
-Checkpoint 7: Gemini text + vision parsers (`gemini-2.5-flash-lite`) with the local fallback and the parser badge.
+Checkpoint 8: frontend (Vite + React + Recharts): Now / Today / Body / Trends / Replay tabs, chat with parser badge and cards, tap inputs, header twin-sync, /clinician page.
