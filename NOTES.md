@@ -15,7 +15,7 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - Windows 11, PowerShell. Installed via winget: GitHub CLI 2.100, Python 3.11.9, Node 24.19 LTS. Git 2.47 was present.
 - `Set-ExecutionPolicy` is overridden by a machine-scope Bypass policy; venv activation is not required because every script calls `.venv\Scripts\python.exe` directly.
 - Python venv: `.venv` (3.11). All packages from `requirements.txt` install cleanly (numpy<2 pinned for lightgbm/filterpy compatibility).
-- Gemini model constant: `backend/config.py::GEMINI_MODEL = "gemini-2.5-flash-lite"`.
+- Gemini model constant: `backend/config.py::GEMINI_MODEL = "gemini-3.5-flash-lite"`.
 
 ## Decisions
 
@@ -74,7 +74,7 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 
 ## Parser decisions (checkpoint 7)
 
-- `adapters/parse.py` is the only entry point: Gemini (`gemini-2.5-flash-lite`, JSON response mode, temperature 0.1, 20 s timeout) when `GEMINI_API_KEY` is set and the call + JSON validation succeed; otherwise the deterministic local parser. The API reports which one answered last (`/parser/status`) and the UI shows the badge. The key is read once in `config.py` and never logged; the exception *type* (not message) is logged on fallback.
+- `adapters/parse.py` is the only entry point: Gemini (`gemini-3.5-flash-lite`, JSON response mode, temperature 0.1, 20 s timeout) when `GEMINI_API_KEY` is set and the call + JSON validation succeed; otherwise the deterministic local parser. The API reports which one answered last (`/parser/status`) and the UI shows the badge. The key is read once in `config.py` and never logged; the exception *type* (not message) is logged on fallback.
 - Gemini output is coerced through `Event(...)` so bad enums (an unknown event type, exercise_kind) raise and trigger the fallback rather than reaching the simulator.
 - Vision: items -> per-item macros -> cross-check: when an item name matches the ~55-row food table (aliases included), the table's per-serving values x count replace Gemini's numbers if they deviate by more than 40 %; unknown items keep Gemini's numbers. Per-item uncertainty is averaged into the event's `uncertainty`, which Monte Carlo samples.
 - The local parser handles the five required phrasings and more (insulin units, sleep hours, illness, stress, water, multi-item meals). "tonight" resolves to *now* when it is already evening (after 17:00), otherwise 20:00.

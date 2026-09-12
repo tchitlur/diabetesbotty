@@ -24,7 +24,7 @@ PLOTS_DIR = VALIDATION_DIR / "plots"
 load_dotenv(REPO_ROOT / ".env")
 
 # The only LLM in the project. Change it here and nowhere else.
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-3.5-flash-lite"   # 2.5-flash-lite was retired for new keys (404 from the API on 2026-09-12)
 
 # The demo clock: the synthetic data runs to 2025-08-31 00:00; the twin lives at this
 # moment and never sees anything after it. A Friday evening just after dinner, glucose

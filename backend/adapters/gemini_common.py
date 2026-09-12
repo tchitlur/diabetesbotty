@@ -101,7 +101,8 @@ def cross_check_items(items: List[Dict[str, Any]]) -> Tuple[Dict[str, float], Li
         except (TypeError, ValueError):
             count = 1.0
         g = {k: float(it.get(k) or 0.0) for k in totals}
-        hit = lookup_food(name) if name else None
+        portion = str(it.get("portion") or it.get("serving") or "")
+        hit = (lookup_food(f"{portion} {name}") if portion else None) or (lookup_food(name) if name else None)
         used = "gemini"
         if hit:
             canon, row = hit

@@ -18,7 +18,7 @@ All data are synthetic. There is no real patient. Decision support only; nothing
    git clone https://github.com/tchitlur/diabetesbotty.git
    cd diabetesbotty
    ```
-3. (Optional) Add a Gemini key so the parsers use `gemini-2.5-flash-lite` instead of the local fallback:
+3. (Optional) Add a Gemini key so the parsers use `gemini-3.5-flash-lite` instead of the local fallback:
    ```powershell
    .\scripts\setup_key.ps1
    ```

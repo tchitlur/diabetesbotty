@@ -1,7 +1,7 @@
 """Gemini text parser: free text -> Event + confidence (JSON only)."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict
 
 from backend.schema.api import ParsedEvent, EventModel
@@ -39,8 +39,15 @@ def parse_text_gemini(text: str, now: datetime) -> ParsedEvent:
     raw = generate([prompt])
     obj = extract_json(raw)
     ev = to_event(obj, now)
+    # a proposal resolved to a time already past (e.g. "at 6pm" asked at 19:00) means the next occurrence
+    past_tense = any(w in text.lower() for w in ("yesterday", "last night", "slept", "ate ", "had ", "drank", "this morning"))
+    if ev.type in ("exercise", "alcohol", "caffeine", "meal") and not past_tense and ev.start < now - timedelta(minutes=30):
+        ev = ev.copy(start_time=(ev.start + timedelta(days=1)).isoformat(timespec="minutes"))
+        notes_extra = "time was in the past; moved to the next day"
+    else:
+        notes_extra = ""
     items = obj.get("items") or []
-    notes = [str(obj.get("notes") or "")]
+    notes = [str(obj.get("notes") or ""), notes_extra]
     raw_items = []
     if items and ev.type in ("meal", "alcohol", "caffeine"):
         totals, raw_items, xnotes = cross_check_items(items)
