@@ -469,6 +469,34 @@ def plan_timeline(req: TimelineRequest) -> Dict[str, Any]:
     return heavy(lambda: tw.cached(key, lambda: home_view.timeline(tw, workout, snacks)))
 
 
+class ChatRequest(BaseModel):
+    text: str
+
+
+@app.post("/chat")
+def chat(req: ChatRequest) -> Dict[str, Any]:
+    """One chat turn: Gemini (or the local classifier) routes the message to the backend tools,
+    phrases the results, and the answer is checked against the tool results before it leaves."""
+    from backend.chat.router import handle
+    tw = get_twin()
+    if not req.text.strip():
+        raise HTTPException(400, "empty text")
+    return heavy(lambda: handle(tw, req.text))
+
+
+@app.post("/chat/reset")
+def chat_reset() -> Dict[str, Any]:
+    tw = get_twin()
+    tw.chat_history = []
+    return {"ok": True}
+
+
+@app.get("/chat/tools")
+def chat_tools() -> List[Dict[str, Any]]:
+    from backend.chat.tools import TOOLS, describe
+    return [{"name": n, "description": describe(n), "parameters": spec["parameters"]} for n, spec in TOOLS.items()]
+
+
 @app.post("/demo/reset")
 def demo_reset() -> Dict[str, Any]:
     tw = reset_twin()
