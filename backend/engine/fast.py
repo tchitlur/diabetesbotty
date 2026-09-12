@@ -86,7 +86,7 @@ def rhs(x: np.ndarray, u: np.ndarray, p: Dict) -> np.ndarray:
 
     # ---------------- insulin subsystem (Hovorka 2004)
     basal_default = p["basal_u_per_h"] * p["basal_drift"] * 1000.0 / 60.0  # mU/min
-    basal = np.where(u[:, UIDX["basal_override"]] > 0.5, u[:, UIDX["basal"]], basal_default)
+    basal = np.where(u[:, UIDX["basal_override"]] > 0.5, u[:, UIDX["basal"]] * p["basal_drift"], basal_default)
     u_ins = (u[:, UIDX["bolus"]] + basal) / BW  # mU/kg/min
     tmaxI = p["tmaxI"]
     dS1 = u_ins - S1 / tmaxI
@@ -315,29 +315,30 @@ def steady_basal_rate(p: Dict, G_target_mgdl: float = 115.0) -> float:
     return basal_rate_for_insulin(steady_basal_insulin(p, G_target_mgdl), p)
 
 
-def calibrate_carb_ratio(p: Dict, carbs_g: float = 60.0, G0: float = 115.0) -> float:
-    """Clinical carb ratio (g per unit) for this physiology: the bolus that
-    returns a 60 g meal to within a few mg/dL of baseline 5 h later (the way a
-    clinician titrates). Bisection on bolus size, deterministic RK4."""
-    from backend.engine.simulate import simulate  # local import to avoid a cycle
+def calibrate_carb_ratio(p: Dict, carbs_g: float = 60.0, G0: float = 120.0, residual_mgdl: float = 35.0) -> float:
+    """Clinical carb ratio (g per unit) for this physiology, the way a clinician
+    titrates: the bolus for a 60 g meal that minimises time spent above
+    G0 + residual over 5 h while never dropping below 80 mg/dL. One batched
+    integration over a log-spaced grid of 40 candidate doses (deterministic)."""
+    from backend.engine.simulate import events_to_inputs, initial_vector  # local import to avoid a cycle
     from backend.schema.state import State
     from backend.schema.events import Event
+    from datetime import datetime
 
     I0 = steady_basal_insulin(p, G0)
-    st = State(glucose=G0, plasma_insulin=I0, liver_glycogen=60.0)
-
-    def end_delta(units: float) -> float:
-        ev = [Event(type="meal", start_time="2025-01-06T12:00", carbs_g=carbs_g),
-              Event(type="insulin", start_time="2025-01-06T12:00", insulin_units=units, insulin_kind="bolus")]
-        tr = simulate(st, ev, p, 300, t0="2025-01-06T12:00")
-        return float(tr.series["glucose"][-1] - G0)
-
-    lo, hi = 0.2, 20.0
-    for _ in range(18):
-        mid = 0.5 * (lo + hi)
-        if end_delta(mid) > 0:
-            lo = mid
-        else:
-            hi = mid
-    units = 0.5 * (lo + hi)
-    return float(carbs_g / max(units, 0.2))
+    st = State(glucose=G0, plasma_insulin=float(I0), liver_glycogen=60.0)
+    t0 = datetime(2025, 1, 6, 12, 0)
+    doses = np.geomspace(0.2, 25.0, 40)
+    T = 300 // 5
+    base_u = events_to_inputs([Event(type="meal", start_time=t0.isoformat(), carbs_g=carbs_g)], t0, T, 5, p)
+    inputs = np.repeat(base_u[:, None, :], len(doses), axis=1)
+    inputs[0, :, UIDX["bolus"]] += doses * 1000.0 / 5.0          # units -> mU/min over the first 5-min step
+    x0 = np.repeat(initial_vector(st, p), len(doses), axis=0)
+    X = integrate(x0, inputs, p, 5.0, substeps=2)
+    G = glucose_mgdl(X, p)                                        # (T+1, n_doses)
+    above = np.maximum(G - (G0 + residual_mgdl), 0.0).mean(axis=0)
+    below = np.maximum(80.0 - G, 0.0).mean(axis=0)
+    end_off = np.abs(G[-1] - G0 - residual_mgdl)
+    cost = above + 4.0 * below + 0.2 * end_off
+    best = float(doses[int(np.argmin(cost))])
+    return float(carbs_g / best)

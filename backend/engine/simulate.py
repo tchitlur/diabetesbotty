@@ -131,14 +131,18 @@ def events_to_inputs(events: List[Event], t0: datetime, n_steps: int, dt_min: in
 
     # carb-weighted absorption time constant over meals started in the last 3 h
     if meal_windows:
-        for m in range(total_min):
-            num, den = 0.0, 0.0
-            for s, c, tau in meal_windows:
-                if s - 1 <= m < s + 180 and c > 0:
-                    num += c * tau
-                    den += c
-            if den > 0:
-                u[m, UIDX["tau_g"]] = num / den
+        num = np.zeros(total_min)
+        den = np.zeros(total_min)
+        for s, c, tau in meal_windows:
+            if c <= 0:
+                continue
+            a = int(np.floor(max(s - 1, 0)))
+            b = int(np.ceil(min(s + 180, total_min)))
+            if b > a:
+                num[a:b] += c * tau
+                den[a:b] += c
+        mask = den > 0
+        u[mask, UIDX["tau_g"]] = num[mask] / den[mask]
     u[:, UIDX["basal_override"]] = (u[:, UIDX["basal_override"]] > 0).astype(float)
 
     # average to dt blocks (rates are per-minute so the mean preserves the total)
