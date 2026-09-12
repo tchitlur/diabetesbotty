@@ -111,7 +111,7 @@ def ensure_seed() -> None:
         path = _path(spec["id"])
         if path.exists():
             cur = json.loads(path.read_text(encoding="utf-8"))
-            if cur.get("occupation") == spec["occupation"] and cur.get("avatar") == spec["avatar"] and cur.get("patient_id") == spec["patient_id"]:
+            if cur.get("occupation") == spec["occupation"] and cur.get("avatar") == spec["avatar"] and cur.get("patient_id") == spec["patient_id"] and cur.get("carb_ratio_g_per_u") == spec["carb_ratio_g_per_u"]:
                 continue
             fitted = bool(cur.get("fitted")) and cur.get("patient_id") == spec["patient_id"]
         else:
@@ -136,10 +136,34 @@ def fit_persona(pid: str) -> Profile:
     t0 = time.time()
     if prof.patient_id != "demo" and not (patient_dir(prof.patient_id) / "fit.json").exists():
         fit_patient(prof.patient_id, verbose=False)
+    apply_demo_tuning(pid, prof.patient_id)
     prof.fitted = True
     prof.fit_seconds = round(time.time() - t0, 1)
     save_profile(prof)
     return prof
+
+
+def apply_demo_tuning(pid: str, patient_id: str) -> None:
+    """The /compare demo tunes two people's fitted parameters (backend/data/compare_personas.json,
+    within the plausible ranges). The same values go into their fit files so the app's dashboards
+    and the demo page run one model, on every machine the cohort is regenerated on."""
+    from backend.data.store import patient_dir
+    path = DATA_DIR / "compare_personas.json"
+    fit_path = patient_dir(patient_id) / "fit.json"
+    if not path.exists() or not fit_path.exists():
+        return
+    over = json.loads(path.read_text(encoding="utf-8")).get(pid)
+    if not over:
+        return
+    fit = json.loads(fit_path.read_text(encoding="utf-8"))
+    changed = False
+    for k, v in over.items():
+        if k in fit.get("params", {}) and fit["params"][k].get("mean") != float(v):
+            fit["params"][k]["mean"] = float(v)
+            changed = True
+    if changed:
+        fit["tuned_for_demo"] = over
+        fit_path.write_text(json.dumps(fit, indent=1), encoding="utf-8")
 
 
 def create_random(seed: Optional[int] = None) -> Profile:

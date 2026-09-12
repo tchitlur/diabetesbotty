@@ -88,6 +88,8 @@ def events_to_inputs(events: List[Event], t0: datetime, n_steps: int, dt_min: in
             tau = 1.0 + p["gut_fat_tau_gain"] * e.fat_g / 50.0 + p["gut_fiber_tau_gain"] * e.fiber_g / 10.0
             _add_rate(u, UIDX["carb"], start, spread, e.carbs_g, total_min)
             meal_windows.append((start, e.carbs_g, tau))
+            if e.insulin_units > 0:   # a meal that carries its own dose (the /compare page doses each person at their ratio)
+                _add_rate(u, UIDX["bolus"], start, 1.0, e.insulin_units * 1000.0, total_min)
         elif e.type == "insulin":
             if e.insulin_kind == "basal":
                 dur = max(e.duration_min, 60.0)
@@ -107,6 +109,8 @@ def events_to_inputs(events: List[Event], t0: datetime, n_steps: int, dt_min: in
             if e.carbs_g > 0:
                 _add_rate(u, UIDX["carb"], start, spread, e.carbs_g, total_min)
                 meal_windows.append((start, e.carbs_g, tau_default))
+            if e.insulin_units > 0:
+                _add_rate(u, UIDX["bolus"], start, 1.0, e.insulin_units * 1000.0, total_min)
         elif e.type == "exercise":
             dur = max(e.duration_min, 30.0)
             kind = e.exercise_kind or "aerobic"

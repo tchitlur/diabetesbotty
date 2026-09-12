@@ -1,0 +1,16 @@
+{
+ "priya": {
+  "si_tod0": 0.55,
+  "si_tod1": 0.56,
+  "si_tod2": 0.64,
+  "tau_carb": 22.0
+ },
+ "marcus": {
+  "carb_ratio": 0.72,
+  "si_tod0": 0.8,
+  "si_tod1": 0.9,
+  "si_tod2": 1.15,
+  "sleep_debt_coef": 0.38,
+  "tau_carb": 48.0
+ }
+}

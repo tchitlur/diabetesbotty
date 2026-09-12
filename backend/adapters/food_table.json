@@ -1,58 +1,743 @@
 {
-  "_comment": "Per-serving macros for the local fallback parser and for cross-checking Gemini item estimates. Sources: USDA FoodData Central typical servings; alcohol = 14 g per standard drink (NIAAA); caffeine from USDA / manufacturer data.",
-  "beer": {"kind": "alcohol", "serving": "12 oz", "alcohol_g": 14, "carbs_g": 13, "aliases": ["beers", "lager", "ale", "ipa", "pint", "pints"]},
-  "light beer": {"kind": "alcohol", "serving": "12 oz", "alcohol_g": 11, "carbs_g": 6, "aliases": ["light beers", "lite beer"]},
-  "wine": {"kind": "alcohol", "serving": "5 oz", "alcohol_g": 14, "carbs_g": 4, "aliases": ["wines", "glass of wine", "glasses of wine", "red wine", "white wine", "rose", "prosecco", "champagne"]},
-  "shot": {"kind": "alcohol", "serving": "1.5 oz", "alcohol_g": 14, "carbs_g": 0, "aliases": ["shots", "vodka", "whiskey", "whisky", "tequila", "rum", "gin", "bourbon", "spirit", "spirits", "liquor"]},
-  "cocktail": {"kind": "alcohol", "serving": "1 drink", "alcohol_g": 14, "carbs_g": 15, "aliases": ["cocktails", "margarita", "margaritas", "mojito", "old fashioned", "gin and tonic", "rum and coke"]},
-  "hard seltzer": {"kind": "alcohol", "serving": "12 oz", "alcohol_g": 14, "carbs_g": 2, "aliases": ["seltzer", "white claw"]},
-  "cider": {"kind": "alcohol", "serving": "12 oz", "alcohol_g": 14, "carbs_g": 20, "aliases": ["ciders"]},
-  "drink": {"kind": "alcohol", "serving": "1 standard drink", "alcohol_g": 14, "carbs_g": 8, "aliases": ["drinks", "alcohol", "booze"]},
-  "coffee": {"kind": "caffeine", "serving": "8 oz", "caffeine_mg": 95, "carbs_g": 0, "aliases": ["coffees", "cup of coffee", "americano", "drip coffee", "cold brew"]},
-  "large coffee": {"kind": "caffeine", "serving": "16 oz", "caffeine_mg": 190, "carbs_g": 0, "aliases": ["big coffee", "grande", "venti", "large latte"]},
-  "espresso": {"kind": "caffeine", "serving": "1 shot", "caffeine_mg": 63, "carbs_g": 0, "aliases": ["espressos", "double espresso", "shot of espresso"]},
-  "latte": {"kind": "caffeine", "serving": "12 oz", "caffeine_mg": 120, "carbs_g": 15, "protein_g": 8, "fat_g": 6, "aliases": ["lattes", "cappuccino", "flat white", "mocha", "macchiato"]},
-  "tea": {"kind": "caffeine", "serving": "8 oz", "caffeine_mg": 45, "carbs_g": 0, "aliases": ["black tea", "green tea", "chai", "matcha", "iced tea"]},
-  "energy drink": {"kind": "caffeine", "serving": "16 oz", "caffeine_mg": 160, "carbs_g": 54, "aliases": ["red bull", "monster", "celsius", "energy drinks"]},
-  "diet soda": {"kind": "caffeine", "serving": "12 oz", "caffeine_mg": 40, "carbs_g": 0, "aliases": ["diet coke", "coke zero", "diet pepsi"]},
-  "soda": {"kind": "meal", "serving": "12 oz", "caffeine_mg": 35, "carbs_g": 39, "aliases": ["coke", "cola", "pepsi", "sprite", "soft drink"]},
-  "juice": {"kind": "meal", "serving": "8 oz", "carbs_g": 26, "aliases": ["orange juice", "apple juice", "oj"]},
-  "water": {"kind": "water", "serving": "1 glass", "water_ml": 300, "aliases": ["glass of water", "bottle of water", "hydrate"]},
-  "glucose tabs": {"kind": "meal", "serving": "4 tabs", "carbs_g": 16, "aliases": ["glucose tablets", "dextrose", "fast carbs", "sugar tabs"]},
-  "pizza": {"kind": "meal", "serving": "1 slice", "carbs_g": 36, "fat_g": 10, "protein_g": 12, "fiber_g": 2, "aliases": ["slice of pizza", "slices of pizza", "pizza slice"]},
-  "burger": {"kind": "meal", "serving": "1 burger", "carbs_g": 40, "fat_g": 22, "protein_g": 25, "fiber_g": 2, "aliases": ["cheeseburger", "hamburger", "burgers"]},
-  "fries": {"kind": "meal", "serving": "medium", "carbs_g": 45, "fat_g": 17, "protein_g": 4, "fiber_g": 4, "aliases": ["french fries", "chips (uk)"]},
-  "rice": {"kind": "meal", "serving": "1 cup cooked", "carbs_g": 45, "fat_g": 0, "protein_g": 4, "fiber_g": 1, "aliases": ["white rice", "brown rice", "fried rice", "bowl of rice"]},
-  "pasta": {"kind": "meal", "serving": "1 cup cooked", "carbs_g": 43, "fat_g": 2, "protein_g": 8, "fiber_g": 3, "aliases": ["spaghetti", "noodles", "mac and cheese", "lasagna", "penne"]},
-  "bread": {"kind": "meal", "serving": "1 slice", "carbs_g": 15, "fat_g": 1, "protein_g": 3, "fiber_g": 1, "aliases": ["toast", "slice of bread", "roll", "bun"]},
-  "bagel": {"kind": "meal", "serving": "1 bagel", "carbs_g": 55, "fat_g": 2, "protein_g": 10, "fiber_g": 2, "aliases": ["bagels"]},
-  "sandwich": {"kind": "meal", "serving": "1 sandwich", "carbs_g": 40, "fat_g": 12, "protein_g": 20, "fiber_g": 3, "aliases": ["sub", "wrap", "panini", "sandwiches"]},
-  "salad": {"kind": "meal", "serving": "1 bowl", "carbs_g": 12, "fat_g": 10, "protein_g": 6, "fiber_g": 4, "aliases": ["green salad", "caesar salad", "side salad"]},
-  "chicken": {"kind": "meal", "serving": "6 oz", "carbs_g": 0, "fat_g": 6, "protein_g": 50, "fiber_g": 0, "aliases": ["chicken breast", "grilled chicken", "chicken thigh"]},
-  "steak": {"kind": "meal", "serving": "8 oz", "carbs_g": 0, "fat_g": 20, "protein_g": 55, "fiber_g": 0, "aliases": ["beef", "sirloin", "ribeye"]},
-  "salmon": {"kind": "meal", "serving": "6 oz", "carbs_g": 0, "fat_g": 18, "protein_g": 38, "fiber_g": 0, "aliases": ["fish", "tuna", "cod"]},
-  "eggs": {"kind": "meal", "serving": "2 eggs", "carbs_g": 1, "fat_g": 10, "protein_g": 12, "fiber_g": 0, "aliases": ["egg", "omelette", "scrambled eggs"]},
-  "oatmeal": {"kind": "meal", "serving": "1 cup cooked", "carbs_g": 28, "fat_g": 4, "protein_g": 6, "fiber_g": 4, "aliases": ["oats", "porridge", "overnight oats"]},
-  "cereal": {"kind": "meal", "serving": "1 cup with milk", "carbs_g": 40, "fat_g": 4, "protein_g": 8, "fiber_g": 3, "aliases": ["granola", "cornflakes", "cheerios"]},
-  "banana": {"kind": "meal", "serving": "1 medium", "carbs_g": 27, "fat_g": 0, "protein_g": 1, "fiber_g": 3, "aliases": ["bananas"]},
-  "apple": {"kind": "meal", "serving": "1 medium", "carbs_g": 25, "fat_g": 0, "protein_g": 0, "fiber_g": 4, "aliases": ["apples", "orange", "pear", "fruit"]},
-  "yogurt": {"kind": "meal", "serving": "1 cup", "carbs_g": 17, "fat_g": 4, "protein_g": 12, "fiber_g": 0, "aliases": ["greek yogurt", "yoghurt"]},
-  "milk": {"kind": "meal", "serving": "1 cup", "carbs_g": 12, "fat_g": 5, "protein_g": 8, "fiber_g": 0, "aliases": ["glass of milk", "chocolate milk"]},
-  "chocolate": {"kind": "meal", "serving": "1 bar (45 g)", "carbs_g": 26, "fat_g": 13, "protein_g": 3, "fiber_g": 2, "aliases": ["chocolate bar", "candy bar", "candy", "snickers"]},
-  "cookie": {"kind": "meal", "serving": "1 large", "carbs_g": 22, "fat_g": 8, "protein_g": 2, "fiber_g": 1, "aliases": ["cookies", "biscuit", "brownie"]},
-  "ice cream": {"kind": "meal", "serving": "1 cup", "carbs_g": 32, "fat_g": 14, "protein_g": 5, "fiber_g": 1, "aliases": ["gelato", "frozen yogurt"]},
-  "granola bar": {"kind": "meal", "serving": "1 bar", "carbs_g": 22, "fat_g": 6, "protein_g": 4, "fiber_g": 2, "aliases": ["cereal bar", "clif bar"]},
-  "protein bar": {"kind": "meal", "serving": "1 bar", "carbs_g": 20, "fat_g": 8, "protein_g": 20, "fiber_g": 3, "aliases": ["protein shake", "protein bars"]},
-  "sushi": {"kind": "meal", "serving": "8 pieces", "carbs_g": 60, "fat_g": 6, "protein_g": 18, "fiber_g": 2, "aliases": ["sushi roll", "rolls", "poke bowl"]},
-  "burrito": {"kind": "meal", "serving": "1 burrito", "carbs_g": 70, "fat_g": 25, "protein_g": 30, "fiber_g": 8, "aliases": ["burritos", "burrito bowl", "chipotle"]},
-  "taco": {"kind": "meal", "serving": "1 taco", "carbs_g": 18, "fat_g": 8, "protein_g": 10, "fiber_g": 2, "aliases": ["tacos", "quesadilla"]},
-  "donut": {"kind": "meal", "serving": "1 donut", "carbs_g": 30, "fat_g": 14, "protein_g": 4, "fiber_g": 1, "aliases": ["doughnut", "donuts", "croissant", "muffin", "pastry"]},
-  "pancakes": {"kind": "meal", "serving": "3 pancakes with syrup", "carbs_g": 75, "fat_g": 10, "protein_g": 9, "fiber_g": 2, "aliases": ["pancake", "waffles", "waffle", "french toast"]},
-  "nuts": {"kind": "meal", "serving": "1 oz", "carbs_g": 6, "fat_g": 15, "protein_g": 6, "fiber_g": 3, "aliases": ["almonds", "peanuts", "peanut butter", "cashews", "trail mix"]},
-  "chips": {"kind": "meal", "serving": "1 oz bag", "carbs_g": 15, "fat_g": 10, "protein_g": 2, "fiber_g": 1, "aliases": ["crisps", "potato chips", "tortilla chips", "popcorn", "pretzels"]},
-  "cheese": {"kind": "meal", "serving": "1 oz", "carbs_g": 1, "fat_g": 9, "protein_g": 7, "fiber_g": 0, "aliases": ["cheese stick", "string cheese"]},
-  "soup": {"kind": "meal", "serving": "1 bowl", "carbs_g": 20, "fat_g": 5, "protein_g": 8, "fiber_g": 3, "aliases": ["ramen", "pho", "chili", "stew"]},
-  "curry": {"kind": "meal", "serving": "1 plate with rice", "carbs_g": 65, "fat_g": 18, "protein_g": 25, "fiber_g": 5, "aliases": ["indian food", "thai food", "pad thai", "stir fry", "chinese food"]},
-  "snack": {"kind": "meal", "serving": "generic", "carbs_g": 25, "fat_g": 8, "protein_g": 5, "fiber_g": 2, "aliases": ["snacks", "something small"]},
-  "meal": {"kind": "meal", "serving": "generic plate", "carbs_g": 60, "fat_g": 20, "protein_g": 30, "fiber_g": 5, "aliases": ["dinner", "lunch", "breakfast", "food", "eat", "eating", "ate", "brunch", "plate"]}
+ "_comment": "Per-serving macros for the local fallback parser and for cross-checking Gemini item estimates. Sources: USDA FoodData Central typical servings; alcohol = 14 g per standard drink (NIAAA); caffeine from USDA / manufacturer data.",
+ "beer": {
+  "kind": "alcohol",
+  "serving": "12 oz",
+  "alcohol_g": 14,
+  "carbs_g": 13,
+  "aliases": [
+   "beers",
+   "lager",
+   "ale",
+   "ipa",
+   "pint",
+   "pints"
+  ]
+ },
+ "light beer": {
+  "kind": "alcohol",
+  "serving": "12 oz",
+  "alcohol_g": 11,
+  "carbs_g": 6,
+  "aliases": [
+   "light beers",
+   "lite beer"
+  ]
+ },
+ "wine": {
+  "kind": "alcohol",
+  "serving": "5 oz",
+  "alcohol_g": 14,
+  "carbs_g": 4,
+  "aliases": [
+   "wines",
+   "glass of wine",
+   "glasses of wine",
+   "red wine",
+   "white wine",
+   "rose",
+   "prosecco",
+   "champagne"
+  ]
+ },
+ "shot": {
+  "kind": "alcohol",
+  "serving": "1.5 oz",
+  "alcohol_g": 14,
+  "carbs_g": 0,
+  "aliases": [
+   "shots",
+   "vodka",
+   "whiskey",
+   "whisky",
+   "tequila",
+   "rum",
+   "gin",
+   "bourbon",
+   "spirit",
+   "spirits",
+   "liquor"
+  ]
+ },
+ "cocktail": {
+  "kind": "alcohol",
+  "serving": "1 drink",
+  "alcohol_g": 14,
+  "carbs_g": 15,
+  "aliases": [
+   "cocktails",
+   "margarita",
+   "margaritas",
+   "mojito",
+   "old fashioned",
+   "gin and tonic",
+   "rum and coke"
+  ]
+ },
+ "hard seltzer": {
+  "kind": "alcohol",
+  "serving": "12 oz",
+  "alcohol_g": 14,
+  "carbs_g": 2,
+  "aliases": [
+   "seltzer",
+   "white claw"
+  ]
+ },
+ "cider": {
+  "kind": "alcohol",
+  "serving": "12 oz",
+  "alcohol_g": 14,
+  "carbs_g": 20,
+  "aliases": [
+   "ciders"
+  ]
+ },
+ "drink": {
+  "kind": "alcohol",
+  "serving": "1 standard drink",
+  "alcohol_g": 14,
+  "carbs_g": 8,
+  "aliases": [
+   "drinks",
+   "alcohol",
+   "booze"
+  ]
+ },
+ "coffee": {
+  "kind": "caffeine",
+  "serving": "8 oz",
+  "caffeine_mg": 95,
+  "carbs_g": 0,
+  "aliases": [
+   "coffees",
+   "cup of coffee",
+   "americano",
+   "drip coffee",
+   "cold brew"
+  ]
+ },
+ "large coffee": {
+  "kind": "caffeine",
+  "serving": "16 oz",
+  "caffeine_mg": 190,
+  "carbs_g": 0,
+  "aliases": [
+   "big coffee",
+   "grande",
+   "venti",
+   "large latte"
+  ]
+ },
+ "espresso": {
+  "kind": "caffeine",
+  "serving": "1 shot",
+  "caffeine_mg": 63,
+  "carbs_g": 0,
+  "aliases": [
+   "espressos",
+   "double espresso",
+   "shot of espresso"
+  ]
+ },
+ "latte": {
+  "kind": "caffeine",
+  "serving": "12 oz",
+  "caffeine_mg": 120,
+  "carbs_g": 15,
+  "protein_g": 8,
+  "fat_g": 6,
+  "aliases": [
+   "lattes",
+   "cappuccino",
+   "flat white",
+   "mocha",
+   "macchiato"
+  ]
+ },
+ "tea": {
+  "kind": "caffeine",
+  "serving": "8 oz",
+  "caffeine_mg": 45,
+  "carbs_g": 0,
+  "aliases": [
+   "black tea",
+   "green tea",
+   "chai",
+   "matcha",
+   "iced tea"
+  ]
+ },
+ "energy drink": {
+  "kind": "caffeine",
+  "serving": "16 oz",
+  "caffeine_mg": 160,
+  "carbs_g": 54,
+  "aliases": [
+   "red bull",
+   "monster",
+   "celsius",
+   "energy drinks"
+  ]
+ },
+ "diet soda": {
+  "kind": "caffeine",
+  "serving": "12 oz",
+  "caffeine_mg": 40,
+  "carbs_g": 0,
+  "aliases": [
+   "diet coke",
+   "coke zero",
+   "diet pepsi"
+  ]
+ },
+ "soda": {
+  "kind": "meal",
+  "serving": "12 oz",
+  "caffeine_mg": 35,
+  "carbs_g": 39,
+  "aliases": [
+   "coke",
+   "cola",
+   "pepsi",
+   "sprite",
+   "soft drink"
+  ]
+ },
+ "juice": {
+  "kind": "meal",
+  "serving": "8 oz",
+  "carbs_g": 26,
+  "aliases": [
+   "orange juice",
+   "apple juice",
+   "oj"
+  ]
+ },
+ "water": {
+  "kind": "water",
+  "serving": "1 glass",
+  "water_ml": 300,
+  "aliases": [
+   "glass of water",
+   "bottle of water",
+   "hydrate"
+  ]
+ },
+ "glucose tabs": {
+  "kind": "meal",
+  "serving": "4 tabs",
+  "carbs_g": 16,
+  "aliases": [
+   "glucose tablets",
+   "dextrose",
+   "fast carbs",
+   "sugar tabs"
+  ]
+ },
+ "pizza": {
+  "kind": "meal",
+  "serving": "1 slice",
+  "carbs_g": 36,
+  "fat_g": 10,
+  "protein_g": 12,
+  "fiber_g": 2,
+  "aliases": [
+   "pepperoni",
+   "pepperoni pizza",
+   "pizza slice",
+   "slice of pizza",
+   "slices of pizza"
+  ]
+ },
+ "burger": {
+  "kind": "meal",
+  "serving": "1 burger",
+  "carbs_g": 40,
+  "fat_g": 22,
+  "protein_g": 25,
+  "fiber_g": 2,
+  "aliases": [
+   "cheeseburger",
+   "hamburger",
+   "burgers"
+  ]
+ },
+ "fries": {
+  "kind": "meal",
+  "serving": "medium",
+  "carbs_g": 45,
+  "fat_g": 17,
+  "protein_g": 4,
+  "fiber_g": 4,
+  "aliases": [
+   "french fries",
+   "chips (uk)"
+  ]
+ },
+ "rice": {
+  "kind": "meal",
+  "serving": "1 cup cooked",
+  "carbs_g": 45,
+  "fat_g": 0,
+  "protein_g": 4,
+  "fiber_g": 1,
+  "aliases": [
+   "white rice",
+   "brown rice",
+   "fried rice",
+   "bowl of rice"
+  ]
+ },
+ "pasta": {
+  "kind": "meal",
+  "serving": "1 cup cooked",
+  "carbs_g": 43,
+  "fat_g": 2,
+  "protein_g": 8,
+  "fiber_g": 3,
+  "aliases": [
+   "spaghetti",
+   "noodles",
+   "mac and cheese",
+   "lasagna",
+   "penne"
+  ]
+ },
+ "bread": {
+  "kind": "meal",
+  "serving": "1 slice",
+  "carbs_g": 15,
+  "fat_g": 1,
+  "protein_g": 3,
+  "fiber_g": 1,
+  "aliases": [
+   "toast",
+   "slice of bread",
+   "roll",
+   "bun"
+  ]
+ },
+ "bagel": {
+  "kind": "meal",
+  "serving": "1 bagel",
+  "carbs_g": 55,
+  "fat_g": 2,
+  "protein_g": 10,
+  "fiber_g": 2,
+  "aliases": [
+   "bagels"
+  ]
+ },
+ "sandwich": {
+  "kind": "meal",
+  "serving": "1 sandwich",
+  "carbs_g": 40,
+  "fat_g": 12,
+  "protein_g": 20,
+  "fiber_g": 3,
+  "aliases": [
+   "sub",
+   "wrap",
+   "panini",
+   "sandwiches"
+  ]
+ },
+ "salad": {
+  "kind": "meal",
+  "serving": "1 bowl",
+  "carbs_g": 12,
+  "fat_g": 10,
+  "protein_g": 6,
+  "fiber_g": 4,
+  "aliases": [
+   "green salad",
+   "caesar salad",
+   "side salad"
+  ]
+ },
+ "chicken": {
+  "kind": "meal",
+  "serving": "6 oz",
+  "carbs_g": 0,
+  "fat_g": 6,
+  "protein_g": 50,
+  "fiber_g": 0,
+  "aliases": [
+   "chicken breast",
+   "grilled chicken",
+   "chicken thigh"
+  ]
+ },
+ "steak": {
+  "kind": "meal",
+  "serving": "8 oz",
+  "carbs_g": 0,
+  "fat_g": 20,
+  "protein_g": 55,
+  "fiber_g": 0,
+  "aliases": [
+   "beef",
+   "sirloin",
+   "ribeye"
+  ]
+ },
+ "salmon": {
+  "kind": "meal",
+  "serving": "6 oz",
+  "carbs_g": 0,
+  "fat_g": 18,
+  "protein_g": 38,
+  "fiber_g": 0,
+  "aliases": [
+   "fish",
+   "tuna",
+   "cod"
+  ]
+ },
+ "eggs": {
+  "kind": "meal",
+  "serving": "2 eggs",
+  "carbs_g": 1,
+  "fat_g": 10,
+  "protein_g": 12,
+  "fiber_g": 0,
+  "aliases": [
+   "egg",
+   "omelette",
+   "scrambled eggs"
+  ]
+ },
+ "oatmeal": {
+  "kind": "meal",
+  "serving": "1 cup cooked",
+  "carbs_g": 28,
+  "fat_g": 4,
+  "protein_g": 6,
+  "fiber_g": 4,
+  "aliases": [
+   "oats",
+   "porridge",
+   "overnight oats"
+  ]
+ },
+ "cereal": {
+  "kind": "meal",
+  "serving": "1 cup with milk",
+  "carbs_g": 40,
+  "fat_g": 4,
+  "protein_g": 8,
+  "fiber_g": 3,
+  "aliases": [
+   "granola",
+   "cornflakes",
+   "cheerios"
+  ]
+ },
+ "banana": {
+  "kind": "meal",
+  "serving": "1 medium",
+  "carbs_g": 27,
+  "fat_g": 0,
+  "protein_g": 1,
+  "fiber_g": 3,
+  "aliases": [
+   "bananas"
+  ]
+ },
+ "apple": {
+  "kind": "meal",
+  "serving": "1 medium",
+  "carbs_g": 25,
+  "fat_g": 0,
+  "protein_g": 0,
+  "fiber_g": 4,
+  "aliases": [
+   "apples",
+   "orange",
+   "pear",
+   "fruit"
+  ]
+ },
+ "yogurt": {
+  "kind": "meal",
+  "serving": "1 cup",
+  "carbs_g": 17,
+  "fat_g": 4,
+  "protein_g": 12,
+  "fiber_g": 0,
+  "aliases": [
+   "greek yogurt",
+   "yoghurt"
+  ]
+ },
+ "milk": {
+  "kind": "meal",
+  "serving": "1 cup",
+  "carbs_g": 12,
+  "fat_g": 5,
+  "protein_g": 8,
+  "fiber_g": 0,
+  "aliases": [
+   "glass of milk",
+   "chocolate milk"
+  ]
+ },
+ "chocolate": {
+  "kind": "meal",
+  "serving": "1 bar (45 g)",
+  "carbs_g": 26,
+  "fat_g": 13,
+  "protein_g": 3,
+  "fiber_g": 2,
+  "aliases": [
+   "chocolate bar",
+   "candy bar",
+   "candy",
+   "snickers"
+  ]
+ },
+ "cookie": {
+  "kind": "meal",
+  "serving": "1 large",
+  "carbs_g": 22,
+  "fat_g": 8,
+  "protein_g": 2,
+  "fiber_g": 1,
+  "aliases": [
+   "cookies",
+   "biscuit",
+   "brownie"
+  ]
+ },
+ "ice cream": {
+  "kind": "meal",
+  "serving": "1 cup",
+  "carbs_g": 32,
+  "fat_g": 14,
+  "protein_g": 5,
+  "fiber_g": 1,
+  "aliases": [
+   "gelato",
+   "frozen yogurt"
+  ]
+ },
+ "granola bar": {
+  "kind": "meal",
+  "serving": "1 bar",
+  "carbs_g": 22,
+  "fat_g": 6,
+  "protein_g": 4,
+  "fiber_g": 2,
+  "aliases": [
+   "cereal bar",
+   "clif bar"
+  ]
+ },
+ "protein bar": {
+  "kind": "meal",
+  "serving": "1 bar",
+  "carbs_g": 20,
+  "fat_g": 8,
+  "protein_g": 20,
+  "fiber_g": 3,
+  "aliases": [
+   "protein shake",
+   "protein bars"
+  ]
+ },
+ "sushi": {
+  "kind": "meal",
+  "serving": "8 pieces",
+  "carbs_g": 60,
+  "fat_g": 6,
+  "protein_g": 18,
+  "fiber_g": 2,
+  "aliases": [
+   "sushi roll",
+   "rolls",
+   "poke bowl"
+  ]
+ },
+ "burrito": {
+  "kind": "meal",
+  "serving": "1 burrito",
+  "carbs_g": 70,
+  "fat_g": 25,
+  "protein_g": 30,
+  "fiber_g": 8,
+  "aliases": [
+   "burritos",
+   "burrito bowl",
+   "chipotle"
+  ]
+ },
+ "taco": {
+  "kind": "meal",
+  "serving": "1 taco",
+  "carbs_g": 18,
+  "fat_g": 8,
+  "protein_g": 10,
+  "fiber_g": 2,
+  "aliases": [
+   "tacos",
+   "quesadilla"
+  ]
+ },
+ "donut": {
+  "kind": "meal",
+  "serving": "1 donut",
+  "carbs_g": 30,
+  "fat_g": 14,
+  "protein_g": 4,
+  "fiber_g": 1,
+  "aliases": [
+   "doughnut",
+   "donuts",
+   "croissant",
+   "pastry"
+  ]
+ },
+ "pancakes": {
+  "kind": "meal",
+  "serving": "3 pancakes with syrup",
+  "carbs_g": 75,
+  "fat_g": 10,
+  "protein_g": 9,
+  "fiber_g": 2,
+  "aliases": [
+   "pancake",
+   "waffles",
+   "waffle",
+   "french toast"
+  ]
+ },
+ "nuts": {
+  "kind": "meal",
+  "serving": "1 oz",
+  "carbs_g": 6,
+  "fat_g": 15,
+  "protein_g": 6,
+  "fiber_g": 3,
+  "aliases": [
+   "almonds",
+   "peanuts",
+   "peanut butter",
+   "cashews",
+   "trail mix"
+  ]
+ },
+ "chips": {
+  "kind": "meal",
+  "serving": "1 oz bag",
+  "carbs_g": 15,
+  "fat_g": 10,
+  "protein_g": 2,
+  "fiber_g": 1,
+  "aliases": [
+   "crisps",
+   "potato chips",
+   "tortilla chips",
+   "popcorn",
+   "pretzels"
+  ]
+ },
+ "cheese": {
+  "kind": "meal",
+  "serving": "1 oz",
+  "carbs_g": 1,
+  "fat_g": 9,
+  "protein_g": 7,
+  "fiber_g": 0,
+  "aliases": [
+   "cheese stick",
+   "string cheese"
+  ]
+ },
+ "soup": {
+  "kind": "meal",
+  "serving": "1 bowl",
+  "carbs_g": 20,
+  "fat_g": 5,
+  "protein_g": 8,
+  "fiber_g": 3,
+  "aliases": [
+   "ramen",
+   "pho",
+   "chili",
+   "stew"
+  ]
+ },
+ "curry": {
+  "kind": "meal",
+  "serving": "1 plate with rice",
+  "carbs_g": 65,
+  "fat_g": 18,
+  "protein_g": 25,
+  "fiber_g": 5,
+  "aliases": [
+   "indian food",
+   "thai food",
+   "pad thai",
+   "stir fry",
+   "chinese food"
+  ]
+ },
+ "snack": {
+  "kind": "meal",
+  "serving": "generic",
+  "carbs_g": 25,
+  "fat_g": 8,
+  "protein_g": 5,
+  "fiber_g": 2,
+  "aliases": [
+   "snacks",
+   "something small"
+  ]
+ },
+ "meal": {
+  "kind": "meal",
+  "serving": "generic plate",
+  "carbs_g": 60,
+  "fat_g": 20,
+  "protein_g": 30,
+  "fiber_g": 5,
+  "aliases": [
+   "dinner",
+   "lunch",
+   "breakfast",
+   "food",
+   "eat",
+   "eating",
+   "ate",
+   "brunch",
+   "plate"
+  ]
+ },
+ "cheesecake": {
+  "kind": "meal",
+  "serving": "1 slice",
+  "carbs_g": 40,
+  "fat_g": 25,
+  "protein_g": 6,
+  "fiber_g": 1,
+  "aliases": [
+   "cheese cake",
+   "slice of cheesecake",
+   "slices of cheesecake"
+  ]
+ },
+ "muffin": {
+  "kind": "meal",
+  "serving": "1 muffin",
+  "carbs_g": 48,
+  "fat_g": 16,
+  "protein_g": 6,
+  "fiber_g": 2,
+  "aliases": [
+   "muffins",
+   "blueberry muffin",
+   "chocolate muffin"
+  ]
+ }
 }

@@ -208,8 +208,10 @@ def permission_plain(card: PermissionCard, now: datetime, cause_event: Optional[
             reason += f" Even if you {cond}, the peak is about {int(round(best['peak']))}."
         return {"headline": head, "tone": "bad", "reason": reason}
     reason = f"{What} would drop you to {low_clause(prop)} because {cause}"
-    if best and cond:
-        reason += f"; even if you {cond} it only lifts to about {int(round(best['nadir']))}, so a low stays {likelihood(card.p_hypo)}."
+    if best and cond and best.get("nadir", 0) > prop.get("nadir", 0) + 2:
+        reason += f"; even if you {cond} it only lifts to about {int(round(best['nadir']))}, so a low stays {likelihood(max(p_prop, card.p_hypo))}."
+    elif best and cond:
+        reason += f", and to {cond} does not help (the low point stays about {int(round(best['nadir']))}); a low is {likelihood(p_prop)}."
     else:
         reason += "."
     if alt and alt.get("start"):
