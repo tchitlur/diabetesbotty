@@ -1,0 +1,4974 @@
+{
+ "n_anchors": 700,
+ "patients": [
+  "demo",
+  "p01",
+  "p02",
+  "p03"
+ ],
+ "bins": [
+  {
+   "lo": 0.0,
+   "hi": 0.05,
+   "n": 337,
+   "pred": 0.00672601384767557,
+   "obs": 0.04154302670623145
+  },
+  {
+   "lo": 0.05,
+   "hi": 0.1,
+   "n": 40,
+   "pred": 0.06883333333333333,
+   "obs": 0.275
+  },
+  {
+   "lo": 0.1,
+   "hi": 0.2,
+   "n": 69,
+   "pred": 0.13787439613526567,
+   "obs": 0.463768115942029
+  },
+  {
+   "lo": 0.2,
+   "hi": 0.35,
+   "n": 55,
+   "pred": 0.2592727272727272,
+   "obs": 0.38181818181818183
+  },
+  {
+   "lo": 0.35,
+   "hi": 0.5,
+   "n": 41,
+   "pred": 0.416260162601626,
+   "obs": 0.7073170731707317
+  },
+  {
+   "lo": 0.5,
+   "hi": 0.7,
+   "n": 32,
+   "pred": 0.5852083333333333,
+   "obs": 0.84375
+  },
+  {
+   "lo": 0.7,
+   "hi": 0.9,
+   "n": 36,
+   "pred": 0.7877777777777778,
+   "obs": 0.9722222222222222
+  },
+  {
+   "lo": 0.9,
+   "hi": 1.0001,
+   "n": 90,
+   "pred": 0.9846666666666666,
+   "obs": 1.0
+  }
+ ],
+ "brier": 0.11729428571428571,
+ "brier_climatology": 0.23310000000000003,
+ "ece": 0.11061904761904763,
+ "auc": 0.9370682635988759,
+ "base_rate": 0.37,
+ "rows": [
+  {
+   "patient": "demo",
+   "start": "2025-08-01T01:35",
+   "g0": 62.0,
+   "p_hypo": 0.9866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-01T06:45",
+   "g0": 71.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-01T13:55",
+   "g0": 148.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-01T14:50",
+   "g0": 134.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-01T16:00",
+   "g0": 125.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-02T01:40",
+   "g0": 54.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-02T02:40",
+   "g0": 60.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-02T06:10",
+   "g0": 93.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-02T13:30",
+   "g0": 117.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-02T14:55",
+   "g0": 106.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-02T16:40",
+   "g0": 79.0,
+   "p_hypo": 0.2733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-03T01:15",
+   "g0": 61.0,
+   "p_hypo": 0.7733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-03T02:15",
+   "g0": 60.0,
+   "p_hypo": 0.4266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-03T06:35",
+   "g0": 94.0,
+   "p_hypo": 0.02,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-03T13:05",
+   "g0": 111.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-03T14:30",
+   "g0": 217.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-03T16:30",
+   "g0": 221.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-04T01:35",
+   "g0": 202.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-04T02:45",
+   "g0": 199.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-04T06:30",
+   "g0": 194.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-04T13:40",
+   "g0": 180.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-04T14:55",
+   "g0": 186.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-04T16:05",
+   "g0": 195.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-05T06:45",
+   "g0": 149.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-05T13:05",
+   "g0": 201.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-05T14:25",
+   "g0": 152.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-05T16:10",
+   "g0": 122.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-06T01:55",
+   "g0": 152.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-06T02:25",
+   "g0": 159.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-06T06:55",
+   "g0": 192.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-06T13:50",
+   "g0": 169.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-06T14:20",
+   "g0": 154.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-06T16:25",
+   "g0": 152.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-07T01:15",
+   "g0": 173.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-07T02:45",
+   "g0": 166.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-07T06:50",
+   "g0": 242.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-07T13:25",
+   "g0": 243.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-07T14:45",
+   "g0": 245.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-07T16:55",
+   "g0": 196.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-08T01:40",
+   "g0": 232.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-08T02:40",
+   "g0": 231.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-08T06:20",
+   "g0": 201.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-08T13:55",
+   "g0": 227.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-08T14:20",
+   "g0": 254.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-08T16:35",
+   "g0": 264.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-09T01:05",
+   "g0": 205.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-09T02:35",
+   "g0": 266.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-09T06:35",
+   "g0": 168.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-09T13:10",
+   "g0": 151.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-09T14:00",
+   "g0": 164.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-09T16:45",
+   "g0": 181.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-10T01:15",
+   "g0": 159.0,
+   "p_hypo": 0.36666666666666664,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-10T02:50",
+   "g0": 109.0,
+   "p_hypo": 0.6733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-10T06:35",
+   "g0": 72.0,
+   "p_hypo": 0.6333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-10T13:05",
+   "g0": 117.0,
+   "p_hypo": 0.47333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-10T14:00",
+   "g0": 126.0,
+   "p_hypo": 0.4,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-10T16:05",
+   "g0": 91.0,
+   "p_hypo": 0.16,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-11T06:00",
+   "g0": 90.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-11T13:10",
+   "g0": 135.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-11T14:30",
+   "g0": 170.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-11T16:45",
+   "g0": 184.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-12T01:30",
+   "g0": 163.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-12T02:35",
+   "g0": 175.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-12T06:10",
+   "g0": 181.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-12T13:45",
+   "g0": 173.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-12T14:55",
+   "g0": 168.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-12T16:20",
+   "g0": 142.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-13T01:20",
+   "g0": 137.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-13T02:50",
+   "g0": 138.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-13T06:30",
+   "g0": 127.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-13T13:40",
+   "g0": 79.0,
+   "p_hypo": 0.4266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-13T14:50",
+   "g0": 71.0,
+   "p_hypo": 0.7066666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-13T16:20",
+   "g0": 81.0,
+   "p_hypo": 0.5466666666666666,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-14T01:35",
+   "g0": 98.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-14T02:30",
+   "g0": 96.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-14T06:20",
+   "g0": 101.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-14T13:15",
+   "g0": 199.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-14T14:05",
+   "g0": 264.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-14T16:05",
+   "g0": 271.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-15T01:55",
+   "g0": 96.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-15T02:55",
+   "g0": 121.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-15T06:35",
+   "g0": 126.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-15T13:00",
+   "g0": 140.0,
+   "p_hypo": 0.3466666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-15T14:30",
+   "g0": 122.0,
+   "p_hypo": 0.6733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-15T16:20",
+   "g0": 85.0,
+   "p_hypo": 0.84,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-16T01:35",
+   "g0": 75.0,
+   "p_hypo": 0.96,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-16T02:30",
+   "g0": 63.0,
+   "p_hypo": 0.9666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-16T06:05",
+   "g0": 83.0,
+   "p_hypo": 0.02,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-16T13:40",
+   "g0": 119.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-16T14:30",
+   "g0": 136.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-16T16:55",
+   "g0": 105.0,
+   "p_hypo": 0.72,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-17T01:30",
+   "g0": 168.0,
+   "p_hypo": 0.12,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-17T02:35",
+   "g0": 148.0,
+   "p_hypo": 0.7066666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-17T06:30",
+   "g0": 69.0,
+   "p_hypo": 0.6666666666666666,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-17T13:15",
+   "g0": 57.0,
+   "p_hypo": 0.88,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-17T14:10",
+   "g0": 66.0,
+   "p_hypo": 0.9133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-17T16:25",
+   "g0": 39.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-18T01:40",
+   "g0": 72.0,
+   "p_hypo": 0.4266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-18T02:05",
+   "g0": 56.0,
+   "p_hypo": 0.9133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-18T06:00",
+   "g0": 83.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-18T13:50",
+   "g0": 146.0,
+   "p_hypo": 0.2866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-18T14:15",
+   "g0": 151.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-18T16:40",
+   "g0": 83.0,
+   "p_hypo": 0.4266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-19T01:05",
+   "g0": 61.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-19T02:00",
+   "g0": 83.0,
+   "p_hypo": 0.18,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-19T06:40",
+   "g0": 173.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-19T13:05",
+   "g0": 225.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-19T14:30",
+   "g0": 206.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-19T16:55",
+   "g0": 178.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-20T01:25",
+   "g0": 263.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-20T02:50",
+   "g0": 265.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-20T06:00",
+   "g0": 225.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-20T13:05",
+   "g0": 188.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-20T14:25",
+   "g0": 138.0,
+   "p_hypo": 0.9266666666666666,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-20T16:20",
+   "g0": 68.0,
+   "p_hypo": 0.98,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-21T06:15",
+   "g0": 91.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-21T13:40",
+   "g0": 125.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-21T14:20",
+   "g0": 115.0,
+   "p_hypo": 0.46,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-21T16:40",
+   "g0": 73.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-22T01:40",
+   "g0": 82.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-22T02:10",
+   "g0": 79.0,
+   "p_hypo": 0.12,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-22T06:45",
+   "g0": 98.0,
+   "p_hypo": 0.08,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-22T13:10",
+   "g0": 56.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-22T14:20",
+   "g0": 71.0,
+   "p_hypo": 0.9733333333333334,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-22T16:05",
+   "g0": 71.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-23T01:40",
+   "g0": 92.0,
+   "p_hypo": 0.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-23T02:50",
+   "g0": 90.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-23T06:30",
+   "g0": 100.0,
+   "p_hypo": 0.1,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-23T13:40",
+   "g0": 177.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-23T14:40",
+   "g0": 162.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-23T16:15",
+   "g0": 139.0,
+   "p_hypo": 0.8733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-24T01:15",
+   "g0": 101.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-24T02:20",
+   "g0": 121.0,
+   "p_hypo": 0.5333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-24T06:50",
+   "g0": 84.0,
+   "p_hypo": 0.37333333333333335,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-24T13:30",
+   "g0": 101.0,
+   "p_hypo": 0.4,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-24T14:35",
+   "g0": 71.0,
+   "p_hypo": 0.9066666666666666,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-24T16:50",
+   "g0": 72.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-25T01:10",
+   "g0": 78.0,
+   "p_hypo": 0.5466666666666666,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-25T02:35",
+   "g0": 76.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-25T06:30",
+   "g0": 103.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-25T13:55",
+   "g0": 177.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-25T14:40",
+   "g0": 173.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-25T16:40",
+   "g0": 150.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-26T01:45",
+   "g0": 84.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-26T02:55",
+   "g0": 89.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-26T06:25",
+   "g0": 100.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-26T13:10",
+   "g0": 124.0,
+   "p_hypo": 0.26,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-26T14:15",
+   "g0": 106.0,
+   "p_hypo": 0.7066666666666667,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-26T16:50",
+   "g0": 78.0,
+   "p_hypo": 0.1,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-27T01:35",
+   "g0": 80.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-27T02:30",
+   "g0": 99.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-27T06:40",
+   "g0": 99.0,
+   "p_hypo": 0.21333333333333335,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-27T13:30",
+   "g0": 137.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-27T14:30",
+   "g0": 164.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-27T16:15",
+   "g0": 141.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-28T01:10",
+   "g0": 139.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-28T02:10",
+   "g0": 160.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-28T06:35",
+   "g0": 170.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-28T13:35",
+   "g0": 110.0,
+   "p_hypo": 0.88,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-28T14:45",
+   "g0": 111.0,
+   "p_hypo": 0.84,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-28T16:20",
+   "g0": 63.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-29T01:50",
+   "g0": 85.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-29T02:30",
+   "g0": 68.0,
+   "p_hypo": 0.21333333333333335,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-29T06:55",
+   "g0": 165.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-29T13:40",
+   "g0": 192.0,
+   "p_hypo": 0.1,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-29T14:20",
+   "g0": 173.0,
+   "p_hypo": 0.29333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-29T16:05",
+   "g0": 103.0,
+   "p_hypo": 0.4533333333333333,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-30T01:45",
+   "g0": 137.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-30T02:30",
+   "g0": 141.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-30T06:40",
+   "g0": 151.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-30T13:40",
+   "g0": 85.0,
+   "p_hypo": 0.36,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-30T14:55",
+   "g0": 60.0,
+   "p_hypo": 0.8066666666666666,
+   "observed": true
+  },
+  {
+   "patient": "demo",
+   "start": "2025-08-30T16:45",
+   "g0": 72.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-01T05:45",
+   "g0": 83.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-01T07:50",
+   "g0": 121.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-01T14:05",
+   "g0": 88.0,
+   "p_hypo": 0.8666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-01T18:20",
+   "g0": 53.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-01T23:00",
+   "g0": 43.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-02T03:55",
+   "g0": 78.0,
+   "p_hypo": 0.28,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-02T05:35",
+   "g0": 82.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-02T07:10",
+   "g0": 81.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-02T14:45",
+   "g0": 52.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-02T18:45",
+   "g0": 58.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-02T23:15",
+   "g0": 62.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-03T03:40",
+   "g0": 64.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-03T05:05",
+   "g0": 77.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-03T07:25",
+   "g0": 49.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-03T14:30",
+   "g0": 73.0,
+   "p_hypo": 0.82,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-03T18:00",
+   "g0": 60.0,
+   "p_hypo": 0.98,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-03T23:45",
+   "g0": 173.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-04T03:50",
+   "g0": 127.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-04T05:40",
+   "g0": 119.0,
+   "p_hypo": 0.16,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-04T07:30",
+   "g0": 130.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-04T14:55",
+   "g0": 121.0,
+   "p_hypo": 0.22666666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-04T18:20",
+   "g0": 107.0,
+   "p_hypo": 0.4266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-04T23:20",
+   "g0": 63.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-05T03:20",
+   "g0": 86.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-05T05:25",
+   "g0": 77.0,
+   "p_hypo": 0.2,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-05T07:35",
+   "g0": 182.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-05T14:25",
+   "g0": 82.0,
+   "p_hypo": 0.20666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-05T18:20",
+   "g0": 74.0,
+   "p_hypo": 0.5266666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-05T23:35",
+   "g0": 65.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-06T03:30",
+   "g0": 39.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-06T05:00",
+   "g0": 71.0,
+   "p_hypo": 0.68,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-06T07:20",
+   "g0": 94.0,
+   "p_hypo": 0.24,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-06T14:20",
+   "g0": 199.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-06T18:00",
+   "g0": 185.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-06T23:00",
+   "g0": 93.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-07T03:15",
+   "g0": 86.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-07T05:10",
+   "g0": 77.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-07T07:50",
+   "g0": 95.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-07T14:50",
+   "g0": 210.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-07T18:45",
+   "g0": 168.0,
+   "p_hypo": 0.6533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-07T23:25",
+   "g0": 74.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-08T03:40",
+   "g0": 94.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-08T05:40",
+   "g0": 78.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-08T07:25",
+   "g0": 145.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-08T14:25",
+   "g0": 141.0,
+   "p_hypo": 0.9333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-08T18:55",
+   "g0": 59.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-08T23:25",
+   "g0": 93.0,
+   "p_hypo": 0.8066666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-09T03:50",
+   "g0": 69.0,
+   "p_hypo": 0.9133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-09T05:20",
+   "g0": 43.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-09T07:10",
+   "g0": 60.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-09T14:50",
+   "g0": 94.0,
+   "p_hypo": 0.98,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-09T18:30",
+   "g0": 58.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-09T23:30",
+   "g0": 120.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-10T03:55",
+   "g0": 93.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-10T05:05",
+   "g0": 88.0,
+   "p_hypo": 0.35333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-10T07:45",
+   "g0": 108.0,
+   "p_hypo": 0.5533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-10T14:10",
+   "g0": 144.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-10T18:20",
+   "g0": 97.0,
+   "p_hypo": 0.26,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-10T23:50",
+   "g0": 49.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-11T07:30",
+   "g0": 86.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-11T14:45",
+   "g0": 172.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-11T18:50",
+   "g0": 142.0,
+   "p_hypo": 0.26666666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-11T23:05",
+   "g0": 146.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-12T03:40",
+   "g0": 189.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-12T05:45",
+   "g0": 195.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-12T07:20",
+   "g0": 228.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-12T14:10",
+   "g0": 182.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-12T18:25",
+   "g0": 170.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-12T23:10",
+   "g0": 214.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-13T03:05",
+   "g0": 168.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-13T05:15",
+   "g0": 145.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-13T07:25",
+   "g0": 131.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-13T14:35",
+   "g0": 160.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-13T18:10",
+   "g0": 155.0,
+   "p_hypo": 0.4866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-13T23:15",
+   "g0": 66.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-14T03:05",
+   "g0": 69.0,
+   "p_hypo": 0.5,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-14T05:25",
+   "g0": 74.0,
+   "p_hypo": 0.3466666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-14T07:05",
+   "g0": 85.0,
+   "p_hypo": 0.35333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-14T14:15",
+   "g0": 110.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-14T18:10",
+   "g0": 90.0,
+   "p_hypo": 0.5133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-14T23:00",
+   "g0": 54.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-15T03:40",
+   "g0": 84.0,
+   "p_hypo": 0.16666666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-15T05:00",
+   "g0": 62.0,
+   "p_hypo": 0.5066666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-15T07:10",
+   "g0": 128.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-15T14:20",
+   "g0": 172.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-15T18:30",
+   "g0": 142.0,
+   "p_hypo": 0.18,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-15T23:55",
+   "g0": 53.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-16T03:35",
+   "g0": 76.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-16T05:15",
+   "g0": 70.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-16T07:55",
+   "g0": 174.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-16T14:40",
+   "g0": 197.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-16T18:25",
+   "g0": 169.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-16T23:20",
+   "g0": 158.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-17T03:45",
+   "g0": 129.0,
+   "p_hypo": 0.2,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-17T05:00",
+   "g0": 130.0,
+   "p_hypo": 0.22,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-17T07:00",
+   "g0": 133.0,
+   "p_hypo": 0.32666666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-17T14:00",
+   "g0": 88.0,
+   "p_hypo": 0.72,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-17T18:35",
+   "g0": 82.0,
+   "p_hypo": 0.8,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-17T23:25",
+   "g0": 68.0,
+   "p_hypo": 0.5333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-18T03:55",
+   "g0": 92.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-18T05:35",
+   "g0": 68.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-18T07:00",
+   "g0": 60.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-18T14:55",
+   "g0": 100.0,
+   "p_hypo": 0.06,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-18T18:50",
+   "g0": 84.0,
+   "p_hypo": 0.3333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-18T23:15",
+   "g0": 70.0,
+   "p_hypo": 0.8733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-19T03:05",
+   "g0": 80.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-19T05:05",
+   "g0": 84.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-19T07:40",
+   "g0": 152.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-19T14:00",
+   "g0": 209.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-19T18:00",
+   "g0": 139.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-19T23:15",
+   "g0": 197.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-20T03:00",
+   "g0": 156.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-20T05:10",
+   "g0": 145.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-20T07:05",
+   "g0": 126.0,
+   "p_hypo": 0.02,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-20T14:50",
+   "g0": 156.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-20T18:50",
+   "g0": 150.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-20T23:10",
+   "g0": 138.0,
+   "p_hypo": 0.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-21T05:05",
+   "g0": 119.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-21T07:35",
+   "g0": 119.0,
+   "p_hypo": 0.06,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-21T14:55",
+   "g0": 143.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-21T18:35",
+   "g0": 125.0,
+   "p_hypo": 0.47333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-21T23:10",
+   "g0": 89.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-22T03:15",
+   "g0": 98.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-22T05:50",
+   "g0": 96.0,
+   "p_hypo": 0.4533333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-22T07:30",
+   "g0": 123.0,
+   "p_hypo": 0.2,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-22T14:00",
+   "g0": 110.0,
+   "p_hypo": 0.66,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-22T18:25",
+   "g0": 69.0,
+   "p_hypo": 0.47333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-22T23:30",
+   "g0": 56.0,
+   "p_hypo": 0.9133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-23T03:55",
+   "g0": 92.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-23T05:50",
+   "g0": 76.0,
+   "p_hypo": 0.1,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-23T07:25",
+   "g0": 79.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-23T14:15",
+   "g0": 140.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-23T18:40",
+   "g0": 81.0,
+   "p_hypo": 0.6933333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-23T23:50",
+   "g0": 78.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-24T03:20",
+   "g0": 51.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-24T05:05",
+   "g0": 83.0,
+   "p_hypo": 0.21333333333333335,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-24T07:55",
+   "g0": 81.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-24T14:10",
+   "g0": 57.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-24T18:50",
+   "g0": 49.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-24T23:55",
+   "g0": 43.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-25T03:55",
+   "g0": 74.0,
+   "p_hypo": 0.76,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-25T05:45",
+   "g0": 60.0,
+   "p_hypo": 0.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-25T07:10",
+   "g0": 73.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-25T14:15",
+   "g0": 81.0,
+   "p_hypo": 0.7266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-25T18:50",
+   "g0": 58.0,
+   "p_hypo": 0.9666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-25T23:20",
+   "g0": 97.0,
+   "p_hypo": 0.44666666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-26T03:25",
+   "g0": 71.0,
+   "p_hypo": 0.6533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-26T05:35",
+   "g0": 60.0,
+   "p_hypo": 0.8333333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-26T07:30",
+   "g0": 62.0,
+   "p_hypo": 0.9866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-26T14:50",
+   "g0": 53.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-26T18:30",
+   "g0": 119.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-26T23:35",
+   "g0": 138.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-27T03:05",
+   "g0": 120.0,
+   "p_hypo": 0.04,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-27T05:35",
+   "g0": 83.0,
+   "p_hypo": 0.26,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-27T07:50",
+   "g0": 85.0,
+   "p_hypo": 0.7533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-27T14:25",
+   "g0": 48.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-27T18:35",
+   "g0": 67.0,
+   "p_hypo": 0.9733333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-27T23:15",
+   "g0": 39.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-28T03:05",
+   "g0": 44.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-28T05:20",
+   "g0": 61.0,
+   "p_hypo": 0.98,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-28T07:40",
+   "g0": 63.0,
+   "p_hypo": 0.8266666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-28T14:15",
+   "g0": 122.0,
+   "p_hypo": 0.8066666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-28T18:05",
+   "g0": 62.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-28T23:15",
+   "g0": 39.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-29T03:20",
+   "g0": 63.0,
+   "p_hypo": 0.9666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-29T05:25",
+   "g0": 63.0,
+   "p_hypo": 0.7,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-29T07:40",
+   "g0": 114.0,
+   "p_hypo": 0.02,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-29T14:05",
+   "g0": 100.0,
+   "p_hypo": 0.5,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-29T18:25",
+   "g0": 67.0,
+   "p_hypo": 0.92,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-29T23:45",
+   "g0": 52.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-30T03:00",
+   "g0": 66.0,
+   "p_hypo": 0.36666666666666664,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-30T05:55",
+   "g0": 75.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-30T07:35",
+   "g0": 95.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-30T14:30",
+   "g0": 120.0,
+   "p_hypo": 0.16,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-30T18:20",
+   "g0": 62.0,
+   "p_hypo": 0.62,
+   "observed": true
+  },
+  {
+   "patient": "p01",
+   "start": "2025-08-30T23:25",
+   "g0": 79.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-01T03:25",
+   "g0": 107.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-01T05:20",
+   "g0": 112.0,
+   "p_hypo": 0.1,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-01T08:50",
+   "g0": 122.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-01T11:45",
+   "g0": 104.0,
+   "p_hypo": 0.3,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-01T12:30",
+   "g0": 113.0,
+   "p_hypo": 0.32,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-01T19:35",
+   "g0": 108.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-02T03:55",
+   "g0": 87.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-02T05:00",
+   "g0": 86.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-02T08:10",
+   "g0": 193.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-02T11:05",
+   "g0": 180.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-02T12:05",
+   "g0": 178.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-02T19:25",
+   "g0": 178.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-03T03:20",
+   "g0": 115.0,
+   "p_hypo": 0.49333333333333335,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-03T05:50",
+   "g0": 86.0,
+   "p_hypo": 0.44,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-03T08:45",
+   "g0": 80.0,
+   "p_hypo": 0.7066666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-03T11:55",
+   "g0": 84.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-03T12:30",
+   "g0": 51.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-03T19:25",
+   "g0": 74.0,
+   "p_hypo": 0.26666666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-04T03:55",
+   "g0": 98.0,
+   "p_hypo": 0.08666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-04T05:40",
+   "g0": 137.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-04T08:55",
+   "g0": 144.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-04T11:30",
+   "g0": 101.0,
+   "p_hypo": 0.20666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-04T12:55",
+   "g0": 152.0,
+   "p_hypo": 0.06,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-04T19:05",
+   "g0": 62.0,
+   "p_hypo": 0.54,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-05T03:05",
+   "g0": 85.0,
+   "p_hypo": 0.11333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-05T05:30",
+   "g0": 80.0,
+   "p_hypo": 0.22666666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-05T08:35",
+   "g0": 138.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-05T11:55",
+   "g0": 117.0,
+   "p_hypo": 0.17333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-05T12:40",
+   "g0": 111.0,
+   "p_hypo": 0.16666666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-05T19:15",
+   "g0": 125.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-06T03:55",
+   "g0": 111.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-06T05:40",
+   "g0": 109.0,
+   "p_hypo": 0.09333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-06T08:05",
+   "g0": 216.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-06T11:15",
+   "g0": 203.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-06T12:35",
+   "g0": 203.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-06T19:45",
+   "g0": 108.0,
+   "p_hypo": 0.21333333333333335,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-07T05:15",
+   "g0": 88.0,
+   "p_hypo": 0.5133333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-07T08:40",
+   "g0": 135.0,
+   "p_hypo": 0.19333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-07T11:35",
+   "g0": 101.0,
+   "p_hypo": 0.31333333333333335,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-07T12:30",
+   "g0": 87.0,
+   "p_hypo": 0.19333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-07T19:25",
+   "g0": 104.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-08T03:05",
+   "g0": 153.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-08T05:45",
+   "g0": 142.0,
+   "p_hypo": 0.26,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-08T08:05",
+   "g0": 156.0,
+   "p_hypo": 0.44,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-08T11:15",
+   "g0": 79.0,
+   "p_hypo": 0.41333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-08T12:30",
+   "g0": 65.0,
+   "p_hypo": 0.6066666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-08T19:15",
+   "g0": 97.0,
+   "p_hypo": 0.29333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-09T03:25",
+   "g0": 98.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-09T05:20",
+   "g0": 107.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-09T08:30",
+   "g0": 140.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-09T11:55",
+   "g0": 136.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-09T12:55",
+   "g0": 147.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-09T19:15",
+   "g0": 125.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-10T03:55",
+   "g0": 272.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-10T05:40",
+   "g0": 213.0,
+   "p_hypo": 0.08666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-10T08:15",
+   "g0": 172.0,
+   "p_hypo": 0.08,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-10T11:55",
+   "g0": 56.0,
+   "p_hypo": 0.7666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-10T12:00",
+   "g0": 56.0,
+   "p_hypo": 0.96,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-10T19:15",
+   "g0": 101.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-11T05:25",
+   "g0": 99.0,
+   "p_hypo": 0.02,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-11T08:45",
+   "g0": 84.0,
+   "p_hypo": 0.2,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-11T11:35",
+   "g0": 91.0,
+   "p_hypo": 0.09333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-11T12:15",
+   "g0": 77.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-11T19:55",
+   "g0": 131.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-12T03:05",
+   "g0": 87.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-12T05:50",
+   "g0": 95.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-12T08:35",
+   "g0": 181.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-12T11:35",
+   "g0": 181.0,
+   "p_hypo": 0.08666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-12T12:40",
+   "g0": 187.0,
+   "p_hypo": 0.2866666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-12T19:55",
+   "g0": 72.0,
+   "p_hypo": 0.7133333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-13T03:10",
+   "g0": 49.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-13T05:50",
+   "g0": 130.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-13T08:00",
+   "g0": 55.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-13T11:45",
+   "g0": 66.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-13T12:05",
+   "g0": 72.0,
+   "p_hypo": 0.9066666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-13T19:10",
+   "g0": 73.0,
+   "p_hypo": 0.56,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-14T03:10",
+   "g0": 81.0,
+   "p_hypo": 0.12,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-14T05:45",
+   "g0": 77.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-14T08:20",
+   "g0": 95.0,
+   "p_hypo": 0.6066666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-14T11:45",
+   "g0": 84.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-14T12:30",
+   "g0": 52.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-14T19:55",
+   "g0": 68.0,
+   "p_hypo": 0.96,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-15T03:50",
+   "g0": 86.0,
+   "p_hypo": 0.14,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-15T05:30",
+   "g0": 89.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-15T08:20",
+   "g0": 85.0,
+   "p_hypo": 0.32,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-15T11:10",
+   "g0": 89.0,
+   "p_hypo": 0.6,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-15T12:35",
+   "g0": 100.0,
+   "p_hypo": 0.34,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-15T19:40",
+   "g0": 111.0,
+   "p_hypo": 0.5133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-16T03:35",
+   "g0": 143.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-16T05:50",
+   "g0": 125.0,
+   "p_hypo": 0.29333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-16T08:15",
+   "g0": 121.0,
+   "p_hypo": 0.22,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-16T11:45",
+   "g0": 82.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-16T12:30",
+   "g0": 76.0,
+   "p_hypo": 0.35333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-16T19:40",
+   "g0": 173.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-17T03:55",
+   "g0": 70.0,
+   "p_hypo": 0.7533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-17T05:50",
+   "g0": 64.0,
+   "p_hypo": 0.8066666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-17T08:55",
+   "g0": 83.0,
+   "p_hypo": 0.18,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-17T11:25",
+   "g0": 82.0,
+   "p_hypo": 0.38666666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-17T12:25",
+   "g0": 92.0,
+   "p_hypo": 0.32,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-17T19:35",
+   "g0": 139.0,
+   "p_hypo": 0.04666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-18T03:45",
+   "g0": 98.0,
+   "p_hypo": 0.24,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-18T05:55",
+   "g0": 123.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-18T08:20",
+   "g0": 140.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-18T11:35",
+   "g0": 129.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-18T12:45",
+   "g0": 126.0,
+   "p_hypo": 0.06,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-18T19:50",
+   "g0": 177.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-19T03:20",
+   "g0": 109.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-19T05:05",
+   "g0": 113.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-19T08:45",
+   "g0": 192.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-19T11:20",
+   "g0": 195.0,
+   "p_hypo": 0.23333333333333334,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-19T12:00",
+   "g0": 186.0,
+   "p_hypo": 0.36,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-19T19:20",
+   "g0": 53.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-20T03:10",
+   "g0": 78.0,
+   "p_hypo": 0.16666666666666666,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-20T05:50",
+   "g0": 96.0,
+   "p_hypo": 0.15333333333333332,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-20T08:35",
+   "g0": 149.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-20T11:05",
+   "g0": 129.0,
+   "p_hypo": 0.3933333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-20T12:10",
+   "g0": 108.0,
+   "p_hypo": 0.38,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-20T19:00",
+   "g0": 101.0,
+   "p_hypo": 0.49333333333333335,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-21T05:55",
+   "g0": 88.0,
+   "p_hypo": 0.02,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-21T08:40",
+   "g0": 139.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-21T11:00",
+   "g0": 157.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-21T12:15",
+   "g0": 177.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-21T19:10",
+   "g0": 101.0,
+   "p_hypo": 0.5266666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-22T03:15",
+   "g0": 132.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-22T05:20",
+   "g0": 140.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-22T08:45",
+   "g0": 196.0,
+   "p_hypo": 0.36666666666666664,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-22T11:25",
+   "g0": 85.0,
+   "p_hypo": 0.76,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-22T12:05",
+   "g0": 65.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-22T19:55",
+   "g0": 100.0,
+   "p_hypo": 0.43333333333333335,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-23T03:00",
+   "g0": 83.0,
+   "p_hypo": 0.21333333333333335,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-23T05:00",
+   "g0": 90.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-23T08:45",
+   "g0": 84.0,
+   "p_hypo": 0.10666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-23T11:55",
+   "g0": 91.0,
+   "p_hypo": 0.4666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-23T12:50",
+   "g0": 80.0,
+   "p_hypo": 0.56,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-23T19:25",
+   "g0": 95.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-24T03:40",
+   "g0": 87.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-24T05:05",
+   "g0": 85.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-24T08:35",
+   "g0": 133.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-24T11:10",
+   "g0": 118.0,
+   "p_hypo": 0.21333333333333335,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-24T12:50",
+   "g0": 107.0,
+   "p_hypo": 0.24666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-24T19:30",
+   "g0": 139.0,
+   "p_hypo": 0.3466666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-25T03:30",
+   "g0": 70.0,
+   "p_hypo": 0.30666666666666664,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-25T05:20",
+   "g0": 93.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-25T08:05",
+   "g0": 147.0,
+   "p_hypo": 0.24666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-25T11:55",
+   "g0": 88.0,
+   "p_hypo": 0.7533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-25T12:20",
+   "g0": 93.0,
+   "p_hypo": 0.8733333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-25T19:40",
+   "g0": 74.0,
+   "p_hypo": 0.74,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-26T03:25",
+   "g0": 67.0,
+   "p_hypo": 0.04,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-26T05:10",
+   "g0": 82.0,
+   "p_hypo": 0.22,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-26T08:50",
+   "g0": 116.0,
+   "p_hypo": 0.07333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-26T11:40",
+   "g0": 83.0,
+   "p_hypo": 0.36,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-26T12:35",
+   "g0": 80.0,
+   "p_hypo": 0.38,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-26T19:00",
+   "g0": 117.0,
+   "p_hypo": 0.20666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-27T03:00",
+   "g0": 94.0,
+   "p_hypo": 0.18,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-27T05:30",
+   "g0": 94.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-27T08:35",
+   "g0": 126.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-27T11:55",
+   "g0": 113.0,
+   "p_hypo": 0.2733333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-27T12:50",
+   "g0": 110.0,
+   "p_hypo": 0.2,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-27T19:45",
+   "g0": 159.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-28T03:00",
+   "g0": 129.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-28T05:50",
+   "g0": 133.0,
+   "p_hypo": 0.14,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-28T08:55",
+   "g0": 126.0,
+   "p_hypo": 0.12666666666666668,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-28T11:20",
+   "g0": 84.0,
+   "p_hypo": 0.36,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-28T12:00",
+   "g0": 89.0,
+   "p_hypo": 0.23333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-28T19:45",
+   "g0": 141.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-29T03:40",
+   "g0": 112.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-29T05:15",
+   "g0": 89.0,
+   "p_hypo": 0.08666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-29T08:20",
+   "g0": 123.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-29T11:30",
+   "g0": 129.0,
+   "p_hypo": 0.1,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-29T12:30",
+   "g0": 124.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-29T19:10",
+   "g0": 104.0,
+   "p_hypo": 0.58,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-30T03:10",
+   "g0": 91.0,
+   "p_hypo": 0.08666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-30T05:20",
+   "g0": 142.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-30T08:10",
+   "g0": 205.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-30T11:25",
+   "g0": 185.0,
+   "p_hypo": 0.20666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-30T12:15",
+   "g0": 182.0,
+   "p_hypo": 0.19333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p02",
+   "start": "2025-08-30T19:35",
+   "g0": 151.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-01T06:15",
+   "g0": 224.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-01T10:35",
+   "g0": 238.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-01T16:35",
+   "g0": 193.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-01T23:35",
+   "g0": 280.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-02T01:40",
+   "g0": 226.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-02T04:45",
+   "g0": 178.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-02T06:25",
+   "g0": 173.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-02T10:05",
+   "g0": 229.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-02T16:25",
+   "g0": 161.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-02T23:30",
+   "g0": 194.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-03T01:40",
+   "g0": 222.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-03T04:00",
+   "g0": 168.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-03T06:25",
+   "g0": 235.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-03T10:00",
+   "g0": 254.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-03T16:55",
+   "g0": 254.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-03T23:50",
+   "g0": 230.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-04T01:15",
+   "g0": 224.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-04T04:15",
+   "g0": 277.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-04T06:05",
+   "g0": 309.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-04T10:45",
+   "g0": 224.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-04T16:15",
+   "g0": 171.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-04T23:20",
+   "g0": 214.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-05T01:00",
+   "g0": 227.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-05T04:45",
+   "g0": 245.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-05T06:55",
+   "g0": 284.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-05T10:00",
+   "g0": 257.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-05T16:35",
+   "g0": 369.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-05T23:30",
+   "g0": 147.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-06T01:10",
+   "g0": 184.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-06T04:55",
+   "g0": 219.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-06T06:00",
+   "g0": 199.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-06T10:25",
+   "g0": 203.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-06T16:50",
+   "g0": 245.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-06T23:25",
+   "g0": 230.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-07T01:20",
+   "g0": 227.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-07T04:20",
+   "g0": 237.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-07T06:10",
+   "g0": 215.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-07T10:40",
+   "g0": 185.0,
+   "p_hypo": 0.02666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-07T16:20",
+   "g0": 249.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-07T23:00",
+   "g0": 86.0,
+   "p_hypo": 0.06666666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-08T01:05",
+   "g0": 88.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-08T04:35",
+   "g0": 143.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-08T06:00",
+   "g0": 176.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-08T10:10",
+   "g0": 204.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-08T16:00",
+   "g0": 349.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-08T23:50",
+   "g0": 180.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-09T01:00",
+   "g0": 161.0,
+   "p_hypo": 0.11333333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-09T04:35",
+   "g0": 77.0,
+   "p_hypo": 0.9133333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-09T06:35",
+   "g0": 51.0,
+   "p_hypo": 0.9933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-09T10:25",
+   "g0": 163.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-09T16:15",
+   "g0": 220.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-09T23:15",
+   "g0": 197.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-10T01:15",
+   "g0": 117.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-10T04:50",
+   "g0": 131.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-10T06:25",
+   "g0": 155.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-10T10:20",
+   "g0": 305.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-10T16:35",
+   "g0": 225.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-10T23:20",
+   "g0": 191.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-11T06:05",
+   "g0": 185.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-11T10:00",
+   "g0": 251.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-11T16:40",
+   "g0": 139.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-11T23:50",
+   "g0": 56.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-12T01:15",
+   "g0": 60.0,
+   "p_hypo": 0.8933333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-12T04:35",
+   "g0": 96.0,
+   "p_hypo": 0.02,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-12T06:50",
+   "g0": 113.0,
+   "p_hypo": 0.02,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-12T10:20",
+   "g0": 185.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-12T16:30",
+   "g0": 118.0,
+   "p_hypo": 0.6066666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-12T23:55",
+   "g0": 182.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-13T01:55",
+   "g0": 210.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-13T04:00",
+   "g0": 210.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-13T06:10",
+   "g0": 193.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-13T10:55",
+   "g0": 184.0,
+   "p_hypo": 0.08666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-13T16:05",
+   "g0": 153.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-13T23:40",
+   "g0": 113.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-14T01:05",
+   "g0": 122.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-14T04:50",
+   "g0": 138.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-14T06:55",
+   "g0": 124.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-14T10:10",
+   "g0": 146.0,
+   "p_hypo": 0.2733333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-14T16:40",
+   "g0": 78.0,
+   "p_hypo": 0.72,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-14T23:30",
+   "g0": 153.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-15T01:35",
+   "g0": 183.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-15T04:15",
+   "g0": 178.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-15T06:20",
+   "g0": 182.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-15T10:50",
+   "g0": 160.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-15T16:05",
+   "g0": 99.0,
+   "p_hypo": 0.9866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-15T23:55",
+   "g0": 100.0,
+   "p_hypo": 0.14,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-16T01:00",
+   "g0": 82.0,
+   "p_hypo": 0.23333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-16T04:50",
+   "g0": 111.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-16T06:45",
+   "g0": 132.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-16T10:00",
+   "g0": 114.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-16T16:25",
+   "g0": 153.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-16T23:30",
+   "g0": 99.0,
+   "p_hypo": 0.9866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-17T01:55",
+   "g0": 62.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-17T04:10",
+   "g0": 39.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-17T06:00",
+   "g0": 42.0,
+   "p_hypo": 1.0,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-17T10:25",
+   "g0": 157.0,
+   "p_hypo": 0.14666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-17T16:50",
+   "g0": 137.0,
+   "p_hypo": 0.42,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-17T23:15",
+   "g0": 79.0,
+   "p_hypo": 0.18,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-18T01:05",
+   "g0": 77.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-18T04:55",
+   "g0": 145.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-18T06:55",
+   "g0": 235.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-18T10:00",
+   "g0": 241.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-18T16:05",
+   "g0": 192.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-18T23:20",
+   "g0": 140.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-19T01:10",
+   "g0": 163.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-19T04:30",
+   "g0": 192.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-19T06:25",
+   "g0": 202.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-19T10:50",
+   "g0": 198.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-19T16:30",
+   "g0": 232.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-19T23:35",
+   "g0": 175.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-20T01:05",
+   "g0": 168.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-20T04:25",
+   "g0": 184.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-20T06:40",
+   "g0": 188.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-20T10:35",
+   "g0": 272.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-20T16:50",
+   "g0": 177.0,
+   "p_hypo": 0.4,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-21T04:20",
+   "g0": 155.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-21T06:10",
+   "g0": 176.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-21T10:10",
+   "g0": 135.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-21T16:45",
+   "g0": 127.0,
+   "p_hypo": 0.03333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-21T23:35",
+   "g0": 179.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-22T01:00",
+   "g0": 179.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-22T04:55",
+   "g0": 207.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-22T06:40",
+   "g0": 193.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-22T10:20",
+   "g0": 287.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-22T16:40",
+   "g0": 161.0,
+   "p_hypo": 0.04,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-22T23:15",
+   "g0": 179.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-23T01:50",
+   "g0": 155.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-23T04:05",
+   "g0": 170.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-23T06:30",
+   "g0": 180.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-23T10:40",
+   "g0": 152.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-23T16:20",
+   "g0": 135.0,
+   "p_hypo": 0.1,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-23T23:45",
+   "g0": 75.0,
+   "p_hypo": 0.9266666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-24T01:05",
+   "g0": 75.0,
+   "p_hypo": 0.13333333333333333,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-24T04:25",
+   "g0": 114.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-24T06:15",
+   "g0": 142.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-24T10:55",
+   "g0": 165.0,
+   "p_hypo": 0.013333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-24T16:05",
+   "g0": 226.0,
+   "p_hypo": 0.05333333333333334,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-24T23:55",
+   "g0": 65.0,
+   "p_hypo": 0.9866666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-25T01:30",
+   "g0": 102.0,
+   "p_hypo": 0.0,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-25T04:30",
+   "g0": 149.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-25T06:00",
+   "g0": 163.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-25T10:35",
+   "g0": 199.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-25T16:45",
+   "g0": 190.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-25T23:30",
+   "g0": 90.0,
+   "p_hypo": 0.0,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-26T01:55",
+   "g0": 74.0,
+   "p_hypo": 0.44666666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-26T04:35",
+   "g0": 170.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-26T06:05",
+   "g0": 236.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-26T10:40",
+   "g0": 293.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-26T16:35",
+   "g0": 376.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-26T23:35",
+   "g0": 228.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-27T01:50",
+   "g0": 234.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-27T04:25",
+   "g0": 240.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-27T06:10",
+   "g0": 254.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-27T10:55",
+   "g0": 236.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-27T16:50",
+   "g0": 219.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-27T23:25",
+   "g0": 150.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-28T01:40",
+   "g0": 174.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-28T04:30",
+   "g0": 186.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-28T06:45",
+   "g0": 183.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-28T10:05",
+   "g0": 188.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-28T16:15",
+   "g0": 219.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-28T23:10",
+   "g0": 185.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-29T01:40",
+   "g0": 194.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-29T04:10",
+   "g0": 206.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-29T06:45",
+   "g0": 231.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-29T10:10",
+   "g0": 190.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-29T16:50",
+   "g0": 288.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-29T23:50",
+   "g0": 151.0,
+   "p_hypo": 0.4533333333333333,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-30T01:30",
+   "g0": 112.0,
+   "p_hypo": 0.8466666666666667,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-30T04:30",
+   "g0": 84.0,
+   "p_hypo": 0.6466666666666666,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-30T06:05",
+   "g0": 82.0,
+   "p_hypo": 0.32,
+   "observed": true
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-30T10:00",
+   "g0": 132.0,
+   "p_hypo": 0.0,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-30T16:35",
+   "g0": 232.0,
+   "p_hypo": 0.006666666666666667,
+   "observed": false
+  },
+  {
+   "patient": "p03",
+   "start": "2025-08-30T23:10",
+   "g0": 203.0,
+   "p_hypo": 0.0,
+   "observed": false
+  }
+ ]
+}

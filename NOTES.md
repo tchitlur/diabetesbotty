@@ -88,6 +88,14 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - Header: Twin sync from `/drift` (green ok / amber flagged / red when >= 5 days), data-quality score, CGM staleness, parser badge (Gemini vs local fallback, with "(no key)" when unconfigured), the twin clock.
 - Replay opens on the most recent drink night where the twin's alcohol-free counterfactual actually lifts the overnight low (`/replay/suggest`, cached; currently Sat 2025-08-09: 69 -> 125 mg/dL).
 
+## Validation decisions (checkpoint 9)
+
+- Five scripts under `backend/validation/` write PNGs to `validation/plots/` and JSON next to them; `results.py` assembles `validation/RESULTS.md`; `run_all.py` runs everything (`--quick` for a 2-minute pass).
+- Forecast RMSE compares three models on held-out days 60-89 at 30/60/120 min, all anchored on the observed glucose at the anchor time after a 3-hour warm-up: population priors, the personalised fit, and the fit + residual model (trained on days 0-59 only). Demo patient at 60 min: 15.7 -> 16.2 -> 14.5 mg/dL (target < 20 met); mean over 6 patients: 22.2 -> 16.9 -> 14.7. For the demo patient the population model is already close because its physiology is near the population mean; the gain is larger for the others (up to 28.6 -> 14.3).
+- Hypo calibration uses P(glucose < 70 within 4 h) rather than 8 h so anchors on consecutive hours are less correlated; each anchor is a UKF over the preceding 6 h followed by a 150-sample Monte Carlo. Bins with fewer than 5 anchors are dropped from the reliability curve.
+- The alcohol-night overlay uses the replay engine (two UKF anchors) on the night `/replay/suggest` selects (2025-08-09), so the plot is exactly what the Replay tab shows.
+- README documents setup in five steps, the demo click order, each screen, the anti-wrapper argument and the validation table with plot filenames.
+
 ## Checkpoint status
 
 - [x] 1. Environment + contracts (stub simulator)
@@ -98,9 +106,9 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - [x] 6. Decision + safety + API
 - [x] 7. Parsers
 - [x] 8. Frontend
-- [ ] 9. Validation + docs
+- [x] 9. Validation + docs
 - [ ] 10. Final release
 
 ## Next
 
-Checkpoint 9: validation scripts 2-4 (forecast RMSE, hypo calibration, alcohol-night overlay), RESULTS.md, README.md.
+Checkpoint 10: clean-clone run of `run_demo.ps1`, the ten-step acceptance test, release commit.

@@ -1,0 +1,33 @@
+{
+  "date": "2025-08-09",
+  "drinks": [
+    {
+      "type": "alcohol",
+      "start_time": "2025-08-09T22:06",
+      "duration_min": 180.0,
+      "carbs_g": 16.0,
+      "fat_g": 0.0,
+      "protein_g": 0.0,
+      "fiber_g": 0.0,
+      "alcohol_g": 56.0,
+      "caffeine_mg": 0.0,
+      "insulin_units": 0.0,
+      "insulin_kind": null,
+      "exercise_kind": null,
+      "intensity": 0.0,
+      "sleep_hours": 0.0,
+      "severity": 0.0,
+      "water_ml": 0.0,
+      "uncertainty": 0.25,
+      "source": "synthetic",
+      "label": "4 wines"
+    }
+  ],
+  "overnight_min_actual": 39.0,
+  "overnight_min_twin": 69.4,
+  "overnight_min_twin_no_alcohol": 125.3,
+  "twin_nadir_time": "2025-08-10T05:45",
+  "hypo_minutes_twin": 70.0,
+  "hypo_minutes_no_alcohol": 0.0,
+  "overlay_rmse_mgdl": 25.781266842418745
+}
