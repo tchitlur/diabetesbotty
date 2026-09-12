@@ -96,6 +96,25 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - The alcohol-night overlay uses the replay engine (two UKF anchors) on the night `/replay/suggest` selects (2025-08-09), so the plot is exactly what the Replay tab shows.
 - README documents setup in five steps, the demo click order, each screen, the anti-wrapper argument and the validation table with plot filenames.
 
+## Release (checkpoint 10): acceptance test log
+
+Run from a fresh `git clone` into a scratch directory on 2026-09-12.
+
+| # | Step | Result |
+|---|---|---|
+| 1 | `.un_demo.ps1` from a fresh clone | first run 190 s (creates `.venv`, `pip install`, `npm install`); warm run **8 s** to both servers answering and the browser opening |
+| 2 | Now tab: forecast band + nonzero P(hypo) | P(hypo 8 h) = 0.21, p10 <= p90 everywhere |
+| 3 | "can I have two more beers tonight?" | parsed JSON (local parser) -> `approved_with_condition`: "eat 15 g carbs before bed, no bolus" -> card in `/cards` (Today tab) |
+| 4 | "fasted run tomorrow at 7 for 30 min" | `denied` (safest variant leaves P(hypo) 16 %) with safe alternative window 10:00 (P(hypo) 2 %) |
+| 5 | `/change morning_workouts` | `merged`, 22-row diff, organ risks change (eye 5.52 -> 5.36 %, ...) -> Body toggle recolours |
+| 6 | `/budget` | 90 g alcohol, 1085 mg caffeine, 1 off-plan meal per week |
+| 7 | Replay, alcohol -> 0 | Fri 2025-07-18: overnight min 56 -> 71; Sat 2025-08-09: 69 -> 125 |
+| 8 | invalid `GEMINI_API_KEY` in `.env` | Gemini raises `ClientError`, badge = local fallback, steps 3-4 give the same verdicts |
+| 9 | `POST /permission?stale=30` | verdict `request_data`, missing "fresh CGM reading" |
+| 10 | `pytest` in the clone, plots, RESULTS.md, git | 38 passed; 8 PNGs in `validation/plots/` (the five required + three sanity); `RESULTS.md` has numbers; `git status` clean; ten checkpoint commits on `origin/main` |
+
+Known limitations worth stating: the demo patient runs on synthetic data and the twin's decisions are only as good as a Hovorka-class model; the hypo calibration is under-confident in the 0.1-0.6 range; alcohol gain is the least identifiable fitted parameter (r = 0.46 across the cohort); no Gemini key was available in the build environment, so the Gemini path is covered by mocked tests plus the live invalid-key fallback.
+
 ## Checkpoint status
 
 - [x] 1. Environment + contracts (stub simulator)
@@ -107,8 +126,8 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - [x] 7. Parsers
 - [x] 8. Frontend
 - [x] 9. Validation + docs
-- [ ] 10. Final release
+- [x] 10. Final release
 
 ## Next
 
-Checkpoint 10: clean-clone run of `run_demo.ps1`, the ten-step acceptance test, release commit.
+Nothing pending. Ideas beyond the spec: real Dexcom/Libre export upload through `adapters/csv_ingest.py` (already parses both formats), a real HRV feed for the residual model, and re-fitting on a schedule instead of once.
