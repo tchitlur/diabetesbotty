@@ -76,3 +76,26 @@ def test_monte_carlo_under_two_seconds():
     assert len(mc.median) == 97
     assert 0.0 <= mc.p_hypo <= 1.0
     assert np.all(mc.p10 <= mc.p90 + 1e-9)
+
+
+def test_medium_layer_sleep_and_a1c():
+    from backend.engine.medium import daily_update, DaySummary, hba1c_steady_state
+    s = State(hba1c=7.0)
+    poor = daily_update(s, DaySummary(mean_glucose=154, sleep_hours=5.0))
+    assert poor.sleep_debt > 2.0
+    good = daily_update(poor, DaySummary(mean_glucose=154, sleep_hours=8.5))
+    assert good.sleep_debt < poor.sleep_debt
+    assert abs(hba1c_steady_state(154.0) - 7.0) < 0.05
+    # 120 days at 212 mg/dL (A1c 9 by ADAG) should move A1c most of the way there
+    for _ in range(120):
+        s = daily_update(s, DaySummary(mean_glucose=212, sleep_hours=7.5))
+    assert s.hba1c > 8.3
+
+
+def test_slow_layer_dcct():
+    from backend.engine.slow import dcct_check, run_slow, constant_week
+    r = dcct_check()
+    assert 70 <= r["reduction_pct"] <= 80
+    res = run_slow(constant_week(150, 40, alcohol_g=30), State())
+    assert all(0.0 < v < 1.0 for v in res.probabilities.values())
+    assert res.final_state.dmg_liver > 0

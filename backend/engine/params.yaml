@@ -157,22 +157,28 @@ medium:
   hba1c_rbc_life_days: 120
 
 # ------------------------------------------------- slow layer (10 years)
+# Each accumulator dmg_* is the cumulative hazard H(t) of that complication, so the
+# 10-year probability is p = 1 - exp(-dmg). Weekly increment:
+#   dH = h0/52 * exp(beta_per_a1c * (A1c_eq - 7)) * (1 + sum_w w * relative_exposure)
+# A1c_eq is the ADAG glucose->A1c map of the week's mean glucose (Nathan 2008,
+# A1c = (G + 46.7)/28.7) plus a variability term (glucose SD, Kilpatrick 2008).
+# beta_per_a1c for retinopathy is calibrated so A1c 9 -> 7 gives a hazard ratio of
+# 0.24 (DCCT 1993, NEJM 329:977-986: 76 % risk reduction, primary-prevention cohort).
+# Other betas follow UKPDS 35 (Stratton 2000, BMJ 321:405): per 1 % A1c, 37 % lower
+# microvascular risk (beta 0.46), 14 % lower MI (beta 0.15), 21 % lower any endpoint.
+# h0 = annual baseline hazard at A1c 7 with no extra exposures (10-year risk at h0=0.006 is 5.8 %),
+# chosen to match DCCT intensive-arm cumulative incidences of order 5-10 % per decade.
 slow:
-  glucose_threshold_mgdl: 140         # exposure integrates (G - 140)+ ; DCCT: risk rises sharply above ~7% A1c
-  variability_gain: 0.5               # weight on glucose SD term
-  # hazard coefficients: 10-year probability p = 1 - exp(-h0 * exp(beta * exposure_scaled))
-  # beta_a1c is calibrated so that A1c 9 -> 7 cuts retinopathy risk by ~76 % (DCCT 1993,
-  # N Engl J Med 329:977-986: 76 % reduction in primary-prevention cohort). The UKPDS 35
-  # (Stratton 2000, BMJ 321:405) relative-risk-per-1%-A1c values are: microvascular 37 %,
-  # MI 14 %, any diabetes endpoint 21 %.
+  glucose_threshold_mgdl: 140         # kept for the strain map; exposure integrates (G - 140)+
+  variability_gain: 0.5               # A1c-equivalent added per (SD / 50 mg/dL)
   organs:
-    dmg_eye:    {h0: 0.045, beta_per_a1c: 0.714, alcohol_w: 0.0, hydration_w: 0.0, fat_w: 0.0, sleep_w: 0.0, label: "retinopathy"}
-    dmg_kidney: {h0: 0.040, beta_per_a1c: 0.60,  alcohol_w: 0.0, hydration_w: 0.8, fat_w: 0.0, sleep_w: 0.0, label: "nephropathy"}
-    dmg_nerve:  {h0: 0.050, beta_per_a1c: 0.55,  alcohol_w: 0.6, hydration_w: 0.0, fat_w: 0.0, sleep_w: 0.0, label: "neuropathy"}
-    dmg_cardio: {h0: 0.060, beta_per_a1c: 0.15,  alcohol_w: 0.3, hydration_w: 0.0, fat_w: 0.4, sleep_w: 0.3, label: "cardiovascular"}
-    dmg_liver:  {h0: 0.020, beta_per_a1c: 0.05,  alcohol_w: 1.0, hydration_w: 0.0, fat_w: 0.6, sleep_w: 0.0, label: "liver"}
+    dmg_eye:    {h0: 0.006,  beta_per_a1c: 0.714, alcohol_w: 0.0, hydration_w: 0.0, fat_w: 0.0, sleep_w: 0.0, label: "retinopathy",   source: "DCCT 1993; hazard ratio 0.24 for A1c 9 -> 7"}
+    dmg_kidney: {h0: 0.0035, beta_per_a1c: 0.46,  alcohol_w: 0.0, hydration_w: 0.8, fat_w: 0.0, sleep_w: 0.0, label: "nephropathy",   source: "UKPDS 35 microvascular 37 %/1 % A1c; chronic dehydration (Clark 2016) as extra exposure"}
+    dmg_nerve:  {h0: 0.005,  beta_per_a1c: 0.46,  alcohol_w: 0.6, hydration_w: 0.0, fat_w: 0.0, sleep_w: 0.0, label: "neuropathy",    source: "UKPDS 35 microvascular; alcohol neurotoxicity (Chopra 2012)"}
+    dmg_cardio: {h0: 0.005,  beta_per_a1c: 0.15,  alcohol_w: 0.3, hydration_w: 0.0, fat_w: 0.4, sleep_w: 0.3, label: "cardiovascular", source: "UKPDS 35 MI 14 %/1 % A1c; adiposity, heavy alcohol and short sleep (Cappuccio 2011) as extras"}
+    dmg_liver:  {h0: 0.0012, beta_per_a1c: 0.05,  alcohol_w: 1.0, hydration_w: 0.0, fat_w: 0.6, sleep_w: 0.0, label: "liver",          source: "alcohol-related liver disease dose response (Rehm 2010); NAFLD with adiposity"}
   reference_a1c: 7.0
-  alcohol_ref_g_per_week: 100.0       # ~7 standard drinks
-  fat_ref_kg: 20.0
-  sleep_debt_ref_h: 2.0
-  hydration_ref: 0.85
+  alcohol_ref_g_per_week: 100.0       # ~7 standard drinks: relative_exposure = alcohol_g_week / this
+  fat_ref_kg: 20.0                    # relative_exposure = max(fat_mass - this, 0) / 10
+  sleep_debt_ref_h: 2.0               # relative_exposure = sleep_debt / this
+  hydration_ref: 0.85                 # relative_exposure = max(this - hydration, 0) / 0.15
