@@ -5,6 +5,7 @@ decision function goes through it."""
 from __future__ import annotations
 
 import json
+import threading
 from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
@@ -48,6 +49,31 @@ class Twin:
             self.params["carb_ratio_g_per_u"] = float(fast.calibrate_carb_ratio(self.params))
         except Exception:
             pass
+        # per-session caches for the slow, deterministic views (plan, alerts, no_change baseline);
+        # keyed by the accepted-events signature so they refresh when the plan changes
+        self._cache: Dict[str, Any] = {}
+        self._lock = threading.Lock()
+        # one heavy computation at a time: the engine is numpy-on-small-arrays (GIL-bound), so
+        # concurrent requests slow each other down ~20x instead of running in parallel
+        self.heavy = threading.Lock()
+        self._state_cache: Optional[Tuple[State, Dict[str, float]]] = None
+        self._week_cache: Optional[WeekProfile] = None
+        spath = self.pt.path / "replay_suggest.json"
+        self._replay_suggest = json.loads(spath.read_text(encoding="utf-8")) if spath.exists() else None
+
+    # ------------------------------------------------------------ caching
+    def session_key(self) -> str:
+        return "|".join(e.start_time + e.type + f"{e.carbs_g:.0f}{e.alcohol_g:.0f}{e.caffeine_mg:.0f}{e.duration_min:.0f}" for e in self.future_events())
+
+    def cached(self, name: str, fn, keyed: bool = True):
+        key = f"{name}:{self.session_key() if keyed else ''}"
+        with self._lock:
+            if key in self._cache:
+                return self._cache[key]
+        val = fn()
+        with self._lock:
+            self._cache[key] = val
+        return val
 
     # ------------------------------------------------------------ state
     def ukf(self) -> UKFResult:
@@ -60,6 +86,12 @@ class Twin:
         return self._daily.get(key) or (list(self._daily.values())[-1] if self._daily else State())
 
     def state_now(self) -> Tuple[State, Dict[str, float]]:
+        if self._state_cache is None:
+            self._state_cache = self._compute_state_now()
+        s, std = self._state_cache
+        return s.copy(), dict(std)
+
+    def _compute_state_now(self) -> Tuple[State, Dict[str, float]]:
         u = self.ukf()
         s = u.state(template=self.medium_state())
         # slow accumulators: hazard accumulated over the observed 13 weeks
@@ -184,7 +216,15 @@ class Twin:
         return start, ev
 
     def week_profile(self, weeks: int = 4) -> WeekProfile:
-        """Per-weekday averages over the last `weeks` weeks of observed data."""
+        """Per-weekday averages over the last `weeks` weeks of observed data (cached; depends only on the data)."""
+        if weeks == 4 and self._week_cache is not None:
+            return WeekProfile([DayProfile(**d.__dict__) for d in self._week_cache.days])
+        wp = self._week_profile(weeks)
+        if weeks == 4:
+            self._week_cache = WeekProfile([DayProfile(**d.__dict__) for d in wp.days])
+        return wp
+
+    def _week_profile(self, weeks: int = 4) -> WeekProfile:
         frame = self.pt.cgm.to_frame()
         frame = frame[frame["valid"] & (frame["time"] <= pd.Timestamp(self.now))]
         frame = frame[frame["time"] > pd.Timestamp(self.now - timedelta(days=7 * weeks))]

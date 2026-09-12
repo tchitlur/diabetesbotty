@@ -102,7 +102,8 @@ Run from a fresh `git clone` into a scratch directory on 2026-09-12.
 
 | # | Step | Result |
 |---|---|---|
-| 1 | `.un_demo.ps1` from a fresh clone | first run 190 s (creates `.venv`, `pip install`, `npm install`); warm run **8 s** to both servers answering and the browser opening |
+| 1 | `.
+un_demo.ps1` from a fresh clone | first run 190 s (creates `.venv`, `pip install`, `npm install`); warm run **8 s** to both servers answering and the browser opening |
 | 2 | Now tab: forecast band + nonzero P(hypo) | P(hypo 8 h) = 0.21, p10 <= p90 everywhere |
 | 3 | "can I have two more beers tonight?" | parsed JSON (local parser) -> `approved_with_condition`: "eat 15 g carbs before bed, no bolus" -> card in `/cards` (Today tab) |
 | 4 | "fasted run tomorrow at 7 for 30 min" | `denied` (safest variant leaves P(hypo) 16 %) with safe alternative window 10:00 (P(hypo) 2 %) |
@@ -114,6 +115,15 @@ Run from a fresh `git clone` into a scratch directory on 2026-09-12.
 | 10 | `pytest` in the clone, plots, RESULTS.md, git | 38 passed; 8 PNGs in `validation/plots/` (the five required + three sanity); `RESULTS.md` has numbers; `git status` clean; ten checkpoint commits on `origin/main` |
 
 Known limitations worth stating: the demo patient runs on synthetic data and the twin's decisions are only as good as a Hovorka-class model; the hypo calibration is under-confident in the 0.1-0.6 range; alcohol gain is the least identifiable fitted parameter (r = 0.46 across the cohort); no Gemini key was available in the build environment, so the Gemini path is covered by mocked tests plus the live invalid-key fallback.
+
+## UI audit cleanup (post-release)
+
+Three-pass audit (`frontend/audit.spec.ts` with Playwright, `audit/curl_audit.py`, manual screenshot review; findings and statuses in `audit/FINDINGS.md`). Decisions:
+
+- **Decision window.** A proposal is judged on P(hypo) inside the window it controls (1 h before to 4 h after it; 12 h after for alcohol), with the forecast horizon extended to cover it. Before this, a risk that already existed before the proposal (tonight's low) could deny tomorrow morning's run, and a harmless coffee was denied because the baseline was above 5 %. A proposal that adds no risk over doing nothing while the baseline is already above the limit is approved with the condition that treats the existing trend (15 g fast carbs first). Consequence for the demo script: "fasted run tomorrow at 7" is now *approved* (2 % in its window); the conditional and denied paths are shown by "lift 45 min now" and "two shots of vodka at 11pm".
+- **Serialisation.** Simulation-bound routes run one at a time behind a lock. The engine is numpy on small arrays and GIL-bound, so parallel requests (or a background warm-up thread, which was tried and reverted) make everything ~20x slower rather than faster. Plan, alerts, budget and the no-change baseline are cached per session state; the twin's state and week profile are cached; the replay suggestion is precomputed by the fitter pipeline into `backend/data/demo_patient/replay_suggest.json`.
+- **Removed feature.** The photo (meal picture) button is disabled unless a Gemini key is configured. Without vision the fallback could only guess from the file name (a 45 g meal at 40 % confidence), which is worse than no answer. Text input keeps its local fallback.
+- **UI rules applied everywhere.** One token sheet (`frontend/src/styles.css`); every chart has axis titles with units and a legend when it has more than one series; every card uses one `Status` component for loading / empty / error; glucose as integer mg/dL, probabilities and confidence as whole percents, times HH:MM, dates with weekday; the permission card leads with the verdict in large text in the verdict colour; the organ map uses the same three colours (green < 5 %, amber 5-10 %, red > 10 % ten-year probability) and prints the percentage on each organ; the parsed event is a key/value grid with the raw JSON collapsed; the header indicators are labelled and explained on hover.
 
 ## Checkpoint status
 

@@ -194,6 +194,21 @@ def main() -> None:
     from backend.inference.drift import compute_drift
     train_residual_model(args.patient)
     compute_drift(args.patient)
+    write_replay_suggestion(args.patient)
+
+
+def write_replay_suggestion(patient_id: str = "demo") -> None:
+    """Precompute which past drink night best shows the alcohol effect in the Replay tab
+    (depends only on the fit; ~15 s), so the app never computes it at request time."""
+    if patient_id != "demo":
+        return
+    from backend.api.twin import Twin
+    from backend.decision.replay import suggest_day
+    tw = Twin()
+    tw._replay_suggest = None
+    out = suggest_day(tw)
+    (tw.pt.path / "replay_suggest.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
+    print("replay suggestion:", out["suggested"])
 
 
 if __name__ == "__main__":

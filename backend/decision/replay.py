@@ -102,9 +102,14 @@ def replay_day(twin, date: str, carbs_scale: float = 1.0, alcohol_scale: float =
     anchors = [day.replace(hour=h) for h in ANCHORS]
     bounds = anchors + [end]
     g_orig, g_mod, times = [], [], []
+    cache = getattr(twin, "_replay_anchors", None)
+    if cache is None:
+        cache = twin._replay_anchors = {}  # type: ignore[attr-defined]
     for i, t0 in enumerate(anchors):
-        u = run_ukf(twin.pt, twin.params, hours=6.0, end=t0)
-        x = u.mean
+        key = t0.isoformat()
+        if key not in cache:
+            cache[key] = run_ukf(twin.pt, twin.params, hours=6.0, end=t0).mean
+        x = cache[key]
         t1 = bounds[i + 1]
         seg_o = _segment(twin, t0, t1, x, ms, [e for e in events if e.start < t1])
         seg_m = _segment(twin, t0, t1, x, ms, [e for e in modified if e.start < t1])

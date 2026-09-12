@@ -55,7 +55,9 @@ def _halve(e: Event) -> Event:
 
 
 def build_variants(e: Event) -> List[Tuple[str, str, List[Event]]]:
-    """(name, condition text, events)."""
+    """(name, condition text, events). Every proposal gets a "15 g fast carbs
+    first" variant: when the patient is already trending low, that is the
+    condition that makes an otherwise harmless proposal safe."""
     fast_carbs = Event(type="meal", start_time=e.start_time, carbs_g=15, duration_min=5, uncertainty=0.1, source="tap", label="15 g fast carbs")
     out: List[Tuple[str, str, List[Event]]] = [
         ("delay_1h", "wait an hour first", [_shift(e, 60)]),
@@ -69,17 +71,37 @@ def build_variants(e: Event) -> List[Tuple[str, str, List[Event]]]:
         bed = Event(type="meal", start_time=(e.start + timedelta(minutes=max(e.duration_min, 60) + 30)).isoformat(timespec="minutes"), carbs_g=15, duration_min=5, uncertainty=0.1, source="tap", label="15 g carbs at bedtime")
         out.append(("fast_carbs_15g", "eat 15 g carbs before bed, no bolus", [e, bed]))
         out.append(("halve_plus_carbs", "have half as much and 15 g carbs before bed", [_halve(e), bed]))
-    elif e.type in ("meal", "caffeine"):
+        out.append(("fast_carbs_now_15g", "take 15 g fast carbs first (you are trending low)", [fast_carbs, e]))
+    elif e.type == "meal":
         pass
     else:
-        out.append(("fast_carbs_15g", "take 15 g fast carbs now", [fast_carbs, e]))
+        out.append(("fast_carbs_15g", "take 15 g fast carbs first (you are trending low)", [fast_carbs, e]))
     return out
 
 
-def _horizon_for(e: Event) -> int:
-    if e.type == "alcohol":
-        return 12 * 60
-    return 8 * 60
+def _horizon_for(e: Event, now=None) -> int:
+    """Horizon long enough to contain the decision window (see _window_for)."""
+    base = 12 * 60 if e.type == "alcohol" else 8 * 60
+    if now is None:
+        return base
+    _, b = _window_for(e, now)
+    return int(max(base, ((b // 5) + 1) * 5))
+
+
+def _window_for(e: Event, now) -> Tuple[int, int]:
+    """Minutes from now: the window this decision controls, 1 h before the proposal
+    to 4 h after it ends (12 h after for alcohol, whose low is delayed)."""
+    start = max(int((e.start - now).total_seconds() // 60), 0)
+    dur = max(e.duration_min, 30.0) if e.type in ("exercise", "alcohol", "meal") else 0.0
+    after = 12 * 60 if e.type == "alcohol" else 4 * 60
+    return max(start - 60, 0), int(start + dur + after)
+
+
+def _window_p_hypo(mc: MCResult, a_min: int, b_min: int) -> float:
+    a, b = a_min // 5, min(b_min // 5 + 1, mc.glucose_samples.shape[1])
+    if b <= a:
+        return float(mc.p_hypo)
+    return float(np.mean(mc.glucose_samples[:, a:b].min(axis=1) < 70))
 
 
 def _long_term_delta(twin, e: Event) -> Dict[str, float]:
@@ -127,13 +149,15 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
         twin.remember_card(card)
         return card
 
-    horizon = _horizon_for(proposed)
+    horizon = _horizon_for(proposed, twin.now)
+    win_a, win_b = _window_for(proposed, twin.now)
     scenarios: List[Scenario] = [Scenario("do_nothing", "", []), Scenario("proposed", "", [proposed])]
     for name, cond, evs in build_variants(proposed):
         scenarios.append(Scenario(name, cond, evs))
     for i, sc in enumerate(scenarios):
         sc.mc = twin.forecast(extra=sc.events, horizon_min=horizon, n=n, seed=i)
-        sc.p_hypo, sc.p_hyper, sc.tir, sc.energy = sc.mc.p_hypo, sc.mc.p_hyper, sc.mc.tir, sc.mc.energy
+        # the verdict is judged inside the window the proposal controls; TIR and energy over the full horizon
+        sc.p_hypo, sc.p_hyper, sc.tir, sc.energy = _window_p_hypo(sc.mc, win_a, win_b), sc.mc.p_hyper, sc.mc.tir, sc.mc.energy
     do_nothing, prop = scenarios[0], scenarios[1]
     variants = scenarios[2:]
 
@@ -147,6 +171,9 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
     if gate.rule == "alcohol_ketone_ceiling":
         hard_block_all = True
 
+    # a proposal that does not add risk over doing nothing is never the problem: if the baseline is
+    # already above the limit, approve it with the condition that treats the existing trend
+    adds_no_risk = prop.p_hypo <= do_nothing.p_hypo + 0.02 and prop.p_hyper < HYPER_BREACH_PROB and not prop.blocked
     if hard_block_all:
         verdict, best, condition = "denied", min(variants + [prop], key=lambda s: s.p_hypo), gate.instruction
     elif prop.passes(p_hypo_max):
@@ -156,6 +183,12 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
         if ok:
             best = max(ok, key=lambda s: s.score())
             verdict, condition = "approved_with_condition", best.condition
+        elif adds_no_risk and do_nothing.p_hypo >= p_hypo_max:
+            carb = next((v for v in variants if v.name.startswith("fast_carbs")), None)
+            best = carb if carb is not None and carb.p_hypo <= prop.p_hypo else prop
+            verdict = "approved_with_condition"
+            condition = (f"this adds no risk, but you are already trending low (P(hypo) {do_nothing.p_hypo:.0%} doing nothing): "
+                         + (best.condition if best is not prop else "treat the low first (15 g fast carbs) and re-check in 20 min"))
         else:
             best = min(variants, key=lambda s: (s.p_hypo, -s.score()))
             verdict, condition = "denied", f"even the safest option ({best.condition}) leaves P(hypo) at {best.p_hypo:.0%}"
@@ -167,7 +200,10 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
         alternative = alternative_window(twin, proposed)
         if alternative is not None:
             tag = "safe alternative" if alternative["p_hypo"] < p_hypo_max else "best alternative window"
-            condition = (condition + f"; {tag}: {alternative['start'][11:16]} (P(hypo) {alternative['p_hypo']:.0%})").strip("; ")
+            from datetime import datetime as _dt
+            when = _dt.fromisoformat(alternative["start"])
+            day = "today" if when.date() == twin.now.date() else ("tomorrow" if (when.date() - twin.now.date()).days == 1 else when.strftime("%a"))
+            condition = (condition + f"; {tag}: {day} {when.strftime('%H:%M')} (P(hypo) {alternative['p_hypo']:.0%})").strip("; ")
     best_event = next((x for x in best.events if x.type == proposed.type), None) or proposed
     factors = factors_from_mc(prop.mc)
     conf = confidence_score(twin.pt.cgm.data_quality, twin.posterior, prop.mc, twin.staleness_min(stale_override), twin.drift_status().score)
@@ -246,8 +282,8 @@ def _r(a) -> List[float]:
 def _explain(verdict: str, proposed: Event, prop: Scenario, best: Scenario, nothing: Scenario, condition: str) -> str:
     lbl = proposed.label or proposed.type
     med_min = float(np.median(prop.mc.min_glucose_samples))
-    base = (f"With '{lbl}' as proposed, P(glucose < 70 within {len(prop.mc.times) * 5 // 60} h) = {prop.p_hypo:.0%} "
-            f"(do nothing: {nothing.p_hypo:.0%}); median low point {med_min:.0f} mg/dL.")
+    base = (f"With '{lbl}' as proposed, P(glucose < 70 in the window around it) = {prop.p_hypo:.0%} "
+            f"(doing nothing: {nothing.p_hypo:.0%}); median low point over the forecast {med_min:.0f} mg/dL.")
     if verdict == "approved":
         return base + " That is under the 5 % limit with no hyper breach, so it is approved."
     if verdict == "approved_with_condition":

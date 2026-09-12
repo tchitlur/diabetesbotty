@@ -49,6 +49,25 @@ export const api = {
   reset: () => req('/demo/reset', { method: 'POST' }),
 }
 
+// ------------------------------------------------------------ formatting rules
+// glucose: integer mg/dL · probabilities: whole percent · times: HH:MM · dates: weekday + date
 export const fmtTime = (iso) => (iso ? iso.slice(11, 16) : '')
 export const fmtDay = (iso) => (iso ? iso.slice(0, 10) : '')
-export const pct = (x, d = 0) => `${(100 * (x || 0)).toFixed(d)}%`
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+export const fmtWhen = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return iso
+  return `${WD[d.getDay()]} ${iso.slice(5, 10)} ${iso.slice(11, 16)}`
+}
+export const fmtDate = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso.length === 10 ? iso + 'T00:00' : iso)
+  return Number.isNaN(d.getTime()) ? iso : `${WD[d.getDay()]} ${iso.slice(0, 10)}`
+}
+export const pct = (x, d = 0) => (x == null || Number.isNaN(x) ? '–' : `${(100 * x).toFixed(d)}%`)
+export const mgdl = (x) => (x == null || Number.isNaN(x) ? '–' : `${Math.round(x)}`)
+export const num = (x, d = 1) => (x == null || Number.isNaN(x) ? '–' : Number(x).toFixed(d))
+export const verdictTone = (v) => ({ approved: 'good', merged: 'good', approved_with_condition: 'warn', merged_with_changes: 'warn', denied: 'bad', rejected: 'bad', escalate: 'bad', request_data: 'off' }[v] || 'off')
+export const riskTone = (p) => (p == null ? 'off' : p < 0.05 ? 'good' : p < 0.10 ? 'warn' : 'bad')
+export const RISK_THRESHOLDS = 'green < 5 % · amber 5–10 % · red > 10 % (10-year probability)'

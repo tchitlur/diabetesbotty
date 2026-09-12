@@ -29,6 +29,13 @@ from backend.decision.replay import replay_day, list_days, suggest_day
 from backend.adapters.parse import parse_text, parse_image, parser_status
 
 log = logging.getLogger("glucopilot.api")
+
+
+def heavy(fn):
+    """Run fn under the twin's heavy lock: one simulation-bound request at a time."""
+    tw = get_twin()
+    with tw.heavy:
+        return fn()
 app = FastAPI(title="GlucoPilot", version="0.1.0", description="Mechanistic-plus-learned Type 1 diabetes twin. Decision support only.")
 app.add_middleware(CORSMiddleware, allow_origins=[FRONTEND_ORIGIN, "http://127.0.0.1:5173"], allow_methods=["*"], allow_headers=["*"])
 
@@ -83,7 +90,7 @@ def state(stale: Optional[float] = Query(default=None)) -> StateNow:
 @app.get("/forecast", response_model=ForecastResponse)
 def forecast(horizon_min: int = Query(default=480, ge=60, le=1440)) -> ForecastResponse:
     tw = get_twin()
-    mc = tw.forecast(horizon_min=horizon_min)
+    mc = heavy(lambda: tw.forecast(horizon_min=horizon_min))
     return ForecastResponse(times=mc.times, median=[round(float(x), 1) for x in mc.median], p10=[round(float(x), 1) for x in mc.p10],
                             p90=[round(float(x), 1) for x in mc.p90], p_hypo_8h=round(mc.p_hypo, 3), p_hyper_8h=round(mc.p_hyper, 3),
                             tir=round(mc.tir, 3), substances={k: [round(float(x), 4) for x in v] for k, v in mc.substances.items()})
@@ -99,21 +106,21 @@ def permission(req: PermissionRequest, stale: Optional[float] = Query(default=No
         ev = Event.from_dict(d)
     except ValueError as ex:
         raise HTTPException(400, str(ex))
-    return evaluate_permission(tw, ev, stale_override=stale if stale is not None else req.stale)
+    return heavy(lambda: evaluate_permission(tw, ev, stale_override=stale if stale is not None else req.stale))
 
 
 @app.get("/plan", response_model=PlanResponse)
 def plan_get(date: Optional[str] = None, drinks: int = 0) -> PlanResponse:
     tw = get_twin()
     day = datetime.fromisoformat(date) if date and date != "tomorrow" else None
-    return plan_day(tw, day=day, drinks=drinks)
+    return heavy(lambda: tw.cached(f"plan:{date}:{drinks}", lambda: plan_day(tw, day=day, drinks=drinks)))
 
 
 @app.post("/plan", response_model=PlanResponse)
 def plan_post(req: PlanRequest) -> PlanResponse:
     tw = get_twin()
     day = datetime.fromisoformat(req.date) if req.date and req.date != "tomorrow" else None
-    return plan_day(tw, day=day, blocks=req.blocks, workout=req.workout, drinks=req.drinks)
+    return heavy(lambda: plan_day(tw, day=day, blocks=req.blocks, workout=req.workout, drinks=req.drinks))
 
 
 @app.post("/change", response_model=ChangeResponse)
@@ -121,7 +128,7 @@ def change(req: ChangeRequest) -> ChangeResponse:
     if req.name not in CHANGES:
         raise HTTPException(400, f"unknown change {req.name!r}; choose one of {CHANGES}")
     tw = get_twin()
-    resp = evaluate_change(tw, req.name)
+    resp = heavy(lambda: tw.cached("no_change", lambda: evaluate_change(tw, "no_change"), keyed=False) if req.name == "no_change" else evaluate_change(tw, req.name))
     tw.cards.append({"kind": "change", "at": tw.now.isoformat(timespec="minutes"), "card": resp.model_dump()})
     tw.last_change = resp  # type: ignore[attr-defined]
     return resp
@@ -134,12 +141,14 @@ def change_options() -> List[str]:
 
 @app.get("/budget", response_model=BudgetResponse)
 def budget() -> BudgetResponse:
-    return compute_budget(get_twin())
+    tw = get_twin()
+    return heavy(lambda: tw.cached("budget", lambda: compute_budget(tw), keyed=False))
 
 
 @app.get("/alerts", response_model=List[Alert])
 def alerts() -> List[Alert]:
-    return compute_alerts(get_twin())
+    tw = get_twin()
+    return heavy(lambda: tw.cached("alerts", lambda: compute_alerts(tw)))
 
 
 @app.get("/replay/days")
@@ -149,13 +158,13 @@ def replay_days() -> List[Dict[str, Any]]:
 
 @app.get("/replay/suggest")
 def replay_suggest() -> Dict[str, Any]:
-    return suggest_day(get_twin())
+    return heavy(lambda: suggest_day(get_twin()))
 
 
 @app.post("/replay", response_model=ReplayResponse)
 def replay(req: ReplayRequest) -> ReplayResponse:
     try:
-        return replay_day(get_twin(), req.date, req.carbs_scale, req.alcohol_scale, req.exercise_scale, req.insulin_scale)
+        return heavy(lambda: replay_day(get_twin(), req.date, req.carbs_scale, req.alcohol_scale, req.exercise_scale, req.insulin_scale))
     except ValueError as ex:
         raise HTTPException(400, str(ex))
 

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api, pct } from './api.js'
+import { api } from './api.js'
+import Header from './components/Header.jsx'
 import NowTab from './components/NowTab.jsx'
 import TodayTab from './components/TodayTab.jsx'
 import BodyTab from './components/BodyTab.jsx'
@@ -10,26 +11,48 @@ import Chat from './components/Chat.jsx'
 
 const TABS = ['Now', 'Today', 'Body', 'Trends', 'Replay']
 
+// A tiny resource holder: { data, loading, error }. All tab data is fetched here once
+// (and prefetched at start) so switching tabs never shows a blank card.
+const idle = { data: null, loading: false, error: null }
+
 export default function App() {
   const [tab, setTab] = useState('Now')
   const [health, setHealth] = useState(null)
   const [state, setState] = useState(null)
   const [drift, setDrift] = useState(null)
   const [parser, setParser] = useState(null)
-  const [cards, setCards] = useState([])          // permission / change cards shown in Today
+  const [cards, setCards] = useState([])
   const [pendingChange, setPendingChange] = useState(null)
   const [planned, setPlanned] = useState([])
-  const [forecastKey, setForecastKey] = useState(0)  // bump to refetch forecasts after accepting events
   const [error, setError] = useState(null)
+  const [forecast, setForecast] = useState(idle)
+  const [history, setHistory] = useState(idle)
+  const [plan, setPlan] = useState(idle)
+  const [alerts, setAlerts] = useState(idle)
+  const [baseline, setBaseline] = useState(idle)
+  const [trends, setTrends] = useState(idle)
 
-  const refreshHeader = useCallback(async () => {
-    try {
-      const [h, s, d, p] = await Promise.all([api.health(), api.state(), api.drift(), api.parserStatus()])
-      setHealth(h); setState(s); setDrift(d); setParser(p)
-    } catch (e) { setError(String(e.message || e)) }
+  const load = useCallback(async (setter, fn) => {
+    setter((r) => ({ ...r, loading: true, error: null }))
+    try { const data = await fn(); setter({ data, loading: false, error: null }) } catch (e) { setter({ data: null, loading: false, error: e.message || String(e) }) }
   }, [])
 
-  useEffect(() => { refreshHeader() }, [refreshHeader])
+  const refreshForecast = useCallback(() => { load(setForecast, () => api.forecast(480)); load(setHistory, () => api.history(6)) }, [load])
+  const refreshPlan = useCallback(() => { load(setPlan, () => api.plan(0)); load(setAlerts, () => api.alerts()) }, [load])
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [h, s, d, p] = await Promise.all([api.health(), api.state(), api.drift(), api.parserStatus()])
+        setHealth(h); setState(s); setDrift(d); setParser(p)
+      } catch (e) { setError(String(e.message || e)) }
+    })()
+    refreshForecast()
+    refreshPlan()
+    load(setBaseline, () => api.change('no_change'))
+    load(setTrends, () => api.trends())
+    api.replaySuggest().catch(() => {})   // warm the server-side cache for the Replay tab
+  }, [load, refreshForecast, refreshPlan])
 
   const onCard = useCallback((card) => {
     setCards((c) => [{ ...card, at: Date.now() }, ...c])
@@ -38,43 +61,31 @@ export default function App() {
 
   const onAccepted = useCallback(async () => {
     try { setPlanned(await api.planned()) } catch (e) { /* ignore */ }
-    setForecastKey((k) => k + 1)
-  }, [])
+    refreshForecast()
+    refreshPlan()
+  }, [refreshForecast, refreshPlan])
 
   const onParser = useCallback((name) => setParser((p) => ({ ...(p || {}), last_parser: name })), [])
 
-  const sync = drift ? (drift.flagged ? (drift.days_flagged >= 5 ? 'red' : 'amber') : 'green') : 'gray'
-  const q = state ? state.data_quality : null
-  const qColor = q == null ? 'gray' : q >= 0.7 ? 'green' : q >= 0.4 ? 'amber' : 'red'
-
   return (
     <div className="app">
-      <header className="header">
-        <div className="brand">Gluco<span>Pilot</span></div>
-        <span className="pill"><span className={`dot ${sync}`} /> Twin sync {drift ? <b>{drift.flagged ? `drift x${drift.score}` : `ok (x${drift.score})`}</b> : '…'}</span>
-        <span className="pill"><span className={`dot ${qColor}`} /> Data quality {q != null ? <b>{q.toFixed(2)}</b> : '…'}</span>
-        <span className="pill">CGM {state ? <b>{state.staleness_min.toFixed(0)} min old</b> : '…'}</span>
-        <span className="pill">Parser: <b className={parser?.last_parser === 'gemini' ? 'ok' : ''}>{parser ? (parser.last_parser === 'gemini' ? 'Gemini' : 'local fallback') : '…'}</b>{parser && !parser.gemini_configured ? <span className="muted"> (no key)</span> : null}</span>
-        <div className="spacer" />
-        <span className="pill">Twin clock <b>{health ? health.now.replace('T', ' ') : '…'}</b></span>
-        <Link to="/clinician" className="pill">Clinician view</Link>
-      </header>
+      <Header health={health} state={state} drift={drift} parser={parser} right={<Link to="/clinician" className="pill">Clinician view</Link>} />
       <div className="main">
         <div className="left">
           <nav className="tabs">
             {TABS.map((t) => <button key={t} className={t === tab ? 'active' : ''} onClick={() => setTab(t)}>{t}</button>)}
           </nav>
           <div className="content">
-            {error ? <div className="err">Backend error: {error}. Is the API running on port 8000?</div> : null}
-            {tab === 'Now' ? <NowTab state={state} forecastKey={forecastKey} /> : null}
-            {tab === 'Today' ? <TodayTab cards={cards} planned={planned} forecastKey={forecastKey} onAccepted={onAccepted} /> : null}
-            {tab === 'Body' ? <BodyTab state={state} pendingChange={pendingChange} /> : null}
-            {tab === 'Trends' ? <TrendsTab /> : null}
+            {error ? <div className="card"><div className="status error">Backend not reachable ({error}). Start it with <code>.\run_demo.ps1</code> (API on port 8000).</div></div> : null}
+            {tab === 'Now' ? <NowTab state={state} forecast={forecast} history={history} /> : null}
+            {tab === 'Today' ? <TodayTab cards={cards} planned={planned} plan={plan} alerts={alerts} onAccepted={onAccepted} /> : null}
+            {tab === 'Body' ? <BodyTab state={state} baseline={baseline} pendingChange={pendingChange} /> : null}
+            {tab === 'Trends' ? <TrendsTab trends={trends} /> : null}
             {tab === 'Replay' ? <ReplayTab /> : null}
           </div>
         </div>
         <aside className="right">
-          <Chat onCard={onCard} onAccepted={onAccepted} onParser={onParser} onChange={(c) => setPendingChange(c)} goTo={setTab} />
+          <Chat onCard={onCard} onAccepted={onAccepted} onParser={onParser} onChange={(c) => setPendingChange(c)} goTo={setTab} parser={parser} twinNow={health?.now} />
         </aside>
       </div>
     </div>

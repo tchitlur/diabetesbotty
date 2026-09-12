@@ -41,14 +41,16 @@ The twin's clock is frozen at **Friday 2025-08-29 19:00** (just after dinner, gl
 
 1. **Now tab.** Estimated state with +-std (UKF over the last 12 h), the 8-hour forecast (median and p10-p90 band from 200 Monte Carlo runs), P(hypo) around 20 %, substance decay curves, energy gauge.
 2. **Chat: `can I have two more beers tonight?`** The parsed event appears as JSON with the parser badge (Gemini or local fallback), then "simulating...", then a card: *approved with condition: eat 15 g carbs before bed, no bolus*, with the mini curve (do nothing / as proposed / best variant), the top-3 factors, the 10-year delta if repeated weekly, and the data used / missing. The card also lands in the Today tab. "Add to plan" commits the beers **and** the bedtime snack to the forecast.
-3. **Chat: `fasted run tomorrow at 7 for 30 min`.** Denied: even the safest variant leaves P(hypo) above 5 %, and the card names a safe alternative window (10:00). If you added the beers + snack in step 2 first, the run is instead approved, because the snack protects the night.
+3. **Chat: `fasted run tomorrow at 7 for 30 min`.** Approved: judged in its own window (06:00 to 11:30) the run carries about 2 % hypo risk. For the other two verdict paths try the tap button **lift 45 min** (approved with a condition: 15 g fast carbs at the start, plus a safe alternative window) and **`two shots of vodka at 11pm`** (denied: even the safest variant leaves P(hypo) above 20 %).
 4. **`/change morning_workouts`** (also `cut_caffeine`, `drink_fridays_only`, `fasting_16_8`). The representative week is rewritten and simulated for 30 days (medium layer) and 10 years (slow layer); you get a verdict and the diff of all 22 state variables. **Body tab**: toggle "pending change" and the five organs recolour with the per-organ risk deltas.
 5. **`/budget`.** Three numbers: weekly alcohol (g), caffeine (mg) and off-plan meals that keep 10-year organ risk within 5 % of the current trajectory.
 6. **`/plan tomorrow`** (or `/plan tomorrow 3 drinks`). Grid search over workout start, snack placement and drink cutoff; the Today tab shows the hourly green/amber/red timeline and the pending alerts with the past event most responsible.
 7. **Replay tab.** Opens on Saturday 2025-08-09 (4 wines). Drag *Alcohol x* to 0: the twin's overnight nadir rises from 69 to about 125 mg/dL and the low disappears. Other sliders: carbs, exercise, bolus insulin.
 8. **Trends tab.** A1c twin estimate + 90-day projection, insulin-sensitivity drift with sleep debt, hypo hours per day, sleep-vs-sensitivity scatter.
 9. **Clinician view** (header link, `/clinician`). Parameter drift from sliding refits, residual log, fitted posterior, escalation history.
-10. **`/why`** prints the explanation payload of the last card. The tap bar (beer/wine/spirit x count, coffee, run 30 min, lift 45 min) creates proposals without typing. Remove `.env` (or set an invalid key) and the badge switches to *local fallback*; everything still works. `POST /permission?stale=30` returns a request-for-data card instead of a verdict.
+10. **`/why`** prints the explanation of the last card. The tap bar (beer/wine/spirit x count, coffee, run 30 min, lift 45 min) creates proposals without typing. Remove `.env` (or set an invalid key) and the badge switches to *local fallback*; everything still works. `POST /permission?stale=30` returns a request-for-data card instead of a verdict. The photo button is enabled only when a Gemini key is configured.
+
+`frontend/audit.spec.ts` (Playwright) walks every screen and interaction and fails on any console error, failed request, placeholder text or empty chart; `audit/FINDINGS.md` lists what it found and what was changed.
 
 ## What is in the box
 

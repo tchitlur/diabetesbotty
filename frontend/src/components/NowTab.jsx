@@ -1,134 +1,134 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { ComposedChart, Area, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
-import { api, fmtTime, pct } from '../api.js'
+import { fmtTime, pct, mgdl, num } from '../api.js'
+import Status, { ChartBox } from './Status.jsx'
+import { TICK, TIP, GRID, xLabel, yLabel, MARGIN, COLORS, legendFilter } from './chart.js'
 
 const FAST = [
-  ['glucose', 'Glucose'], ['plasma_insulin', 'Plasma insulin'], ['gut_carbs_1', 'Gut carbs (1)'], ['gut_carbs_2', 'Gut carbs (2)'],
-  ['liver_glycogen', 'Liver glycogen'], ['muscle_glycogen', 'Muscle glycogen'], ['blood_alcohol', 'Blood alcohol'], ['caffeine', 'Caffeine'],
-  ['ketones', 'Ketones'], ['hydration', 'Hydration'],
+  ['glucose', 'Glucose', 0], ['plasma_insulin', 'Plasma insulin', 1], ['gut_carbs_1', 'Gut carbs, stomach', 0], ['gut_carbs_2', 'Gut carbs, absorbing', 0],
+  ['liver_glycogen', 'Liver glycogen', 0], ['muscle_glycogen', 'Muscle glycogen', 0], ['blood_alcohol', 'Blood alcohol', 3], ['caffeine', 'Caffeine', 0],
+  ['ketones', 'Ketones', 2], ['hydration', 'Hydration', 2],
 ]
-const MEDIUM = [['sleep_debt', 'Sleep debt'], ['insulin_sensitivity', 'Insulin sensitivity'], ['training_load', 'Training load'], ['fat_mass', 'Fat mass'], ['lean_mass', 'Lean mass'], ['hba1c', 'HbA1c']]
-
-function fmt(v, k) {
-  if (v == null) return '–'
-  if (k === 'blood_alcohol') return v.toFixed(3)
-  if (k === 'hydration' || k === 'ketones' || k === 'insulin_sensitivity') return v.toFixed(2)
-  if (k === 'hba1c') return v.toFixed(2)
-  return v.toFixed(v >= 100 ? 0 : 1)
-}
+const MEDIUM = [['sleep_debt', 'Sleep debt', 1], ['insulin_sensitivity', 'Insulin sensitivity', 2], ['training_load', 'Training load', 0], ['fat_mass', 'Fat mass', 1], ['lean_mass', 'Lean mass', 1], ['hba1c', 'HbA1c', 2]]
 
 function Gauge({ value }) {
   const v = Math.max(0, Math.min(100, value || 0))
   const ang = Math.PI * (1 - v / 100)
   const r = 70, cx = 80, cy = 82
   const x = cx + r * Math.cos(ang), y = cy - r * Math.sin(ang)
-  const color = v >= 70 ? 'var(--green)' : v >= 45 ? 'var(--amber)' : 'var(--red)'
+  const color = v >= 70 ? COLORS.good : v >= 45 ? COLORS.warn : COLORS.bad
   return (
-    <div className="gauge">
-      <svg width="160" height="90" viewBox="0 0 160 90">
-        <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} stroke="var(--panel-2)" strokeWidth="14" fill="none" />
+    <div className="gauge" title="Energy score 0–100 from |glucose − 100|, sleep debt, caffeine and hydration. Green ≥ 70, amber 45–69, red < 45.">
+      <svg width="160" height="92" viewBox="0 0 160 92">
+        <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} stroke="#1f2731" strokeWidth="14" fill="none" />
         <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${x} ${y}`} stroke={color} strokeWidth="14" fill="none" strokeLinecap="round" />
       </svg>
-      <div className="val">{v.toFixed(0)}</div>
+      <div className="val">{Math.round(v)}<small> / 100</small></div>
     </div>
   )
 }
 
-export default function NowTab({ state, forecastKey }) {
-  const [fc, setFc] = useState(null)
-  const [hist, setHist] = useState(null)
-  const [err, setErr] = useState(null)
-  useEffect(() => {
-    let alive = true
-    Promise.all([api.forecast(480), api.history(6)]).then(([f, h]) => { if (alive) { setFc(f); setHist(h) } }).catch((e) => setErr(String(e.message)))
-    return () => { alive = false }
-  }, [forecastKey])
-
+export default function NowTab({ state, forecast, history }) {
+  const fc = forecast.data, hist = history.data
   const data = []
   if (hist) hist.times.forEach((t, i) => data.push({ t: fmtTime(t), actual: hist.glucose[i] }))
-  if (fc) fc.times.forEach((t, i) => data.push({ t: fmtTime(t), median: fc.median[i], p10: fc.p10[i], band: fc.p90[i] - fc.p10[i], ins: fc.substances.insulin?.[i], alc: fc.substances.alcohol?.[i], caf: fc.substances.caffeine?.[i] }))
+  if (fc) fc.times.forEach((t, i) => data.push({ t: fmtTime(t), median: fc.median[i], p10: fc.p10[i], band: fc.p90[i] - fc.p10[i] }))
   const sub = fc ? fc.times.map((t, i) => ({ t: fmtTime(t), insulin: fc.substances.insulin?.[i], alcohol: fc.substances.alcohol?.[i], caffeine: fc.substances.caffeine?.[i] })) : []
-
+  const busy = forecast.loading || history.loading
   return (
-    <div className="grid" style={{ gridTemplateColumns: '1fr' }}>
-      {err ? <div className="err">{err}</div> : null}
+    <div className="grid">
       <div className="grid three">
         <div className="card">
           <h3>Glucose now (estimated)</h3>
-          <div className="big">{state ? `${state.values.glucose.toFixed(0)} ± ${state.std.glucose.toFixed(0)}` : '…'} <span className="sub">mg/dL</span></div>
-          <div className="sub">UKF estimate as of {state ? state.as_of.replace('T', ' ') : ''}</div>
+          <Status loading={!state} loadingText="Estimating state…">
+            {state ? <>
+              <div className="big">{mgdl(state.values.glucose)} ± {mgdl(state.std.glucose)}<span className="unit">mg/dL</span></div>
+              <div className="note">Unscented Kalman filter over the last 12 h of CGM, as of {state.as_of.replace('T', ' ')}</div>
+            </> : null}
+          </Status>
         </div>
         <div className="card">
-          <h3>8 h forecast</h3>
-          <div className="kv">
-            <span className="k">P(hypo &lt; 70)</span><b>{fc ? pct(fc.p_hypo_8h) : '…'}</b><span />
-            <span className="k">P(hyper &gt; 250)</span><b>{fc ? pct(fc.p_hyper_8h) : '…'}</b><span />
-            <span className="k">Time in range</span><b>{fc ? pct(fc.tir) : '…'}</b><span />
-          </div>
-          <div className="sub">200 Monte Carlo trajectories over the fitted posterior + residual model</div>
+          <h3>Next 8 hours, doing nothing</h3>
+          <Status loading={forecast.loading} error={forecast.error} loadingText="Running 200 Monte Carlo trajectories…">
+            {fc ? <>
+              <div className="kv">
+                <span className="k">P(glucose &lt; 70)</span><b className="v">{pct(fc.p_hypo_8h)}</b><span />
+                <span className="k">P(glucose &gt; 250)</span><b className="v">{pct(fc.p_hyper_8h)}</b><span />
+                <span className="k">Time in range 70–180</span><b className="v">{pct(fc.tir)}</b><span />
+              </div>
+              <div className="note">200 trajectories sampled from the fitted parameter posterior, plus the residual model</div>
+            </> : null}
+          </Status>
         </div>
         <div className="card">
           <h3>Energy score</h3>
-          <Gauge value={state?.values.energy_score} />
-          <div className="sub" style={{ textAlign: 'center' }}>from |glucose − 100|, sleep debt, caffeine, hydration</div>
+          <Status loading={!state}><Gauge value={state?.values.energy_score} /></Status>
         </div>
       </div>
 
       <div className="card">
-        <h3>Last 6 h (CGM) and next 8 h (median with p10–p90 band)</h3>
-        <ResponsiveContainer width="100%" height={260}>
-          <ComposedChart data={data} margin={{ left: 0, right: 10, top: 5, bottom: 0 }}>
-            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-            <XAxis dataKey="t" tick={{ fontSize: 11, fill: 'var(--muted)' }} interval={11} />
-            <YAxis domain={[40, 300]} tick={{ fontSize: 11, fill: 'var(--muted)' }} width={36} />
-            <Tooltip contentStyle={{ background: '#0b0f14', border: '1px solid var(--border)' }} />
-            <ReferenceLine y={70} stroke="var(--red)" strokeDasharray="4 4" />
-            <ReferenceLine y={180} stroke="var(--amber)" strokeDasharray="4 4" />
-            <ReferenceLine y={250} stroke="var(--red)" strokeDasharray="2 6" />
-            <Area type="monotone" dataKey="p10" stackId="b" stroke="none" fill="transparent" isAnimationActive={false} />
-            <Area type="monotone" dataKey="band" stackId="b" stroke="none" fill="var(--accent)" fillOpacity={0.18} isAnimationActive={false} name="p10–p90" />
-            <Line type="monotone" dataKey="actual" stroke="#e6edf3" dot={false} strokeWidth={1.5} isAnimationActive={false} name="CGM" connectNulls={false} />
-            <Line type="monotone" dataKey="median" stroke="var(--accent)" dot={false} strokeWidth={2} isAnimationActive={false} name="forecast median" />
-            <Legend wrapperStyle={{ fontSize: 11 }} />
-          </ComposedChart>
-        </ResponsiveContainer>
+        <h3>Glucose: last 6 h (CGM) and next 8 h (forecast median with p10–p90 band)</h3>
+        <ChartBox loading={busy} error={forecast.error} height={280} loadingText="Running forecast…">
+          <ResponsiveContainer width="100%" height={280}>
+            <ComposedChart data={data} margin={MARGIN}>
+              <CartesianGrid {...GRID} />
+              <XAxis dataKey="t" tick={TICK} interval={11} label={xLabel('time (HH:MM)')} />
+              <YAxis domain={[40, 300]} tick={TICK} width={46} label={yLabel('glucose (mg/dL)')} />
+              <Tooltip contentStyle={TIP} formatter={(v, n) => [n === 'p10–p90 band' ? '' : `${Math.round(v)} mg/dL`, n]} />
+              <ReferenceLine y={70} stroke={COLORS.bad} strokeDasharray="4 4" />
+              <ReferenceLine y={180} stroke={COLORS.warn} strokeDasharray="4 4" />
+              <ReferenceLine y={250} stroke={COLORS.bad} strokeDasharray="2 6" />
+              <Area type="monotone" dataKey="p10" stackId="b" stroke="none" fill="transparent" isAnimationActive={false} legendType="none" tooltipType="none" />
+              <Area type="monotone" dataKey="band" stackId="b" stroke="none" fill={COLORS.accent} fillOpacity={0.18} isAnimationActive={false} name="p10–p90 band" />
+              <Line type="monotone" dataKey="actual" stroke={COLORS.cgm} dot={false} strokeWidth={1.5} isAnimationActive={false} name="CGM" connectNulls={false} />
+              <Line type="monotone" dataKey="median" stroke={COLORS.accent} dot={false} strokeWidth={2} isAnimationActive={false} name="forecast median" />
+              <Legend wrapperStyle={{ fontSize: 11, paddingTop: 12 }} formatter={legendFilter(['p10'])} />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </ChartBox>
+        <div className="note">Dashed lines: 70 (low), 180 (high), 250 (hyper breach). Gaps in the CGM line are sensor dropouts.</div>
       </div>
 
       <div className="grid two">
         <div className="card">
-          <h3>Active substances (median decay over the forecast)</h3>
-          <ResponsiveContainer width="100%" height={180}>
-            <ComposedChart data={sub} margin={{ left: 0, right: 10, top: 5, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
-              <XAxis dataKey="t" tick={{ fontSize: 11, fill: 'var(--muted)' }} interval={11} />
-              <YAxis yAxisId="l" tick={{ fontSize: 11, fill: 'var(--muted)' }} width={36} />
-              <YAxis yAxisId="r" orientation="right" tick={{ fontSize: 11, fill: 'var(--muted)' }} width={40} domain={[0, 0.15]} />
-              <Tooltip contentStyle={{ background: '#0b0f14', border: '1px solid var(--border)' }} />
-              <Line yAxisId="l" type="monotone" dataKey="insulin" stroke="var(--accent)" dot={false} name="plasma insulin (mU/L)" isAnimationActive={false} />
-              <Line yAxisId="l" type="monotone" dataKey="caffeine" stroke="var(--amber)" dot={false} name="caffeine (mg)" isAnimationActive={false} />
-              <Line yAxisId="r" type="monotone" dataKey="alcohol" stroke="var(--purple)" dot={false} name="BAC (g/dL)" isAnimationActive={false} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-            </ComposedChart>
-          </ResponsiveContainer>
+          <h3>Active substances over the forecast (median)</h3>
+          <ChartBox loading={forecast.loading} height={200}>
+            <ResponsiveContainer width="100%" height={200}>
+              <ComposedChart data={sub} margin={MARGIN}>
+                <CartesianGrid {...GRID} />
+                <XAxis dataKey="t" tick={TICK} interval={11} label={xLabel('time (HH:MM)')} />
+                <YAxis yAxisId="l" tick={TICK} width={46} label={yLabel('insulin mU/L · caffeine mg')} />
+                <YAxis yAxisId="r" orientation="right" tick={TICK} width={50} domain={[0, 0.15]} label={yLabel('alcohol g/dL', 'right')} />
+                <Tooltip contentStyle={TIP} formatter={(v, n) => [n.startsWith('BAC') ? Number(v).toFixed(3) : Math.round(v), n]} />
+                <Line yAxisId="l" type="monotone" dataKey="insulin" stroke={COLORS.accent} dot={false} name="plasma insulin (mU/L)" isAnimationActive={false} />
+                <Line yAxisId="l" type="monotone" dataKey="caffeine" stroke={COLORS.s3} dot={false} name="caffeine (mg)" isAnimationActive={false} />
+                <Line yAxisId="r" type="monotone" dataKey="alcohol" stroke={COLORS.s2} dot={false} name="BAC (g/dL)" isAnimationActive={false} />
+                <Legend wrapperStyle={{ fontSize: 11, paddingTop: 12 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartBox>
         </div>
         <div className="card">
           <h3>Estimated state (± std for the fast layer)</h3>
-          <div className="kv">
-            {FAST.map(([k, l]) => (
-              <React.Fragment key={k}>
-                <span className="k">{l}</span>
-                <span className="mono">{state ? `${fmt(state.values[k], k)}${state.std[k] != null ? ` ± ${fmt(state.std[k], k)}` : ''}` : '…'}</span>
-                <span className="u">{state?.units[k]}</span>
-              </React.Fragment>
-            ))}
-            {MEDIUM.map(([k, l]) => (
-              <React.Fragment key={k}>
-                <span className="k">{l}</span>
-                <span className="mono">{state ? fmt(state.values[k], k) : '…'}</span>
-                <span className="u">{state?.units[k]}</span>
-              </React.Fragment>
-            ))}
-          </div>
+          <Status loading={!state} loadingText="Estimating state…">
+            {state ? <div className="kv">
+              {FAST.map(([k, l, d]) => (
+                <React.Fragment key={k}>
+                  <span className="k">{l}</span>
+                  <span className="v">{num(state.values[k], d)}{state.std[k] != null ? ` ± ${num(state.std[k], d)}` : ''}</span>
+                  <span className="u">{state.units[k]}</span>
+                </React.Fragment>
+              ))}
+              {MEDIUM.map(([k, l, d]) => (
+                <React.Fragment key={k}>
+                  <span className="k">{l}</span>
+                  <span className="v">{num(state.values[k], d)}</span>
+                  <span className="u">{state.units[k]}</span>
+                </React.Fragment>
+              ))}
+            </div> : null}
+          </Status>
+          <div className="note">Medium-layer values (sleep debt onward) are daily estimates without a std.</div>
         </div>
       </div>
     </div>
