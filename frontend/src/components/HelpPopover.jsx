@@ -1,6 +1,12 @@
 import React, { useEffect, useRef } from 'react'
 
-export const EXAMPLES = ['Can I have pizza for dinner?', 'Is dessert okay right now?', 'Large coffee now', 'Run at 7 tomorrow?']
+export const GROUPS = [
+  ['Ask', ["What's my glucose?", "Why isn't my sugar rising after lunch?", 'How many lows did I have this week?']],
+  ['Decide', ['Can I have pizza for dinner?', 'Run at 7 tomorrow?']],
+  ['Log', ['I just had a large coffee', 'Ate a bagel 15 min ago']],
+  ['Explore', ['What if I skip dinner?', '/plan tomorrow', '/change morning_workouts']],
+]
+export const EXAMPLES = GROUPS.flatMap(([, xs]) => xs)
 export const CHANGES = [
   ['morning_workouts', 'Move workouts to morning'],
   ['cut_caffeine', 'Cut caffeine'],
@@ -8,7 +14,7 @@ export const CHANGES = [
   ['fasting_16_8', 'Skip breakfast, eat 12–8'],
 ]
 
-// The "?" popover next to the chat input: examples to tap and the commands with plain labels.
+// The "?" popover next to the chat input: grouped examples to tap, and the /change options with plain labels.
 export default function HelpPopover({ onPick, onClose }) {
   const ref = useRef(null)
   useEffect(() => {
@@ -19,16 +25,15 @@ export default function HelpPopover({ onPick, onClose }) {
   }, [onClose])
   return (
     <div className="help" ref={ref} role="dialog" aria-label="help">
-      <div className="help-title">Try asking</div>
-      <div className="help-list">{EXAMPLES.map((x) => <button key={x} type="button" className="small" onClick={() => onPick(x)}>{x}</button>)}</div>
+      {GROUPS.map(([title, xs]) => (
+        <React.Fragment key={title}>
+          <div className="help-title">{title}</div>
+          <div className="help-list">{xs.map((x) => <button key={x} type="button" className="small" onClick={() => onPick(x)}>{x}</button>)}</div>
+        </React.Fragment>
+      ))}
       <div className="help-title">What if I changed…</div>
       <div className="help-list">{CHANGES.map(([name, label]) => <button key={name} type="button" className="small" onClick={() => onPick(`/change ${name}`)}>{label}</button>)}</div>
-      <div className="help-title">More</div>
-      <div className="help-list">
-        <button type="button" className="small" onClick={() => onPick('/plan tomorrow')}>Plan tomorrow's workout</button>
-        <button type="button" className="small" onClick={() => onPick('/why')}>Why the last answer?</button>
-      </div>
-      <div className="faint xs">You can also log food, drinks and workouts with the buttons above.</div>
+      <div className="faint xs">Every answer comes from your model; the chips under it show which parts were checked.</div>
     </div>
   )
 }

@@ -11,7 +11,10 @@ export default function Strip({ times, line, p10, p90, markerIso, markerLabel, h
   if (startIso) { const i = times.findIndex((t) => t >= startIso); a = i < 0 ? 0 : i }
   const n = Math.min(times.length - a, hours * 12 + 1)
   const data = []
-  for (let i = a; i < a + n; i++) data.push({ t: fmtTime(times[i]), iso: times[i], line: line?.[i], p10: p10?.[i], band: p90 && p10 ? p90[i] - p10[i] : undefined })
+  for (let i = a; i < a + n; i++) {
+    if (data.length && data[data.length - 1].iso === times[i]) continue   // a repeated boundary point would give Recharts two ticks with one key
+    data.push({ t: fmtTime(times[i]), iso: times[i], line: line?.[i], p10: p10?.[i], band: p90 && p10 ? p90[i] - p10[i] : undefined })
+  }
   const m = markerIso ? data.find((d) => d.iso >= markerIso.slice(0, 16)) : null
   const mIdx = m ? data.indexOf(m) : -1
   const ticks = data.filter((d) => d.iso.slice(14, 16) === '00').map((d) => d.t)

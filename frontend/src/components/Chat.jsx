@@ -4,19 +4,21 @@ import AnswerCard from './AnswerCard.jsx'
 import ChangeCard from './ChangeCard.jsx'
 import QuickLog from './QuickLog.jsx'
 import HelpPopover, { CHANGES } from './HelpPopover.jsx'
+import { ToolChips, StateCard, ForecastCard, ExplainCard, HistoryCard, LoggedCard, TextCard } from './ChatCards.jsx'
 
 const PLACEHOLDER = 'Ask your personalized model about your daily decisions.'
-const changeLabel = (name) => (CHANGES.find(([n]) => n === name) || [name, name])[1]
 
-function Understood({ event, nowIso, parsed }) {
+function Understood({ text, parser }) {
   return (
     <div className="msg plain">
-      <div className="understood"><span>Understood:</span><b>{eventPhrase(event)} {fmtRel(event.start_time, nowIso)}</b>{parsed?.parser ? <span className="faint xs">· read by {parsed.parser === 'gemini' ? 'Gemini' : 'the built-in reader'}</span> : null}</div>
-      <details><summary>details</summary><pre>{JSON.stringify(event, null, 2)}</pre></details>
+      <div className="understood"><span>{text.split(':')[0]}:</span><b>{text.split(':').slice(1).join(':').trim()}</b>{parser ? <span className="faint xs">· read by {parser === 'gemini' ? 'Gemini' : 'the built-in reader'}</span> : null}</div>
     </div>
   )
 }
 
+// Every message goes to /chat: Gemini (or the built-in reader) picks backend tools, the backend
+// phrases and ground-checks the answer, and the card that comes back is rendered by type. The
+// quick buttons and photos still go straight to the permission engine (same card as before).
 const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twinNow }, ref) {
   const [log, setLog] = useState([])
   const [help, setHelp] = useState(false)
@@ -35,25 +37,50 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
     if (!mc) return null
     return { times: mc.times, line: mc.best_variant, p10: mc.p10, p90: mc.p90, markerIso: card.proposed?.start_time, markerLabel: eventPhrase(card.proposed), hours: 6, nowLabel: fmtTime(nowIso), title: 'Next 6 hours if you follow the advice' }
   }
+  const permissionNode = (card, extra) => (
+    <AnswerCard plain={card.plain} strip={stripFor(card)} card={card} onAccepted={onAccepted} onWhy={() => submit('/why')} footer={extra}
+                details={<pre>{JSON.stringify({ verdict: card.verdict, condition: card.condition, options: card.variants, confidence: card.confidence, data_used: card.data_used, data_missing: card.data_missing, engine: card.engine }, null, 2)}</pre>} />
+  )
+  const planNode = (p) => {
+    const start = p.workout_start ? shiftIso(p.workout_start, -60) : null
+    const strip = p.glucose_times?.length ? { times: p.glucose_times, line: p.glucose_median, p10: p.glucose_p10, p90: p.glucose_p90, startIso: start, markerIso: p.workout_start, markerLabel: 'workout', hours: 6, title: 'Around the workout tomorrow' } : null
+    return <AnswerCard plain={p.plain} strip={strip} footer={<button className="small ghost" onClick={() => goTo && goTo('Plan')}>open the Plan tab</button>} details={<pre>{JSON.stringify({ workout_start: p.workout_start, snack_time: p.snack_time, drink_cutoff: p.drink_cutoff, notes: p.notes }, null, 2)}</pre>} />
+  }
+
+  // the bot's turn: answer text, the card for its type, the tool chips
+  const Answer = ({ r }) => {
+    const c = r.card || { type: 'text', payload: {} }
+    const p = c.payload || {}
+    let card = null
+    if (c.type === 'permission') card = permissionNode(p)
+    else if (c.type === 'plan') card = planNode(p)
+    else if (c.type === 'change') card = <ChangeCard resp={p} />
+    else if (c.type === 'state') card = <StateCard p={p} />
+    else if (c.type === 'forecast') card = <ForecastCard p={p} nowIso={nowIso} />
+    else if (c.type === 'explain') card = <ExplainCard p={p} />
+    else if (c.type === 'history') card = <HistoryCard p={p} />
+    else if (c.type === 'logged') card = <LoggedCard p={p} />
+    else if (c.type === 'text') card = <TextCard p={p} />
+    const showText = !(c.type === 'permission' || c.type === 'plan' || c.type === 'change')
+    return (
+      <div className="answer-wrap" data-card={c.type} data-testid={`answer-${c.type}`}>
+        {showText ? <div className="answer-text">{r.answer}</div> : null}
+        {card}
+        <ToolChips tools={r.tools} router={r.router} />
+        {r.grounding && r.grounding.replaced ? <div className="faint xs">The language model's wording was replaced: it used a number the tools did not return.</div> : null}
+      </div>
+    )
+  }
 
   const runPermission = async (event, parsed) => {
     if (parsed?.parser) onParser && onParser(parsed.parser)
     const ev = { ...event, start_time: event.start_time === 'now' ? (nowIso || event.start_time) : event.start_time }
-    push('bot', <Understood event={ev} nowIso={nowIso} parsed={parsed} />)
+    push('bot', <Understood text={`Understood: ${eventPhrase(ev)} ${fmtRel(ev.start_time, nowIso)}`} parser={parsed?.parser} />)
     const id = push('bot', <span className="status"><span className="spinner" />Checking how your body would handle it…</span>)
     try {
       const card = await api.permission(ev)
-      replace(id, <AnswerCard plain={card.plain} strip={stripFor(card)} card={card} onAccepted={onAccepted} onWhy={() => runWhy()} details={<pre>{JSON.stringify({ verdict: card.verdict, condition: card.condition, options: card.variants, confidence: card.confidence, data_used: card.data_used, data_missing: card.data_missing }, null, 2)}</pre>} />)
+      replace(id, <div className="answer-wrap" data-card="permission" data-testid="answer-permission">{permissionNode(card)}<ToolChips tools={['evaluate_action']} /></div>)
     } catch (e) { replace(id, <span className="err">Could not check that: {String(e.message)}</span>) }
-  }
-
-  const runWhy = async () => {
-    const id = push('bot', <span className="status"><span className="spinner" />Getting the reason…</span>)
-    try {
-      const w = await api.why()
-      if (!w.plain) { replace(id, <span>Nothing to explain yet. Ask about something first.</span>); return }
-      replace(id, <AnswerCard plain={{ ...w.plain, headline: `Why: ${w.plain.headline}` }} details={<pre>{JSON.stringify({ verdict: w.verdict, condition: w.condition, confidence: w.confidence, factors: w.factors, data_used: w.data_used, data_missing: w.data_missing, gate: w.gate }, null, 2)}</pre>} />)
-    } catch (e) { replace(id, <span className="err">{String(e.message)}</span>) }
   }
 
   const submit = async (raw) => {
@@ -63,36 +90,17 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
     push('user', t)
     setBusy(true)
     try {
-      if (t.startsWith('/change')) {
-        const name = t.split(/\s+/)[1] || 'no_change'
-        const id = push('bot', <span className="status"><span className="spinner" />Trying that change on a typical week and running it forward 30 days…</span>)
-        try {
-          const r = await api.change(name)
-          replace(id, <ChangeCard resp={r} />)
-        } catch (e) { replace(id, <span className="err">{String(e.message)}. Options: {CHANGES.map(([n, l]) => `${l} (/change ${n})`).join(', ')}.</span>) }
-      } else if (t.startsWith('/plan')) {
-        const m = t.match(/(\d+)\s*drink/); const drinks = m ? +m[1] : 0
-        const id = push('bot', <span className="status"><span className="spinner" />Trying every workout time tomorrow…</span>)
-        try {
-          const p = await api.plan(drinks)
-          const start = p.workout_start ? shiftIso(p.workout_start, -60) : null
-          const strip = p.glucose_times?.length ? { times: p.glucose_times, line: p.glucose_median, p10: p.glucose_p10, p90: p.glucose_p90, startIso: start, markerIso: p.workout_start, markerLabel: 'workout', hours: 6, title: 'Around the workout tomorrow' } : null
-          replace(id, <AnswerCard plain={p.plain} strip={strip} footer={<button className="small ghost" onClick={() => goTo && goTo('Plan')}>open the Plan tab</button>} details={<pre>{JSON.stringify({ workout_start: p.workout_start, snack_time: p.snack_time, drink_cutoff: p.drink_cutoff, notes: p.notes }, null, 2)}</pre>} />)
-        } catch (e) { replace(id, <span className="err">{String(e.message)}</span>) }
-      } else if (t.startsWith('/budget')) {
-        push('bot', <span>The /budget command is not part of this version. Try /plan tomorrow or /change morning_workouts.</span>)
-      } else if (t.startsWith('/why')) {
-        await runWhy()
-      } else if (t.startsWith('/help')) {
-        setHelp(true)
-      } else {
-        const id = push('bot', <span className="status"><span className="spinner" />Reading that…</span>)
-        try {
-          const parsed = await api.parse(t)
-          remove(id)
-          await runPermission(parsed.event, parsed)
-        } catch (e) { replace(id, <span className="err">{String(e.message)}</span>) }
-      }
+      if (t.startsWith('/help')) { setHelp(true); return }
+      if (t.startsWith('/budget')) { push('bot', <span>The /budget command is not part of this version. Try /plan tomorrow or /change morning_workouts.</span>); return }
+      const id = push('bot', <span className="status"><span className="spinner" />{t.startsWith('/change') ? 'Trying that change on a typical week and running it forward 30 days…' : t.startsWith('/plan') ? 'Trying every workout time tomorrow…' : 'Asking your model…'}</span>)
+      try {
+        const r = await api.chat(t)
+        if (r.router) onParser && onParser(r.router === 'gemini' ? 'gemini' : 'local')
+        remove(id)
+        if (r.understood) push('bot', <Understood text={r.understood} parser={r.router} />)
+        push('bot', <Answer r={r} />)
+        if (r.card?.type === 'logged' || r.card?.type === 'permission') onAccepted && onAccepted()
+      } catch (e) { replace(id, <span className="err">{String(e.message)}{t.startsWith('/change') ? ` Options: ${CHANGES.map(([n, l]) => `${l} (/change ${n})`).join(', ')}.` : ''}</span>) }
     } finally { setBusy(false) }
   }
 
@@ -115,15 +123,15 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
   useImperativeHandle(ref, () => ({
     quick: onQuick,
     ask: (t) => submit(t),
-    reset: () => { setLog([]); setText('') },
+    reset: () => { setLog([]); setText(''); api.chatReset().catch(() => {}) },
   }))
 
   return (
     <div className="chat">
       <div className="chat-head"><span className="bot-icon" aria-hidden="true">🩺</span><b>Diabetes Bot</b><span className="faint xs">asks the model, not a chatbot</span></div>
       <div className="log">
-        {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "Can I have pizza for dinner?" or tap a button below.</div> : null}
-        {log.map((m) => (m.role === 'user' ? <div key={m.id} className="msg user">{m.node}</div> : <div key={m.id} className={m.node?.props?.className === 'msg plain' ? '' : 'msg bot'}>{m.node}</div>))}
+        {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "What's my glucose?", "Can I have pizza for dinner?" or tap a button below.</div> : null}
+        {log.map((m) => (m.role === 'user' ? <div key={m.id} className="msg user">{m.node}</div> : <div key={m.id} className={m.node?.props?.className === 'msg plain' || m.node?.type === Understood ? '' : 'msg bot'}>{m.node}</div>))}
         <div ref={endRef} />
       </div>
       <QuickLog onAction={onQuick} disabled={busy} parser={parser} />

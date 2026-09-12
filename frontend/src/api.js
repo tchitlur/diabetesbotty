@@ -50,6 +50,8 @@ export const api = {
   why: () => req('/why'),
   twinSummary: () => req('/twin/summary'),
   permissionCompare: (event) => req('/permission/compare', { method: 'POST', body: JSON.stringify({ event }) }),
+  chat: (text) => req('/chat', { method: 'POST', body: JSON.stringify({ text }) }),
+  chatReset: () => req('/chat/reset', { method: 'POST' }),
   reset: () => req('/demo/reset', { method: 'POST' }),
 }
 
