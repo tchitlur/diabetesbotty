@@ -7,10 +7,13 @@ CORS is open for the Vite dev server on localhost:5173.
 """
 from __future__ import annotations
 
+import json
 import logging
+from pathlib import Path
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from fastapi.responses import HTMLResponse
 from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -538,6 +541,55 @@ def chat_reset() -> Dict[str, Any]:
 def chat_tools() -> List[Dict[str, Any]]:
     from backend.chat.tools import TOOLS, describe
     return [{"name": n, "description": describe(n), "parameters": spec["parameters"]} for n, spec in TOOLS.items()]
+
+
+# ------------------------------------------------------------------ /compare: the side-by-side pitch page
+_COMPARE_HTML = (Path(__file__).resolve().parent.parent / "compare" / "page.html")
+
+
+def _compare_bundle() -> Dict[str, Any]:
+    from backend.compare import engine as ce
+    cache = ce.load_cache()
+    personas_path = ce.CACHE_DIR / "personas.json"
+    personas = json.loads(personas_path.read_text(encoding="utf-8")) if personas_path.exists() else []
+    return {"personas": personas, "results": cache, "bank": [{"slug": b["slug"], "text": b["text"]} for b in ce.BANK], "now": ce.COMPARE_NOW.isoformat(timespec="minutes")}
+
+
+@app.get("/compare", response_class=HTMLResponse)
+def compare_page() -> str:
+    """The pitch page: three people, one question. The cached results are bundled into the page so it
+    renders even if every API call fails."""
+    html = _COMPARE_HTML.read_text(encoding="utf-8")
+    bundle = json.dumps(_compare_bundle()).replace("</", "<\\/")
+    return html.replace("__BUNDLE__", bundle)
+
+
+@app.get("/compare/data")
+def compare_data() -> Dict[str, Any]:
+    return _compare_bundle()
+
+
+class CompareAsk(BaseModel):
+    text: str
+
+
+@app.post("/compare/ask")
+def compare_ask(req: CompareAsk) -> Dict[str, Any]:
+    """A bank prompt from the cache; anything else runs the three twins live (4-second budget) and falls
+    back to the nearest cached prompt."""
+    from backend.compare import engine as ce
+    if not req.text.strip():
+        raise HTTPException(400, "empty text")
+    try:
+        return ce.ask(req.text, timeout_s=4.0)
+    except RuntimeError as ex:
+        raise HTTPException(503, str(ex))
+
+
+@app.on_event("startup")
+def _compare_prewarm() -> None:
+    from backend.compare import engine as ce
+    ce.prewarm()
 
 
 @app.post("/demo/reset")

@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GlucoPilot · Compare</title>
+<style>
+:root { --bg:#f7f7f4; --panel:#ffffff; --panel-2:#f1f2ef; --border:#e3e5df; --border-strong:#cfd3cb; --text:#24282b; --muted:#5f6a70; --faint:#9aa3a8;
+  --accent:#2f8f83; --accent-soft:#e2f1ee; --good:#2f9e5f; --warn:#d68b1c; --bad:#d1443f; --good-soft:#e4f4ea; --warn-soft:#fcefd9; --bad-soft:#fbe3e2;
+  --font:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --fs-xs:12px; --fs-sm:13px; --fs-md:15px; --fs-lg:18px; --fs-xl:24px; --fs-xxl:34px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:40px; --radius:14px; --radius-sm:8px; --shadow:0 1px 2px rgba(20,30,30,.05); color-scheme: light; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: var(--fs-md); line-height: 1.4; }
+body { min-height: 100vh; padding-bottom: 150px; }
+.top { display: flex; align-items: baseline; gap: var(--s5); padding: var(--s4) var(--s6) 0; }
+.brand { font-size: var(--fs-xxl); font-weight: 700; letter-spacing: -.5px; }
+.brand span { color: var(--accent); }
+.tag { font-size: var(--fs-xl); color: var(--muted); font-weight: 500; }
+main { padding: var(--s5) var(--s6); max-width: 1800px; margin: 0 auto; }
+.card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent-soft); display: inline-flex; align-items: center; justify-content: center; font-size: 30px; flex: none; }
+.avatar.sm { width: 34px; height: 34px; font-size: 18px; }
+
+/* ---- initial: three columns */
+.cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s5); transition: opacity .3s ease, transform .3s ease, max-height .3s ease; max-height: 1200px; overflow: hidden; }
+.col { padding: var(--s5); display: grid; gap: var(--s4); align-content: start; }
+.col .who { display: flex; align-items: center; gap: var(--s3); }
+.col .who b { font-size: var(--fs-xl); }
+.col .who small { display: block; color: var(--muted); font-size: var(--fs-md); }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s2) var(--s4); font-size: var(--fs-sm); }
+.stats .k { color: var(--muted); }
+.stats .v { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.stats .v.big { font-size: var(--fs-xl); }
+.tone-good { color: var(--good); } .tone-warn { color: var(--warn); } .tone-bad { color: var(--bad); } .tone-off { color: var(--muted); }
+.learned { font-size: var(--fs-sm); color: var(--muted); border-top: 1px solid var(--border); padding-top: var(--s3); }
+.learned b { color: var(--text); font-weight: 600; }
+.spark { display: block; width: 100%; height: 64px; }
+.spark-lbl { font-size: var(--fs-xs); color: var(--faint); display: flex; justify-content: space-between; }
+
+/* ---- answer state: compact strip, question, panels, summary */
+.state-answer .cols { max-height: 0; opacity: 0; transform: translateY(-16px); margin-bottom: 0; pointer-events: none; }
+.strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s4); opacity: 0; max-height: 0; overflow: hidden; transform: translateY(-8px); transition: opacity .3s ease .15s, transform .3s ease .15s, max-height .3s ease; }
+.state-answer .strip { opacity: 1; max-height: 120px; transform: none; }
+.strip .mini { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); }
+.strip .mini b { font-size: var(--fs-md); }
+.strip .mini small { display: block; color: var(--muted); font-size: var(--fs-sm); }
+.qbar { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s4); opacity: 0; max-height: 0; overflow: hidden; transform: translateY(40px); transition: opacity .3s ease .2s, transform .35s ease .2s, max-height .3s ease .2s; }
+.state-answer .qbar { opacity: 1; max-height: 90px; transform: none; }
+.qbar .q { font-size: var(--fs-xxl); font-weight: 700; letter-spacing: -.3px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qbar .tagc { font-size: var(--fs-xs); color: var(--muted); border: 1px solid var(--border-strong); border-radius: 999px; padding: 2px 8px; }
+.switch { display: inline-flex; align-items: center; gap: var(--s2); font-size: var(--fs-sm); color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; }
+.switch .track { width: 46px; height: 26px; border-radius: 13px; background: var(--border-strong); position: relative; transition: background .2s; }
+.switch .track::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2); }
+.switch.on .track { background: var(--accent); }
+.switch.on .track::after { transform: translateX(20px); }
+.switch b { color: var(--text); }
+button { font: inherit; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--panel); color: var(--text); padding: 10px 18px; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button.ghost { border-color: transparent; color: var(--accent); }
+.panels { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s5); margin-top: var(--s5); }
+.panel { padding: var(--s4) var(--s5) var(--s5); opacity: 0; transform: translateY(24px); transition: opacity .4s ease, transform .4s ease; display: grid; gap: var(--s3); }
+.panel.in { opacity: 1; transform: none; }
+.panel .chart { width: 100%; height: 220px; display: block; }
+.panel .verdict { font-size: var(--fs-xxl); font-weight: 700; letter-spacing: -.4px; line-height: 1.1; transition: opacity .15s; }
+.panel .cond { font-size: var(--fs-md); min-height: 1.4em; color: var(--muted); }
+.panel .stat3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--s3); font-size: var(--fs-sm); }
+.panel .stat3 .k { color: var(--muted); display: block; }
+.panel .stat3 b { font-size: var(--fs-lg); font-variant-numeric: tabular-nums; }
+.panel .reason { font-size: var(--fs-md); border-top: 1px solid var(--border); padding-top: var(--s3); }
+.summary { margin-top: var(--s5); padding: var(--s5); opacity: 0; transform: translateY(16px); transition: opacity .35s ease, transform .35s ease; display: grid; gap: var(--s3); }
+.summary.in { opacity: 1; transform: none; }
+.summary .head { font-size: var(--fs-xxl); font-weight: 700; letter-spacing: -.4px; line-height: 1.15; }
+.summary .head small { display: block; font-size: var(--fs-xl); font-weight: 600; color: var(--muted); margin-top: 4px; }
+.summary ul { margin: 0; padding-left: 20px; font-size: var(--fs-lg); display: grid; gap: 6px; }
+.summary .same { font-size: var(--fs-xl); color: var(--muted); }
+.hidden { display: none !important; }
+
+/* ---- the ask bar, pinned at the bottom in the initial state */
+.ask { position: fixed; left: 0; right: 0; bottom: 0; padding: var(--s3) var(--s6) var(--s5); background: linear-gradient(to top, var(--bg) 70%, rgba(247,247,244,0)); transition: opacity .25s ease, transform .3s ease; }
+.state-answer .ask { opacity: 0; transform: translateY(30px); pointer-events: none; }
+.ask .inner { max-width: 1800px; margin: 0 auto; display: grid; gap: var(--s3); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.chip { border-radius: 999px; border: 1px solid var(--border-strong); background: var(--panel); padding: 8px 14px; font-size: var(--fs-sm); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.chip:hover { border-color: var(--accent); }
+.chip i { font-style: normal; background: var(--panel-2); border-radius: 6px; padding: 0 6px; color: var(--muted); font-size: var(--fs-xs); }
+.askrow { display: flex; gap: var(--s3); }
+.askrow input { flex: 1; font: inherit; font-size: var(--fs-xl); padding: 14px 20px; border: 1px solid var(--border-strong); border-radius: var(--radius); background: var(--panel); color: var(--text); }
+.askrow input:focus { outline: 2px solid var(--accent); border-color: var(--accent); }
+.askrow button { font-size: var(--fs-lg); padding: 0 28px; }
+.status { font-size: var(--fs-sm); color: var(--muted); min-height: 1.2em; }
+.kbd { color: var(--faint); font-size: var(--fs-xs); }
+</style>
+</head>
+<body class="state-initial">
+<header class="top"><div class="brand">Gluco<span>Pilot</span></div><div class="tag">Same question. Three bodies. Three answers.</div></header>
+<main id="main">
+  <section id="cols" class="cols" data-testid="columns"></section>
+  <section id="strip" class="strip" data-testid="strip"></section>
+  <section id="qbar" class="qbar" data-testid="qbar">
+    <div class="q" id="qtext"></div>
+    <span class="tagc hidden" id="qtag">cached</span>
+    <label class="switch on" id="toggle" data-testid="toggle" title="Off: the population model, the same for everyone. On: each person's own twin.">
+      <span>Average</span><span class="track"></span><b>Personalized</b>
+    </label>
+    <button type="button" id="again" data-testid="again">Ask another</button>
+  </section>
+  <section id="panels" class="panels hidden" data-testid="panels"></section>
+  <section id="summary" class="summary card hidden" data-testid="summary"></section>
+</main>
+<footer class="ask" id="ask" data-testid="ask">
+  <div class="inner">
+    <div class="chips" id="chips"></div>
+    <form class="askrow" id="form"><input id="input" type="text" placeholder="Ask all three the same question…" aria-label="question" autocomplete="off" /><button type="submit" class="primary">Ask</button></form>
+    <div class="status" id="status"><span class="kbd">1–6 fire a prompt · Enter asks · Esc resets</span></div>
+  </div>
+</footer>
+<script id="bundle" type="application/json">__BUNDLE__</script>
+<script>
+(function () {
+  'use strict'
+  const $ = (s, el) => (el || document).querySelector(s)
+  const bundle = JSON.parse($('#bundle').textContent)
+  let data = bundle                       // { personas, results: {slug: res}, bank: [{slug, text}] }
+  let personalized = true
+  let current = null                      // the result currently shown
+  let drawn = {}                          // per-person current curve values (for tweening)
+  const ORDER = ['alex', 'priya', 'marcus']
+  const HEAD_WORD = { approved: 'go ahead', approved_with_condition: 'yes, with a snack', denied: 'better to wait', request_data: 'need more data', escalate: 'check first' }
+  const fmt12 = (iso) => { const h = +iso.slice(11, 13), m = iso.slice(14, 16); return `${h % 12 || 12}:${m} ${h < 12 ? 'am' : 'pm'}` }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]))
+  const timing = { start: 0, summary: 0 }
+  window.__compare = { timing, get data() { return data }, get current() { return current }, get personalized() { return personalized } }
+
+  // ------------------------------------------------------------ initial columns
+  function sparkline(sp) {
+    const W = 320, H = 64, vals = sp.values || []
+    if (!vals.length) return ''
+    const n = vals.length
+    const y = (v) => H - 4 - ((Math.min(Math.max(v, 40), 300) - 40) / 260) * (H - 8)
+    let d = '', pen = false
+    vals.forEach((v, i) => { if (v == null) { pen = false; return } d += `${pen ? 'L' : 'M'}${(i / (n - 1) * W).toFixed(1)},${y(v).toFixed(1)} `; pen = true })
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-label="yesterday"><rect x="0" y="${y(180).toFixed(1)}" width="${W}" height="${(y(70) - y(180)).toFixed(1)}" fill="#2f9e5f" opacity=".1"/><path d="${d}" fill="none" stroke="#24282b" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg><div class="spark-lbl"><span>yesterday, midnight</span><span>noon</span><span>midnight</span></div>`
+  }
+  function renderColumns() {
+    const cols = $('#cols'), strip = $('#strip')
+    cols.innerHTML = ''; strip.innerHTML = ''
+    for (const p of data.personas) {
+      const tone = p.position === 'in range' ? 'good' : p.position === 'low' ? 'bad' : 'warn'
+      const col = document.createElement('div'); col.className = 'card col'; col.dataset.person = p.id
+      col.innerHTML = `
+        <div class="who"><span class="avatar">${p.avatar}</span><span><b>${esc(p.name)}</b><small>${esc(p.lifestyle)}</small></span></div>
+        <div class="stats">
+          <span class="k">Glucose now</span><span class="v big tone-${tone}">${p.glucose} <span style="font-size:13px;color:var(--muted)">${p.trend_arrow} ${esc(p.trend)}</span></span>
+          <span class="k">Time in range, 7 days</span><span class="v">${p.tir7}%</span>
+          <span class="k">Average glucose</span><span class="v">${p.avg7} mg/dL</span>
+          <span class="k">Lows, last 7 days</span><span class="v">${p.lows7}</span>
+          <span class="k">Carb ratio</span><span class="v">${esc(p.carb_ratio_text)}</span>
+          <span class="k">Insulin working today</span><span class="v">${p.insulin_working}%</span>
+          <span class="k">Recovery</span><span class="v">${p.recovery} / 100</span>
+        </div>
+        <div class="learned"><b>What the twin learned:</b> ${esc(p.learned)}.</div>
+        <div>${sparkline(p.sparkline)}</div>`
+      cols.appendChild(col)
+      const mini = document.createElement('div'); mini.className = 'card mini'
+      mini.innerHTML = `<span class="avatar sm">${p.avatar}</span><span><b>${esc(p.name)}</b><small>${esc(p.lifestyle)}</small></span>`
+      strip.appendChild(mini)
+    }
+  }
+  function renderChips() {
+    const c = $('#chips'); c.innerHTML = ''
+    data.bank.forEach((b, i) => {
+      const el = document.createElement('button'); el.type = 'button'; el.className = 'chip'; el.dataset.slug = b.slug; el.dataset.testid = `chip-${i + 1}`
+      el.innerHTML = `<i>${i + 1}</i>${esc(b.text)}`
+      el.addEventListener('click', () => ask(b.text))
+      c.appendChild(el)
+    })
+  }
+
+  // ------------------------------------------------------------ the chart
+  const CH = { w: 0, h: 220, pl: 34, pr: 10, pt: 14, pb: 22 }
+  const yOf = (v) => CH.pt + (1 - (Math.min(Math.max(v, 40), 300) - 40) / 260) * (CH.h - CH.pt - CH.pb)
+  function xOf(i, n) { return CH.pl + (i / Math.max(n - 1, 1)) * (CH.w - CH.pl - CH.pr) }
+  function pathOf(vals) { return vals.map((v, i) => `${i ? 'L' : 'M'}${xOf(i, vals.length).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ') }
+  function areaOf(lo, hi) {
+    const n = lo.length
+    const up = hi.map((v, i) => `${i ? 'L' : 'M'}${xOf(i, n).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ')
+    const down = lo.map((v, i) => `L${xOf(n - 1 - i, n).toFixed(1)},${yOf(lo[n - 1 - i]).toFixed(1)}`).join(' ')
+    return up + ' ' + down + ' Z'
+  }
+  function sixHours(curve) {
+    const n = Math.min(curve.times.length, 73)
+    return { times: curve.times.slice(0, n), median: curve.median.slice(0, n), p10: (curve.p10 || []).slice(0, n), p90: (curve.p90 || []).slice(0, n) }
+  }
+  function chartSvg(res, avg, width) {
+    CH.w = width
+    const c = sixHours(res.curve), a = avg && avg.curve ? sixHours(avg.curve) : null
+    const n = c.times.length
+    const ticks = c.times.map((t, i) => ({ t, i })).filter((x) => x.t.slice(14, 16) === '00')
+    let mi = res.marker ? c.times.findIndex((t) => t >= res.marker.slice(0, 16)) : -1
+    const band = c.p10.length ? `<path class="band" d="${areaOf(c.p10, c.p90)}" fill="#2f8f83" opacity="0.14"/>` : ''
+    return `<svg class="chart" width="${width}" height="${CH.h}" data-testid="chart">
+      <rect x="${CH.pl}" y="${yOf(180).toFixed(1)}" width="${(width - CH.pl - CH.pr).toFixed(1)}" height="${(yOf(70) - yOf(180)).toFixed(1)}" fill="#2f9e5f" opacity="0.09"/>
+      ${[70, 180, 250].map((v) => `<line x1="${CH.pl}" x2="${width - CH.pr}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}" stroke="#e3e5df" stroke-dasharray="3 3"/><text x="${CH.pl - 6}" y="${(yOf(v) + 4).toFixed(1)}" text-anchor="end" font-size="12" fill="#5f6a70">${v}</text>`).join('')}
+      ${ticks.map((x) => `<text x="${xOf(x.i, n).toFixed(1)}" y="${CH.h - 6}" text-anchor="middle" font-size="12" fill="#5f6a70">${fmt12(x.t)}</text>`).join('')}
+      ${a ? `<path class="avg" d="${pathOf(a.median)}" fill="none" stroke="#9aa3a8" stroke-width="1.5" opacity="0.6"/>` : ''}
+      ${band}
+      ${mi >= 0 ? `<line x1="${xOf(mi, n).toFixed(1)}" x2="${xOf(mi, n).toFixed(1)}" y1="${CH.pt}" y2="${CH.h - CH.pb}" stroke="#2f8f83" stroke-width="2"/><text x="${(xOf(mi, n) + 5).toFixed(1)}" y="${CH.pt + 10}" font-size="12" fill="#2f8f83">${esc(res.marker_label || 'proposed')}</text>` : ''}
+      <path class="line" d="${pathOf(c.median)}" fill="none" stroke="#2f8f83" stroke-width="2.4" stroke-dasharray="6 4"/>
+    </svg>`
+  }
+  function animateDraw(svg) {
+    const line = svg.querySelector('path.line')
+    if (!line) return
+    const len = line.getTotalLength()
+    line.style.strokeDasharray = `${len}`
+    line.style.strokeDashoffset = `${len}`
+    line.style.transition = 'none'
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      line.style.transition = 'stroke-dashoffset .6s ease-out'
+      line.style.strokeDashoffset = '0'
+      setTimeout(() => { line.style.strokeDasharray = '6 4'; line.style.strokeDashoffset = '0'; line.style.transition = 'none' }, 650)
+    }))
+  }
+
+  // ------------------------------------------------------------ panels
+  function shown(res, who) { return personalized ? res.personal[who] : res.population }
+  function panelHtml(p, res, who, width) {
+    const r = shown(res, who)
+    const person = data.personas.find((x) => x.id === who)
+    return `
+      ${chartSvg(r, res.population, width)}
+      <div class="verdict tone-${r.tone}" data-testid="verdict">${esc(r.headline)}</div>
+      <div class="cond">${esc(r.condition || (r.verdict === 'approved' ? 'No condition.' : ''))}</div>
+      <div class="stat3">
+        <span><span class="k">Predicted peak</span><b data-testid="peak">${r.peak}</b> <span class="k" style="display:inline">at ${esc(r.peak_time_text)}</span></span>
+        <span><span class="k">${r.verdict === 'approved_with_condition' ? 'Chance of a low, with the advice' : 'Chance of a low'}</span><b>${esc(r.p_low_final_word || r.p_low_word)}</b></span>
+        <span><span class="k">Low point</span><b>${r.low}</b> <span class="k" style="display:inline">at ${esc(r.low_time_text)}</span></span>
+      </div>
+      <div class="reason">${esc(r.reason)}</div>`
+  }
+  function renderPanels(res, animate) {
+    const host = $('#panels')
+    host.classList.remove('hidden')
+    host.innerHTML = ''
+    const width = Math.max(240, Math.floor((host.clientWidth - 2 * 24) / 3) - 2 * 24 - 2)
+    ORDER.forEach((who, i) => {
+      const person = data.personas.find((x) => x.id === who)
+      const el = document.createElement('div'); el.className = 'card panel'; el.dataset.person = who; el.dataset.testid = `panel-${who}`
+      el.innerHTML = `<div class="who" style="display:flex;align-items:center;gap:8px"><span class="avatar sm">${person.avatar}</span><b>${esc(person.name)}</b></div>` + panelHtml(person, res, who, width)
+      host.appendChild(el)
+      drawn[who] = sixHours(shown(res, who).curve).median.slice()
+      if (animate) {
+        setTimeout(() => { el.classList.add('in'); animateDraw(el.querySelector('svg')) }, 120 + i * 100)
+      } else el.classList.add('in')
+    })
+  }
+  function tweenPanels(res) {
+    // 400 ms from the curves on screen to the target curves; verdict text swaps at the midpoint
+    const targets = {}
+    ORDER.forEach((who) => { targets[who] = sixHours(shown(res, who).curve).median.slice() })
+    const from = {}; ORDER.forEach((who) => { from[who] = (drawn[who] || targets[who]).slice() })
+    const t0 = performance.now()
+    ORDER.forEach((who) => { const v = $(`#panels [data-person=${who}] .verdict`); if (v) v.style.opacity = '0' })
+    function step(now) {
+      const k = Math.min(1, (now - t0) / 400), e = 1 - Math.pow(1 - k, 3)
+      ORDER.forEach((who) => {
+        const el = $(`#panels [data-person=${who}]`); if (!el) return
+        const line = el.querySelector('path.line'); const vals = targets[who].map((t, i) => (from[who][i] ?? t) + (t - (from[who][i] ?? t)) * e)
+        if (line) line.setAttribute('d', pathOf(vals))
+      })
+      if (k < 1) requestAnimationFrame(step)
+      else {
+        ORDER.forEach((who) => {
+          const el = $(`#panels [data-person=${who}]`); if (!el) return
+          const person = data.personas.find((x) => x.id === who)
+          const width = el.querySelector('svg').getAttribute('width')
+          const keep = el.querySelector('.who').outerHTML
+          el.innerHTML = keep + panelHtml(person, res, who, +width)
+          drawn[who] = targets[who]
+        })
+      }
+    }
+    requestAnimationFrame(step)
+  }
+
+  // ------------------------------------------------------------ summary (built from the numbers)
+  const PRON = { M: ['he', 'him', 'his'], F: ['she', 'her', 'her'] }
+  function foodWord(res) { const r = res.personal.alex; return res.kind === 'skip' ? 'skipping lunch' : (r.marker_label || 'that') }
+  function bullets(res) {
+    const ps = ORDER.map((w) => ({ id: w, s: data.personas.find((x) => x.id === w), r: res.personal[w] }))
+    const out = []
+    for (const p of ps) {
+      const others = ps.filter((o) => o !== p)
+      const pr = PRON[p.s.sex || 'M']
+      const facts = []
+      const crMed = others.reduce((a, o) => a + o.s.carb_ratio, 0) / others.length
+      if (p.s.carb_ratio < crMed * 0.7) facts.push({ w: crMed / p.s.carb_ratio, t: `1 unit covers only ${p.s.carb_ratio} g` })
+      if (p.s.carb_ratio > crMed * 1.4) facts.push({ w: p.s.carb_ratio / crMed, t: `1 unit covers ${p.s.carb_ratio} g, more than twice the others` })
+      if (p.s.insulin_working != null && p.s.insulin_working <= 90) facts.push({ w: 1 + (100 - p.s.insulin_working) / 20, t: `insulin working ${100 - p.s.insulin_working}% below usual${/night/.test(p.s.lifestyle) ? ' after night shifts' : ''}` })
+      if (p.s.insulin_working != null && p.s.insulin_working >= 110) facts.push({ w: 1 + (p.s.insulin_working - 100) / 20, t: `insulin working ${p.s.insulin_working - 100}% better than usual` })
+      const tauMed = others.reduce((a, o) => a + o.s.params.tau_carb, 0) / others.length
+      if (p.s.params.tau_carb < tauMed - 6) facts.push({ w: tauMed / p.s.params.tau_carb, t: `carbs hit ${Math.round(tauMed - p.s.params.tau_carb)} min faster than the others` })
+      if (p.s.params.tau_carb > tauMed + 6) facts.push({ w: p.s.params.tau_carb / tauMed, t: `carbs arrive ${Math.round(p.s.params.tau_carb - tauMed)} min slower than the others` })
+      const hour = res.personal[p.id].marker ? +res.personal[p.id].marker.slice(11, 13) : 12
+      const siKey = hour < 8 ? 'si_tod0' : hour < 16 ? 'si_tod1' : 'si_tod2'
+      const siMed = others.reduce((a, o) => a + o.s.params[siKey], 0) / others.length
+      const siWhen = hour < 8 ? 'at night' : hour < 16 ? 'in the daytime' : 'in the evening'
+      if (p.s.params[siKey] < siMed * 0.85) facts.push({ w: siMed / p.s.params[siKey], t: `insulin is ${Math.round(100 * (1 - p.s.params[siKey] / siMed))}% less effective ${siWhen}` })
+      if (p.s.params[siKey] > siMed * 1.15) facts.push({ w: p.s.params[siKey] / siMed, t: `insulin is ${Math.round(100 * (p.s.params[siKey] / siMed - 1))}% more effective ${siWhen}` })
+      if (p.s.recovery != null && p.s.recovery < 60) facts.push({ w: 1.3, t: `recovery is only ${p.s.recovery} / 100` })
+      facts.sort((a, b) => b.w - a.w)
+      const fact = facts.length ? facts[0].t : `glucose is ${p.s.glucose} right now`
+      // the consequence: the peak against the nearest other person, or the condition
+      const hi = others.reduce((a, o) => (o.r.peak > a.r.peak ? o : a), others[0]), lo = others.reduce((a, o) => (o.r.peak < a.r.peak ? o : a), others[0])
+      let cons
+      if (p.r.verdict === 'approved_with_condition') cons = `the twin adds a condition: ${p.r.condition.toLowerCase()}`
+      else if (p.r.verdict === 'denied') cons = `${foodWord(res)} is a "${p.r.headline.toLowerCase()}" for ${pr[1]} (peak ${p.r.peak}, low ${p.r.low})`
+      else if (p.r.peak >= hi.r.peak + 20) cons = `the same ${foodWord(res)} sends ${pr[1]} ${p.r.peak - hi.r.peak} mg/dL higher than ${hi.s.name}`
+      else if (p.r.peak <= lo.r.peak - 20) cons = `${pr[0]} peaks ${lo.r.peak - p.r.peak} mg/dL lower than ${lo.s.name} and it is a "${p.r.headline.toLowerCase()}"`
+      else cons = `${pr[2]} peak of ${p.r.peak} at ${p.r.peak_time_text} makes it a "${p.r.headline.toLowerCase()}"`
+      out.push(`<li><b>${esc(p.s.name)}:</b> ${esc(fact)}, so ${esc(cons)}.</li>`)
+    }
+    return out.join('')
+  }
+  function renderSummary(res, animate) {
+    const el = $('#summary')
+    el.classList.remove('hidden'); el.classList.remove('in')
+    if (!personalized) {
+      const pop = res.population
+      el.innerHTML = `<div class="head">Predicted peaks: ${pop.peak} / ${pop.peak} / ${pop.peak} mg/dL<small>Verdicts: ${esc(pop.headline.toLowerCase())} / ${esc(pop.headline.toLowerCase())} / ${esc(pop.headline.toLowerCase())}</small></div><div class="same" data-testid="same">Without personalization, everyone gets the same answer.</div>`
+    } else {
+      const ps = ORDER.map((w) => res.personal[w])
+      el.innerHTML = `<div class="head" data-testid="peaks">Predicted peaks: ${ps.map((p) => p.peak).join(' / ')} mg/dL<small data-testid="verdicts">Verdicts: ${ps.map((p) => esc(p.headline.toLowerCase())).join(' / ')}</small></div><ul data-testid="bullets">${bullets(res)}</ul>`
+    }
+    const delay = animate ? 120 + 2 * 100 + 400 + 300 : 0
+    setTimeout(() => { el.classList.add('in'); timing.summary = performance.now(); timing.total_ms = Math.round(timing.summary - timing.start); $('#status').textContent = `Enter → summary: ${timing.total_ms} ms` }, delay)
+  }
+
+  // ------------------------------------------------------------ flow
+  function show(res, tag) {
+    current = res
+    timing.start = timing.start || performance.now()
+    document.body.classList.remove('state-initial'); document.body.classList.add('state-answer')
+    $('#qtext').textContent = res.asked || res.text
+    $('#qtag').classList.toggle('hidden', !tag)
+    if (tag) $('#qtag').textContent = tag
+    renderPanels(res, true)
+    renderSummary(res, true)
+  }
+  function reset() {
+    document.body.classList.remove('state-answer'); document.body.classList.add('state-initial')
+    $('#summary').classList.remove('in'); $('#panels').querySelectorAll('.panel').forEach((p) => p.classList.remove('in'))
+    setTimeout(() => { $('#panels').classList.add('hidden'); $('#panels').innerHTML = ''; $('#summary').classList.add('hidden') }, 600)
+    current = null; timing.start = 0; drawn = {}
+    $('#input').value = ''; $('#status').innerHTML = '<span class="kbd">1–6 fire a prompt · Enter asks · Esc resets</span>'
+    setTimeout(() => $('#input').focus(), 50)
+  }
+  function bankMatch(text) {
+    const t = text.trim().toLowerCase().replace(/\?+$/, '').trim()
+    return data.bank.find((b) => b.text.toLowerCase().replace(/\?+$/, '').trim() === t)
+  }
+  function nearest(text) {
+    const stop = new Set(['a', 'an', 'the', 'i', 'can', 'have', 'with', 'at', 'now', 'right', 'today', 'tomorrow', 'of', 'for', 'my', 'some'])
+    const words = new Set(text.toLowerCase().match(/[a-z]+/g) || []); stop.forEach((w) => words.delete(w))
+    let best = null, score = -1
+    for (const b of data.bank) { const bw = new Set(b.text.toLowerCase().match(/[a-z]+/g) || []); let s = 0; words.forEach((w) => { if (bw.has(w)) s++ }); if (s > score) { best = b; score = s } }
+    return best ? data.results[best.slug] : null
+  }
+  async function ask(text) {
+    text = (text || '').trim()
+    if (!text) return
+    timing.start = performance.now()
+    $('#input').value = text
+    const bank = bankMatch(text)
+    if (bank && data.results[bank.slug]) { show(data.results[bank.slug], null); return }
+    $('#status').textContent = 'Running the three twins…'
+    try {
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 6000)
+      const r = await fetch('/compare/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }), signal: ctrl.signal })
+      clearTimeout(tm)
+      if (!r.ok) throw new Error(String(r.status))
+      const res = await r.json()
+      timing.start = performance.now()
+      show(res, res.source === 'cached-fallback' ? 'cached' : (res.source === 'live' ? null : null))
+      if (res.source === 'cached-fallback') $('#qtext').textContent = text
+    } catch (e) {
+      const near = nearest(text)
+      if (!near) { $('#status').textContent = 'Could not answer that.'; return }
+      timing.start = performance.now()
+      show(Object.assign({}, near, { asked: text }), 'cached')
+    }
+  }
+  function setPersonalized(on) {
+    personalized = on
+    $('#toggle').classList.toggle('on', on)
+    if (!current) return
+    tweenPanels(current)
+    renderSummary(current, false)
+  }
+
+  // ------------------------------------------------------------ wiring
+  renderColumns(); renderChips()
+  $('#form').addEventListener('submit', (e) => { e.preventDefault(); ask($('#input').value) })
+  $('#toggle').addEventListener('click', () => setPersonalized(!personalized))
+  $('#again').addEventListener('click', reset)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { reset(); return }
+    const inInput = document.activeElement === $('#input') && $('#input').value.trim().length > 0
+    if (/^[1-6]$/.test(e.key) && !inInput && !e.metaKey && !e.ctrlKey) { e.preventDefault(); const b = data.bank[+e.key - 1]; if (b) ask(b.text) }
+    if (e.key === 'Enter' && document.activeElement !== $('#input') && current === null) { const v = $('#input').value.trim(); if (v) ask(v) }
+  })
+  // refresh from the API when it is up (the bundled copy already rendered everything)
+  ;(async () => {
+    try {
+      const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), 1500)
+      const r = await fetch('/compare/data', { signal: ctrl.signal }); clearTimeout(tm)
+      if (r.ok) { const d = await r.json(); if (d && d.personas && d.results) { data = d; if (!current) { renderColumns(); renderChips() } } }
+    } catch (e) { /* API down: the bundled copy stands */ }
+    const m = location.search.match(/[?&]prompt=(\d)/)
+    if (m) { const b = data.bank[+m[1] - 1]; if (b) ask(b.text) } else $('#input').focus()
+    window.__compare.ready = true
+  })()
+})()
+</script>
+</body>
+</html>
