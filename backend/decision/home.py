@@ -86,17 +86,19 @@ def recovery_score(load: float, debt: float) -> float:
     return float(np.clip(100.0 - 10.0 * debt - 1.5 * max(load - 12.0, 0.0), 0.0, 100.0))
 
 
-def tiles(twin) -> List[Dict[str, Any]]:
+def tiles(twin, details: bool = True, always: Tuple[str, ...] = ()) -> List[Dict[str, Any]]:
     """The "right now" tiles. Every tile has the same four rows: label, value + unit, fill level,
-    status word. Hydration and body composition are computed elsewhere but not shown here."""
+    status word. Hydration and body composition are computed elsewhere but not shown here.
+    `always` forces the optional tiles (caffeine, alcohol) in even when nothing recent explains them;
+    `details=False` skips the detail views (the compare page only draws the tile itself)."""
     s, _ = twin.state_now()
     tr = twin.deterministic(horizon_min=180)
     times = tr.times()
     ser = {k: np.asarray(v, dtype=float) for k, v in tr.series.items()}
     p = twin.params
     recent = twin.events_recent(12.0)
-    alcohol_recent = any(e.type == "alcohol" for e in recent) or s.blood_alcohol > 0.005
-    caffeine_recent = any(e.type == "caffeine" and e.start >= twin.now - timedelta(hours=8) for e in recent) or s.caffeine > 10
+    alcohol_recent = any(e.type == "alcohol" for e in recent) or s.blood_alcohol > 0.005 or "alcohol" in always
+    caffeine_recent = any(e.type == "caffeine" and e.start >= twin.now - timedelta(hours=8) for e in recent) or s.caffeine > 10 or "caffeine" in always
 
     def fc(arr: np.ndarray, digits: int = 1):
         return {"times": times, "values": [round(float(x), digits) for x in arr]}
@@ -162,7 +164,8 @@ def tiles(twin) -> List[Dict[str, Any]]:
     hot = sorted([t for t in out if t["score"] >= 0.35], key=lambda t: -t["score"])
     rest = sorted([t for t in out if t["score"] < 0.35], key=lambda t: TILE_ORDER.index(t["key"]))
     tiles_out = hot + rest
-    add_details(twin, tiles_out, s, ser, times, p)
+    if details:
+        add_details(twin, tiles_out, s, ser, times, p)
     return tiles_out
 
 

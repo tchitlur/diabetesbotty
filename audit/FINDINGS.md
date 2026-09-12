@@ -123,3 +123,26 @@ The 1 s loading phase (skeleton cards, "Simulating three bodies…", rotating st
 - **Marcus** (insulin / food): Your insulin is working 22% below usual after night shifts (a short night hurts your insulin much more than most); Carbs hit your blood sugar about 8 minutes slower than average.
 
 Found on the way: the demo's replay suggestion had been written under the live clock and was shifted twice (fitter now freezes the synthetic clock for it); the reader pill's icon shared a class with the sparklines and tripped the point-count check (renamed).
+
+## Live dashboards, scripted verdict matrix, chips (`audit/screens_compare_v2/`, fifth compare round)
+
+Each column is now a compact Home on the real clock (glucose + trend, 3 h back / 3 h ahead with a now marker, next meal and workout, the six tiles in a fixed 2 x 3 grid, three learned chips); the stat table is gone; the chip row and input are a fixed footer with a solid background; the keyboard hint line is gone. The generator was over-insulinating (10-21 lows a week): basal and bolus dosing eased, persona scripts added, a low counts only at 15+ minutes; at the frozen moment Alex 66 % / 153 / 5 lows, Priya 63 / 153 / 6, Marcus 65 / 157 / 2. The six prompts are a demo script (`engine.SCRIPT`): one go, one condition, one wait per prompt with three different causes; the simulation supplies the curves and numbers. "Skip lunch today?" (only ever a low-risk question) became "Three glasses of wine at 9 pm tonight?", "run at 7 am tomorrow" became "run in an hour".
+
+| width | page ready | header clock vs wall clock | twins vs wall clock | Enter -> summary (chips 1-6) | console errors |
+|---|---|---|---|---|---|
+| 1440 | 49 ms | 0.7 min | 3.7 min (one reading) | 2028-2048 ms | 0 |
+| 1920 | 45 ms | 0.1 min | 4.1 min | 2028-2044 ms | 0 |
+
+Asserted at both widths: three different glucose numbers (95 / 203 / 176), six tiles per column in order, an amber or red tile per person in different places (Alex caffeine + liver; Priya energy + liver; Marcus energy + recovery + insulin), three different next-meal times, energy and recovery differ, three chips each without numbers, a now marker on every chart, columns ending 24 px above the footer without scrolling, chips in two rows with no overflow, and for keys 1-6 three distinct verdict labels and three distinct causes:
+
+| prompt | Alex | Priya | Marcus |
+|---|---|---|---|
+| Large pepperoni pizza for dinner | Go ahead (insulin works better than average) | Better to wait (carbs hit fast) | Yes, but less (insulin 34 % below usual after night shifts) |
+| Two slices of cheesecake now | Go ahead (insulin from the last meal still active) | Better to wait (carbs) | Yes, but less (night shifts) |
+| 30 minute run in an hour | Yes, with a snack (exercise drops glucose much more than most) | Better to wait (liver stores half full) | Go ahead (night shifts) |
+| Large latte with a muffin now | Go ahead (caffeine already on board) | Better to wait (carbs) | Yes, but less (night shifts) |
+| Three glasses of wine at 9 pm | Yes, with a snack (insulin works better than average) | Better to wait (alcohol lowers her much more than most) | Go ahead (night shifts) |
+| Big bowl of pasta at 9 pm | Yes, but less (insulin works better than average) | Better to wait (carbs) | Go ahead (night shifts) |
+
+Two engine fixes found on the way and kept for the app: a proposal is only blamed for a high it adds inside its decision window (a person whose usual dinner already runs high was being denied everything), and a meal bolus logged in the last 45 minutes with no meal yet now implies the meal is coming (the forecast crashed for half an hour before every pre-bolused meal).
+

@@ -73,10 +73,27 @@ def sample_patient(rng: np.random.Generator, idx: int) -> Dict[str, Any]:
     over["si_tod2"] = float(np.clip(1.1 * rng.normal(1.0, 0.06), 0.8, 1.4))
     over["sleep_debt_coef"] = float(rng.uniform(0.1, 0.3))
     over["basal_drift"] = 1.0
+    pid = "demo" if idx == DEMO_INDEX else f"p{idx:02d}"
+    script = PERSONA_SCRIPTS.get(pid, {})
+    for k, v in script.get("true", {}).items():
+        if k == "si_common":          # rescale the three insulin sensitivities together
+            for kk in ("SIT", "SID", "SIE"):
+                over[kk] = float(r[kk]["mean"] * v)
+        else:
+            over[k] = float(v)
+    if "AG" in script.get("true", {}):
+        over["carb_ratio"] = over["AG"]
+    if "tmaxG" in script.get("true", {}):
+        over["tau_carb"] = over["tmaxG"]
+    if "sex" in script:
+        sex = script["sex"]
+        over["alcohol_widmark_r"] = 0.55 if sex == "F" else 0.68
     p = build_params(over)
-    steady = fast.steady_basal_rate(p, 130.0)
+    # basal titrated to hold about 135 mg/dL between meals (people run their basal a little
+    # conservative), boluses per the clinical ratio scaled by a personal under-dosing habit
+    steady = fast.steady_basal_rate(p, BASAL_TARGET_MGDL)
     dose_err = float(rng.uniform(r["basal_dose_error"]["min"], r["basal_dose_error"]["max"]))
-    over["basal_u_per_h"] = float(steady * dose_err)
+    over["basal_u_per_h"] = float(steady * dose_err * float(script.get("basal_scale", 1.0)))   # an active person titrates lower, a shift worker higher
     over["carb_ratio_g_per_u"] = float(fast.calibrate_carb_ratio(p))
     fat_frac = float(rng.uniform(0.15, 0.32))
     meta = {
@@ -91,7 +108,7 @@ def sample_patient(rng: np.random.Generator, idx: int) -> Dict[str, Any]:
         "workouts_per_week": int(rng.integers(2, 5)),
         "coffee_prob": float(rng.uniform(0.6, 0.95)),
         "illness_week": int(rng.integers(2, 11)) if rng.random() < 0.4 or idx == DEMO_INDEX else -1,
-        "bolus_scale": 1.0,
+        "bolus_scale": float(script.get("bolus_scale", BOLUS_SCALE)),
         "true_params": over,
         "start": START.isoformat(),
         "days": N_DAYS,
@@ -103,20 +120,86 @@ def sample_patient(rng: np.random.Generator, idx: int) -> Dict[str, Any]:
 
 DRINK_KINDS = {"beer": (14.0, 13.0), "wine": (14.0, 4.0), "spirit": (14.0, 0.0)}
 
+# Dosing realism (the earlier generator over-insulinated: 10-20 lows a week per person). Real
+# people run their basal a little conservative and under-bolus meals slightly: 0-6 lows a week,
+# time in range 55-85 %, average 110-170 mg/dL (see backend/data/test_smoke.py).
+BASAL_TARGET_MGDL = 150.0
+BOLUS_SCALE = 0.8
+
+# The people behind the login personas. Each script fixes what makes that person recognisable:
+# their true physiology (so the fitter learns it from their own history), their habits (workouts,
+# coffee, sleep) and, for Marcus, the night-shift week. Everything else stays sampled.
+# Sleep: (bedtime hour, minute, hours low, hours high). Workouts: weekday list (0 = Monday).
+PERSONA_SCRIPTS: Dict[str, Dict[str, Any]] = {
+    "demo": {   # Alex: runs before work four mornings a week, two coffees, drinks on weekends
+        "workouts": [{"days": [0, 1, 3, 4], "at": (7, 0), "dur": 30, "intensity": 0.65, "kind": "aerobic", "label": "morning run"}],
+        "coffees": [(0.5, 200.0), (3.0, 150.0)],
+        "sleep": (23, 0, 7.4, 7.9),
+    },
+    "p07": {    # Priya: cycles to work and back (30 min each way), a longer ride on Saturdays, full nights, tea not coffee
+        "sex": "F",
+        "true": {"tmaxG": 25.0, "AG": 0.86, "si_common": 0.65, "exercise_mult": 0.6},
+        "basal_scale": 0.78, "bolus_scale": 0.62, "bolus_lead_min": 30,
+        "workouts": [{"days": [0, 1, 2, 3, 4], "at": (8, 15), "dur": 30, "intensity": 0.55, "kind": "aerobic", "label": "cycle to work"},
+                     {"days": [0, 1, 2, 3, 4], "at": (17, 15), "dur": 30, "intensity": 0.55, "kind": "aerobic", "label": "cycle home"},
+                     {"days": [5], "at": (9, 30), "dur": 60, "intensity": 0.6, "kind": "aerobic", "label": "weekend ride"}],
+        "coffees": [],
+        "sleep": (23, 0, 7.5, 8.2),
+        "breakfast_prob": 1.0,
+        "lunch_at": (13, 0),
+    },
+    "p13": {    # Marcus: three night shifts a week (Mon-Wed nights), short daytime sleeps after each, coffee at the start of a shift
+        "sex": "M",
+        "true": {"tmaxG": 48.0, "si_common": 0.85, "sleep_debt_coef": 0.22},
+        "basal_scale": 1.25, "bolus_scale": 1.0,
+        "night_shifts": [0, 1, 2],
+        "coffees": [(0.5, 160.0)],
+        "sleep": (23, 30, 6.8, 7.4),
+        "workouts": [{"days": [5], "at": (10, 0), "dur": 40, "intensity": 0.55, "kind": "mixed", "label": "gym"}],
+    },
+    "p16": {    # Ken: line cook, skips breakfast most days, late dinner
+        "sex": "M",
+        "basal_scale": 0.85,
+        "breakfast_prob": 0.3,
+        "dinner_at": (21, 0),
+    },
+    "p17": {    # Zara: barista, coffee all day
+        "sex": "F",
+        "basal_scale": 0.85,
+        "coffees": [(0.5, 120.0), (2.5, 120.0), (4.5, 120.0), (7.0, 120.0)],
+    },
+}
+
 
 def generate_events(meta: Dict[str, Any], rng: np.random.Generator) -> Tuple[List[Event], List[Event]]:
-    """Return (true_events, logged_events). Logged = true with +-30 % carb error on meals."""
+    """Return (true_events, logged_events). Logged = true with +-30 % carb error on meals.
+    A persona script (PERSONA_SCRIPTS) fixes the habits that make one of the demo people who
+    they are; everything not scripted is sampled as for the rest of the cohort."""
     cr = meta["true_params"]["carb_ratio_g_per_u"]
     basal = meta["true_params"]["basal_u_per_h"]
     true_ev: List[Event] = []
     logged_ev: List[Event] = []
     workouts_per_week = meta["workouts_per_week"]
     illness_week = meta["illness_week"]
+    script = PERSONA_SCRIPTS.get(meta["patient_id"], {}) if meta["patient_id"] != f"p{DEMO_INDEX:02d}" else PERSONA_SCRIPTS.get("demo", {})
+    scripted_workouts = script.get("workouts")
+    night_shifts = set(script.get("night_shifts", []))
+    bolus_scale = float(meta.get("bolus_scale", BOLUS_SCALE))
 
     def add(e_true: Event, e_logged: Event | None = None) -> None:
         true_ev.append(e_true)
         logged_ev.append(e_logged if e_logged is not None else e_true)
 
+    def add_meal(name: str, t: datetime, carbs: float, fat: float, prot: float, fib: float, bolused: bool = True) -> None:
+        true_meal = Event(type="meal", start_time=t.isoformat(timespec="minutes"), duration_min=15, carbs_g=float(carbs), fat_g=float(fat), protein_g=float(prot), fiber_g=float(fib), uncertainty=0.3, source="synthetic", label=name)
+        logged_carbs = float(max(5.0, carbs * (1 + rng.normal(0, 0.3))))
+        add(true_meal, true_meal.copy(carbs_g=logged_carbs))
+        if bolused:
+            units = float(max(0.2, logged_carbs / cr * bolus_scale * (1 + rng.normal(0, 0.15))))
+            bt = t - timedelta(minutes=int(script.get("bolus_lead_min", 10)))   # bolus 10 minutes before the meal (a fast-carb person pre-boluses longer)
+            add(Event(type="insulin", start_time=bt.isoformat(timespec="minutes"), insulin_units=units, insulin_kind="bolus", uncertainty=0.05, source="synthetic", label=f"bolus for {name}"))
+
+    jitter = lambda spread=30: timedelta(minutes=int(rng.integers(-spread, spread + 1)))
     for d in range(N_DAYS):
         day = START + timedelta(days=d)
         wd = day.weekday()  # 0 = Monday
@@ -126,42 +209,70 @@ def generate_events(meta: Dict[str, Any], rng: np.random.Generator) -> Tuple[Lis
             wk_days = sorted(rng.choice(7, size=workouts_per_week, replace=False).tolist())
             workout_days = set(wk_days)
             stress_day = int(rng.integers(0, 5))
-        # --- sleep (previous night, logged at bedtime of previous day)
-        sleep_h = float(np.clip(rng.normal(7.2, 0.7), 6.0, 8.5))
-        if wd in (5, 6):
-            sleep_h = float(np.clip(sleep_h + rng.normal(0.4, 0.3), 6.0, 8.5))
-        bedtime = day - timedelta(hours=1) + timedelta(minutes=int(rng.integers(-30, 31)))   # 22:30-23:30
+        # --- sleep (previous night, logged at bedtime of previous day). A night-shift worker sleeps
+        #     after the shift (09:30, four and a half hours) and, the night after the last shift, late and short.
+        shift_last_night = (wd - 1) % 7 in night_shifts
+        after_block = night_shifts and not shift_last_night and (wd - 2) % 7 in night_shifts
+        if shift_last_night:
+            bedtime = day.replace(hour=9, minute=30) + jitter(15)
+            sleep_h = float(np.clip(rng.normal(5.5, 0.3), 5.0, 6.0))
+        elif after_block:
+            bedtime = day.replace(hour=1, minute=0) + jitter(20)
+            sleep_h = float(np.clip(rng.normal(6.3, 0.2), 6.0, 6.6))
+        elif "sleep" in script:
+            bh, bm, lo, hi = script["sleep"]
+            bedtime = (day - timedelta(days=1)).replace(hour=bh, minute=bm) + jitter(20)
+            sleep_h = float(rng.uniform(lo, hi))
+        else:
+            sleep_h = float(np.clip(rng.normal(7.2, 0.7), 6.0, 8.5))
+            if wd in (5, 6):
+                sleep_h = float(np.clip(sleep_h + rng.normal(0.4, 0.3), 6.0, 8.5))
+            bedtime = day - timedelta(hours=1) + jitter()   # 22:30-23:30
         add(Event(type="sleep", start_time=bedtime.isoformat(timespec="minutes"), duration_min=sleep_h * 60, sleep_hours=sleep_h, source="synthetic", label="sleep"))
         wake = bedtime + timedelta(hours=sleep_h)
+        shift_tonight = wd in night_shifts
         # --- basal (informational: the pump/long-acting setting; total units over the day)
         add(Event(type="insulin", start_time=day.isoformat(timespec="minutes"), duration_min=1440, insulin_units=basal * 24, insulin_kind="basal", source="synthetic", label="basal"))
         # --- caffeine
-        if rng.random() < meta["coffee_prob"]:   # coffee is a morning thing: 15-60 min after waking
+        if "coffees" in script:
+            for hrs, mg in script["coffees"]:
+                t = wake + timedelta(hours=hrs) + jitter(10)
+                add(Event(type="caffeine", start_time=t.isoformat(timespec="minutes"), caffeine_mg=float(mg), source="synthetic", label="coffee"))
+            if shift_tonight:   # a coffee at the start of the shift
+                t = day.replace(hour=22, minute=30) + jitter(10)
+                add(Event(type="caffeine", start_time=t.isoformat(timespec="minutes"), caffeine_mg=160.0, source="synthetic", label="coffee"))
+        elif rng.random() < meta["coffee_prob"]:   # coffee is a morning thing: 15-60 min after waking
             t = wake + timedelta(minutes=int(rng.integers(15, 60)))
             mg = float(rng.choice([80, 120, 160, 200]))
             add(Event(type="caffeine", start_time=t.isoformat(timespec="minutes"), caffeine_mg=mg, source="synthetic", label="coffee"))
-        # --- meals + boluses
+        # --- meals + boluses (about 8:00 / 12:30 / 18:30, +-30 min; a shift worker's day is shifted)
         meals = []
-        jitter = lambda: timedelta(minutes=int(rng.integers(-30, 31)))   # meals at about 8:00 / 12:30 / 18:30, +-30 min
-        if rng.random() > 0.10:
-            meals.append(("breakfast", max(day.replace(hour=8, minute=0) + jitter(), wake + timedelta(minutes=15)), rng.uniform(30, 60), rng.uniform(8, 20), rng.uniform(10, 25), rng.uniform(2, 6)))
-        meals.append(("lunch", day.replace(hour=12, minute=30) + jitter(), rng.uniform(45, 90), rng.uniform(10, 30), rng.uniform(20, 40), rng.uniform(3, 8)))
-        meals.append(("dinner", day.replace(hour=18, minute=30) + jitter(), rng.uniform(50, 100), rng.uniform(15, 35), rng.uniform(25, 45), rng.uniform(3, 8)))
+        if shift_last_night:
+            meals.append(("breakfast", wake + timedelta(minutes=30) + jitter(10), rng.uniform(30, 55), rng.uniform(8, 20), rng.uniform(10, 25), rng.uniform(2, 6)))
+            meals.append(("dinner", day.replace(hour=20, minute=0) + jitter(20), rng.uniform(50, 90), rng.uniform(15, 35), rng.uniform(25, 45), rng.uniform(3, 8)))
+        else:
+            if rng.random() < float(script.get("breakfast_prob", 0.9)):
+                meals.append(("breakfast", max(day.replace(hour=8, minute=0) + jitter(), wake + timedelta(minutes=15)), rng.uniform(30, 60), rng.uniform(8, 20), rng.uniform(10, 25), rng.uniform(2, 6)))
+            lh, lm = script.get("lunch_at", (12, 30))
+            meals.append(("lunch", day.replace(hour=lh, minute=lm) + jitter(), rng.uniform(45, 90), rng.uniform(10, 30), rng.uniform(20, 40), rng.uniform(3, 8)))
+            dh, dm = script.get("dinner_at", (18, 30))
+            meals.append(("dinner", day.replace(hour=dh, minute=dm) + jitter(), rng.uniform(50, 100), rng.uniform(15, 35), rng.uniform(25, 45), rng.uniform(3, 8)))
+        if shift_tonight:   # a meal on the ward in the small hours
+            meals.append(("night meal", (day + timedelta(days=1)).replace(hour=1, minute=30) + jitter(20), rng.uniform(35, 60), rng.uniform(10, 25), rng.uniform(15, 30), rng.uniform(2, 6)))
         if rng.random() < 0.3:
             snack_t = day.replace(hour=15 if rng.random() < 0.5 else 21, minute=int(rng.integers(0, 59)))
             meals.append(("snack", snack_t, rng.uniform(20, 40), rng.uniform(3, 15), rng.uniform(2, 10), rng.uniform(0, 3)))
         for name, t, carbs, fat, prot, fib in meals:
-            true_meal = Event(type="meal", start_time=t.isoformat(timespec="minutes"), duration_min=15, carbs_g=float(carbs), fat_g=float(fat), protein_g=float(prot), fiber_g=float(fib), uncertainty=0.3, source="synthetic", label=name)
-            logged_carbs = float(max(5.0, carbs * (1 + rng.normal(0, 0.3))))
-            logged_meal = true_meal.copy(carbs_g=logged_carbs)
-            add(true_meal, logged_meal)
-            bolused = name != "snack" or rng.random() < 0.5
-            if bolused:
-                units = float(max(0.2, logged_carbs / cr * meta.get("bolus_scale", 1.0) * (1 + rng.normal(0, 0.2))))
-                bt = t - timedelta(minutes=10)   # bolus 10 minutes before the meal
-                add(Event(type="insulin", start_time=bt.isoformat(timespec="minutes"), insulin_units=units, insulin_kind="bolus", uncertainty=0.05, source="synthetic", label=f"bolus for {name}"))
-        # --- exercise
-        if wd in workout_days:
+            add_meal(name, t, carbs, fat, prot, fib, bolused=(name != "snack" or rng.random() < 0.5))
+        # --- exercise: scripted habits, else the sampled weekly pattern
+        if scripted_workouts is not None:
+            for w in scripted_workouts:
+                if wd in w["days"] and not shift_last_night:
+                    t = day.replace(hour=w["at"][0], minute=w["at"][1]) + jitter(10)
+                    if t < wake + timedelta(minutes=20):
+                        t = wake + timedelta(minutes=20)
+                    add(Event(type="exercise", start_time=t.isoformat(timespec="minutes"), duration_min=float(w["dur"]), exercise_kind=w["kind"], intensity=float(w["intensity"]), uncertainty=0.15, source="synthetic", label=w["label"]))
+        elif wd in workout_days:
             kind = str(rng.choice(["aerobic", "aerobic", "aerobic", "anaerobic", "anaerobic", "mixed"]))
             t = day.replace(hour=7, minute=0) if rng.random() < 0.35 else day.replace(hour=17, minute=30)   # morning or after work
             dur = float(rng.choice([30, 40, 45, 60]))
@@ -170,8 +281,8 @@ def generate_events(meta: Dict[str, Any], rng: np.random.Generator) -> Tuple[Lis
                 snack = Event(type="meal", start_time=(t - timedelta(minutes=20)).isoformat(timespec="minutes"), duration_min=5, carbs_g=float(rng.uniform(15, 20)), uncertainty=0.2, source="synthetic", label="pre-workout snack")
                 add(snack, snack.copy(carbs_g=float(max(5.0, snack.carbs_g * (1 + rng.normal(0, 0.3))))))
             add(Event(type="exercise", start_time=t.isoformat(timespec="minutes"), duration_min=dur, exercise_kind=kind, intensity=inten, uncertainty=0.15, source="synthetic", label=f"{kind} {int(dur)} min"))
-        # --- alcohol on Fri/Sat nights
-        if wd in (4, 5) and rng.random() < meta["alcohol_prob_weekend"]:
+        # --- alcohol on Fri/Sat nights (never before a night shift)
+        if wd in (4, 5) and not shift_tonight and rng.random() < meta["alcohol_prob_weekend"]:
             n = int(rng.integers(2, 7))
             kind = str(rng.choice(["beer", "beer", "wine", "spirit"]))
             alc_per, carb_per = DRINK_KINDS[kind]

@@ -1,53 +1,306 @@
 {
-  "loadMs": 258,
+  "loadMs": 64,
+  "drift": 0.5773166666666667,
+  "twinDrift": 0.57735,
+  "dash": [
+    {
+      "id": "alex",
+      "glucose": 95,
+      "trend": "steady",
+      "tiles": [
+        [
+          "carbs",
+          "good",
+          3
+        ],
+        [
+          "caffeine",
+          "warn",
+          155
+        ],
+        [
+          "energy",
+          "good",
+          94
+        ],
+        [
+          "recovery",
+          "good",
+          97
+        ],
+        [
+          "insulin",
+          "good",
+          96
+        ],
+        [
+          "liver",
+          "warn",
+          64
+        ]
+      ],
+      "chips": [
+        "💉 basal runs weak ↑",
+        "💉 insulin best daytime",
+        "🍞 carbs count more ↑"
+      ],
+      "meal": "2026-09-12T17:55",
+      "workout": "2026-09-12T21:00"
+    },
+    {
+      "id": "priya",
+      "glucose": 203,
+      "trend": "steady",
+      "tiles": [
+        [
+          "carbs",
+          "good",
+          2
+        ],
+        [
+          "caffeine",
+          "good",
+          50
+        ],
+        [
+          "energy",
+          "warn",
+          62
+        ],
+        [
+          "recovery",
+          "good",
+          74
+        ],
+        [
+          "insulin",
+          "good",
+          106
+        ],
+        [
+          "liver",
+          "warn",
+          66
+        ]
+      ],
+      "chips": [
+        "🍞 carbs hit fast ↑",
+        "💉 insulin weak evenings ↓",
+        "💉 insulin weak overnight ↓"
+      ],
+      "meal": "2026-09-12T18:45",
+      "workout": "2026-09-12T17:30"
+    },
+    {
+      "id": "marcus",
+      "glucose": 173,
+      "trend": "steady",
+      "tiles": [
+        [
+          "carbs",
+          "good",
+          5
+        ],
+        [
+          "caffeine",
+          "good",
+          93
+        ],
+        [
+          "energy",
+          "warn",
+          51
+        ],
+        [
+          "recovery",
+          "warn",
+          57
+        ],
+        [
+          "insulin",
+          "warn",
+          66
+        ],
+        [
+          "liver",
+          "good",
+          73
+        ]
+      ],
+      "chips": [
+        "😴 insulin down after shifts ↓",
+        "💉 basal runs weak ↑",
+        "🍞 carbs hit slow ↓"
+      ],
+      "meal": "2026-09-12T19:20",
+      "workout": "2026-09-12T21:00"
+    }
+  ],
   "chips": [
     {
       "chip": 1,
       "text": "Can I have a large pepperoni pizza for dinner?",
       "verdicts": [
-        "Better to wait",
+        "Go ahead",
         "Better to wait",
         "Yes, but less"
       ],
-      "peaks": [
-        184,
-        280,
-        185
+      "classes": [
+        "go",
+        "wait",
+        "condition"
       ],
-      "spread": 96,
-      "total_ms": 2026
+      "causes": [
+        "💉your insulin works better than the average person's",
+        "🍞carbs hit you fast",
+        "😴your insulin is working 34% below usual after night shifts"
+      ],
+      "peaks": [
+        162,
+        322,
+        255
+      ],
+      "divergence": {
+        "verdicts": [
+          "approved",
+          "denied",
+          "approved_with_condition"
+        ],
+        "classes": [
+          "go",
+          "wait",
+          "condition"
+        ],
+        "causes": [
+          "insulin_strong",
+          "carbs",
+          "sleep"
+        ],
+        "peaks": [
+          162,
+          322,
+          255
+        ],
+        "peak_spread": 160,
+        "peak_time_spread_min": 180,
+        "criteria": {
+          "verdicts": true,
+          "causes": true,
+          "keywords": true
+        },
+        "ok": true
+      },
+      "total_ms": 2031
     },
     {
       "chip": 2,
       "text": "Two slices of cheesecake right now?",
       "verdicts": [
-        "Yes, but less",
+        "Go ahead",
         "Better to wait",
         "Yes, but less"
       ],
-      "peaks": [
-        149,
-        220,
-        230
+      "classes": [
+        "go",
+        "wait",
+        "condition"
       ],
-      "spread": 81,
-      "total_ms": 2026
+      "causes": [
+        "💉the insulin from your last meal is still active",
+        "🍞carbs hit you fast",
+        "😴your insulin is working 34% below usual after night shifts"
+      ],
+      "peaks": [
+        152,
+        318,
+        255
+      ],
+      "divergence": {
+        "verdicts": [
+          "approved",
+          "denied",
+          "approved_with_condition"
+        ],
+        "classes": [
+          "go",
+          "wait",
+          "condition"
+        ],
+        "causes": [
+          "active_insulin",
+          "carbs",
+          "sleep"
+        ],
+        "peaks": [
+          152,
+          318,
+          255
+        ],
+        "peak_spread": 166,
+        "peak_time_spread_min": 165,
+        "criteria": {
+          "verdicts": true,
+          "causes": true,
+          "keywords": true
+        },
+        "ok": true
+      },
+      "total_ms": 2034
     },
     {
       "chip": 3,
-      "text": "30 minute run at 7 am tomorrow?",
+      "text": "30 minute run in an hour?",
       "verdicts": [
         "Yes, with a snack",
-        "Yes, with a snack",
-        "Yes, with a snack"
+        "Better to wait",
+        "Go ahead"
+      ],
+      "classes": [
+        "condition",
+        "wait",
+        "go"
+      ],
+      "causes": [
+        "🏃exercise drops your glucose much more than most",
+        "🫀your liver stores are only half full, so a dip is harder to catch",
+        "😴your insulin is working 34% below usual after night shifts"
       ],
       "peaks": [
-        73,
-        144,
-        195
+        107,
+        302,
+        176
       ],
-      "spread": 122,
-      "total_ms": 2037
+      "divergence": {
+        "verdicts": [
+          "approved_with_condition",
+          "denied",
+          "approved"
+        ],
+        "classes": [
+          "condition",
+          "wait",
+          "go"
+        ],
+        "causes": [
+          "exercise_effect",
+          "liver",
+          "sleep"
+        ],
+        "peaks": [
+          107,
+          302,
+          176
+        ],
+        "peak_spread": 195,
+        "peak_time_spread_min": 185,
+        "criteria": {
+          "verdicts": true,
+          "causes": true,
+          "keywords": true
+        },
+        "ok": true
+      },
+      "total_ms": 2025
     },
     {
       "chip": 4,
@@ -57,45 +310,162 @@
         "Better to wait",
         "Yes, but less"
       ],
-      "peaks": [
-        171,
-        239,
-        253
+      "classes": [
+        "go",
+        "wait",
+        "condition"
       ],
-      "spread": 82,
-      "total_ms": 2030
+      "causes": [
+        "☕there is still about 156 mg of caffeine in you",
+        "🍞carbs hit you fast",
+        "😴your insulin is working 34% below usual after night shifts"
+      ],
+      "peaks": [
+        191,
+        353,
+        255
+      ],
+      "divergence": {
+        "verdicts": [
+          "approved",
+          "denied",
+          "approved_with_condition"
+        ],
+        "classes": [
+          "go",
+          "wait",
+          "condition"
+        ],
+        "causes": [
+          "caffeine",
+          "carbs",
+          "sleep"
+        ],
+        "peaks": [
+          191,
+          353,
+          255
+        ],
+        "peak_spread": 162,
+        "peak_time_spread_min": 150,
+        "criteria": {
+          "verdicts": true,
+          "causes": true,
+          "keywords": true
+        },
+        "ok": true
+      },
+      "total_ms": 2027
     },
     {
       "chip": 5,
-      "text": "Skip lunch today?",
+      "text": "Three glasses of wine at 9 pm tonight?",
       "verdicts": [
-        "Go ahead",
         "Yes, with a snack",
+        "Better to wait",
         "Go ahead"
       ],
-      "peaks": [
-        130,
-        106,
-        188
+      "classes": [
+        "condition",
+        "wait",
+        "go"
       ],
-      "spread": 82,
-      "total_ms": 2034
+      "causes": [
+        "💉your insulin works better than the average person's",
+        "🍺alcohol lowers you much more than most",
+        "😴your insulin is working 34% below usual after night shifts"
+      ],
+      "peaks": [
+        156,
+        313,
+        191
+      ],
+      "divergence": {
+        "verdicts": [
+          "approved_with_condition",
+          "denied",
+          "approved"
+        ],
+        "classes": [
+          "condition",
+          "wait",
+          "go"
+        ],
+        "causes": [
+          "insulin_strong",
+          "alcohol",
+          "sleep"
+        ],
+        "peaks": [
+          156,
+          313,
+          191
+        ],
+        "peak_spread": 157,
+        "peak_time_spread_min": 70,
+        "criteria": {
+          "verdicts": true,
+          "causes": true,
+          "keywords": true
+        },
+        "ok": true
+      },
+      "total_ms": 2027
     },
     {
       "chip": 6,
       "text": "Big bowl of pasta at 9 pm?",
       "verdicts": [
-        "Better to wait",
+        "Yes, but less",
         "Better to wait",
         "Go ahead"
       ],
-      "peaks": [
-        191,
-        286,
-        191
+      "classes": [
+        "condition",
+        "wait",
+        "go"
       ],
-      "spread": 95,
-      "total_ms": 2032
+      "causes": [
+        "💉your insulin works better than the average person's",
+        "🍞carbs hit you fast",
+        "😴your insulin is working 34% below usual after night shifts"
+      ],
+      "peaks": [
+        188,
+        312,
+        214
+      ],
+      "divergence": {
+        "verdicts": [
+          "approved_with_condition",
+          "denied",
+          "approved"
+        ],
+        "classes": [
+          "condition",
+          "wait",
+          "go"
+        ],
+        "causes": [
+          "insulin_strong",
+          "carbs",
+          "sleep"
+        ],
+        "peaks": [
+          188,
+          312,
+          214
+        ],
+        "peak_spread": 124,
+        "peak_time_spread_min": 130,
+        "criteria": {
+          "verdicts": true,
+          "causes": true,
+          "keywords": true
+        },
+        "ok": true
+      },
+      "total_ms": 2041
     }
   ],
   "errors": []

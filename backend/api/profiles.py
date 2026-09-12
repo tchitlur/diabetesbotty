@@ -158,6 +158,14 @@ def apply_demo_tuning(pid: str, patient_id: str) -> None:
     fit = json.loads(fit_path.read_text(encoding="utf-8"))
     changed = False
     for k, v in over.items():
+        if k == "_std_scale":
+            for kk, row in fit.get("params", {}).items():
+                if row.get("std_raw") is None:
+                    row["std_raw"] = row.get("std", 0.0)
+                if row.get("std") != float(row["std_raw"]) * float(v):
+                    row["std"] = float(row["std_raw"]) * float(v)
+                    changed = True
+            continue
         if k in fit.get("params", {}) and fit["params"][k].get("mean") != float(v):
             fit["params"][k]["mean"] = float(v)
             changed = True

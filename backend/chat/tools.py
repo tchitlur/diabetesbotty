@@ -313,17 +313,20 @@ def _explain_summary(total: float, sensor: float, terms: List[Dict[str, Any]], p
 METRICS = ["glucose", "lows", "average", "tir", "events", "carbs", "insulin", "exercise", "sleep", "caffeine", "alcohol"]
 
 
-def _low_episodes(times: List[datetime], g: np.ndarray, valid: np.ndarray, thresh: float = 70.0) -> List[Dict[str, Any]]:
-    """Distinct lows: a run starts at a valid reading under `thresh` and ends after 30 min back above 70."""
+def _low_episodes(times: List[datetime], g: np.ndarray, valid: np.ndarray, thresh: float = 70.0, min_minutes: float = 15.0) -> List[Dict[str, Any]]:
+    """Distinct lows: a run starts at a valid reading under `thresh`, ends after 30 min back above 70,
+    and only counts when it lasted at least `min_minutes` (a single dip of one reading is sensor noise,
+    not a low)."""
     eps, cur, above = [], None, 0
     for t, v, ok in zip(times, g, valid):
         if not ok or np.isnan(v):
             continue
         if v < thresh:
             if cur is None:
-                cur = {"start": _iso(t), "min": float(v), "min_time": _iso(t)}
+                cur = {"start": _iso(t), "min": float(v), "min_time": _iso(t), "last_low": _iso(t)}
             elif v < cur["min"]:
                 cur["min"], cur["min_time"] = float(v), _iso(t)
+            cur["last_low"] = _iso(t)
             above = 0
         elif cur is not None:
             above += 1 if v > 70 else 0
@@ -334,7 +337,9 @@ def _low_episodes(times: List[datetime], g: np.ndarray, valid: np.ndarray, thres
     if cur is not None:
         cur["end"] = _iso(times[-1])
         eps.append(cur)
+    eps = [e for e in eps if (datetime.fromisoformat(e["last_low"]) - datetime.fromisoformat(e["start"])).total_seconds() >= (min_minutes - 5) * 60]
     for e in eps:
+        e.pop("last_low", None)
         e["min"] = _r(e["min"])
         e["start_text"], e["min_time_text"], e["date_text"] = fmt12(e["start"]), fmt12(e["min_time"]), fmt_date(e["start"])
     return eps

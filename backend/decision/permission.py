@@ -17,6 +17,8 @@ from backend.safety.gate import load_rules
 from backend.safety.explain import factors_from_mc, confidence_score, data_inventory
 
 HYPER_BREACH_PROB = 0.25
+HYPER_ADDED_PEAK = 30.0    # mg/dL: a proposal that lifts the median peak in its window by less than this adds no high of its own
+HYPER_PEAK_ABS = 280.0     # mg/dL: a median peak this high is a breach whatever was coming anyway
 
 
 @dataclass
@@ -31,8 +33,14 @@ class Scenario:
     energy: float = 0.0
     blocked: bool = False
 
+    peak: float = 0.0                # median peak inside the window
+    base_peak: float = 0.0           # the same when nothing is done (set by evaluate_permission)
+
     def passes(self, p_hypo_max: float) -> bool:
-        return (not self.blocked) and self.p_hypo < p_hypo_max and self.p_hyper < HYPER_BREACH_PROB
+        # a high is only this proposal's fault when it lifts the peak over what was coming anyway (a person
+        # whose usual dinner already runs high is not denied a walk because of that dinner)
+        hyper_ok = self.p_hyper < HYPER_BREACH_PROB or ((self.peak - self.base_peak) < HYPER_ADDED_PEAK and self.peak < HYPER_PEAK_ABS)
+        return (not self.blocked) and self.p_hypo < p_hypo_max and hyper_ok
 
     def score(self) -> float:
         return self.tir + self.energy / 100.0 - 2.0 * self.p_hypo - 0.5 * self.p_hyper
@@ -104,6 +112,13 @@ def _window_p_hypo(mc: MCResult, a_min: int, b_min: int) -> float:
     return float(np.mean(mc.glucose_samples[:, a:b].min(axis=1) < 70))
 
 
+def _window_p_hyper(mc: MCResult, a_min: int, b_min: int) -> float:
+    a, b = a_min // 5, min(b_min // 5 + 1, mc.glucose_samples.shape[1])
+    if b <= a:
+        return float(mc.p_hyper)
+    return float(np.mean(mc.glucose_samples[:, a:b].max(axis=1) > 250))
+
+
 def _long_term_delta(twin, e: Event) -> Dict[str, float]:
     """10-year organ-risk change if this event were repeated every week."""
     base = twin.week_profile()
@@ -158,10 +173,13 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
     for i, sc in enumerate(scenarios):
         sc.mc = twin.forecast(extra=sc.events, horizon_min=horizon, n=n, seed=i)
         # the verdict is judged inside the window the proposal controls; TIR and energy over the full horizon
-        sc.p_hypo, sc.p_hyper, sc.tir, sc.energy = _window_p_hypo(sc.mc, win_a, win_b), sc.mc.p_hyper, sc.mc.tir, sc.mc.energy
+        sc.p_hypo, sc.p_hyper, sc.tir, sc.energy = _window_p_hypo(sc.mc, win_a, win_b), _window_p_hyper(sc.mc, win_a, win_b), sc.mc.tir, sc.mc.energy
         extremes[sc.name] = _extremes(sc.mc, win_a, win_b)
     do_nothing, prop = scenarios[0], scenarios[1]
     variants = scenarios[2:]
+    for sc in scenarios:
+        sc.peak = float(extremes[sc.name]["peak"])
+        sc.base_peak = float(extremes["do_nothing"]["peak"])
 
     # event-type hard rules turn into blocks on the proposed scenario (or all of them)
     hard_block_all = False
@@ -175,7 +193,7 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
 
     # a proposal that does not add risk over doing nothing is never the problem: if the baseline is
     # already above the limit, approve it with the condition that treats the existing trend
-    adds_no_risk = prop.p_hypo <= do_nothing.p_hypo + 0.02 and prop.p_hyper < HYPER_BREACH_PROB and not prop.blocked
+    adds_no_risk = prop.p_hypo <= do_nothing.p_hypo + 0.02 and (prop.p_hyper < HYPER_BREACH_PROB or ((prop.peak - prop.base_peak) < HYPER_ADDED_PEAK and prop.peak < HYPER_PEAK_ABS)) and not prop.blocked
     if hard_block_all:
         verdict, best, condition = "denied", min(variants + [prop], key=lambda s: s.p_hypo), gate.instruction
     elif prop.passes(p_hypo_max):

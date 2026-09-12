@@ -53,7 +53,7 @@ Remove `.env` (or set an invalid key) and text is read by the built-in reader in
 
 ## The pitch page: /compare
 
-http://127.0.0.1:8000/compare puts one question to three people at once (Alex, Priya, Marcus) and shows three answers side by side: each person's own forecast, verdict and reason, with the population model's curve in gray behind, and a summary built from their numbers. Keys 1-6 fire the six prepared prompts, Enter asks what you typed, Escape resets, and the Personalized / Average switch shows what everyone would get without personalization. The six prompts are pre-computed and bundled into the page; anything else runs live with a cached fallback.
+http://127.0.0.1:8000/compare puts one question to three people at once (Alex, Priya, Marcus). The page opens on three mini dashboards (glucose and trend, last 3 h and next 3 h with a now marker, next meal and workout, the six "right now" tiles, three learned chips) on the real clock, then shows three answers side by side: each person's own forecast, verdict, cause and reason, with the population model's curve in gray behind, and a summary built from their numbers. Keys 1-6 fire the six prepared prompts, Enter asks what you typed, Escape resets, and the Personalized / Average switch shows what everyone would get without personalization. The six prompts are recomputed in the background for the current time; anything else runs live with a cached fallback. The verdict matrix is in `audit/compare_divergence.md`.
 
 ## Screenshots
 

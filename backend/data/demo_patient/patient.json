@@ -5,12 +5,12 @@
   "fat_mass_kg": 18.092343425913043,
   "lean_mass_kg": 77.90016460095086,
   "basal_dose_error": 0.9689058901700223,
-  "steady_basal_u_per_h": 0.5031776284063267,
+  "steady_basal_u_per_h": 0.4907593281288551,
   "alcohol_prob_weekend": 0.6,
   "workouts_per_week": 4,
   "coffee_prob": 0.750819221239551,
   "illness_week": 6,
-  "bolus_scale": 1.0,
+  "bolus_scale": 0.8,
   "true_params": {
     "SIT": 0.0041540603375985865,
     "SID": 0.0005148154236581289,
@@ -33,7 +33,7 @@
     "si_tod2": 1.0733524825326857,
     "sleep_debt_coef": 0.16776249066275237,
     "basal_drift": 1.0,
-    "basal_u_per_h": 0.4875317679646727,
+    "basal_u_per_h": 0.4754996036799304,
     "carb_ratio_g_per_u": 19.690146149593097
   },
   "start": "2025-06-02T00:00:00",
@@ -42,10 +42,10 @@
     "format": "dexcom",
     "n_raw": 25920,
     "n_grid": 25920,
-    "coverage": 1.0,
+    "coverage": 0.9998456790123457,
     "n_gaps": 0,
-    "n_artifacts": 0,
+    "n_artifacts": 4,
     "staleness_min": 0.0,
-    "data_quality": 1.0
+    "data_quality": 0.9997993827160494
   }
 }

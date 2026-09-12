@@ -105,7 +105,9 @@ def test_five_people_in_order_and_parser_toggle(client):
     by = {p["name"]: p for p in profs}
     assert by["Ken"]["occupation"] == "Line cook" and by["Marcus"]["occupation"] == "Nurse" and by["Zara"]["occupation"] == "Barista"
     assert len({p["avatar"] for p in profs[:5]}) == 5 and all(p["signature"] for p in profs[:5])
-    assert by["Ken"]["target_high"] == 160 and by["Alex"]["carb_ratio_g_per_u"] == 37 and by["Priya"]["carb_ratio_g_per_u"] == 17
+    from backend.api.personas import PERSONAS
+    spec = {p["name"]: p for p in PERSONAS}
+    assert by["Ken"]["target_high"] == 160 and by["Alex"]["carb_ratio_g_per_u"] == spec["Alex"]["carb_ratio_g_per_u"] and by["Priya"]["carb_ratio_g_per_u"] == spec["Priya"]["carb_ratio_g_per_u"]
     assert client.delete("/profiles/zara").status_code == 400   # the five cannot be deleted
     st = client.post("/parser/mode", json={"ai_reader": False}).json()
     assert st["ai_reader"] is False and st["gemini_configured"] is False

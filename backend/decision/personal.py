@@ -189,3 +189,52 @@ def as_population(twin):
         yield twin
     finally:
         twin.params, twin.posterior, twin.residual, twin._ukf, twin._state_cache, twin._cache = saved
+
+# ------------------------------------------------------------------ chips: the same facts as symbols
+# key -> (icon, label when the parameter is above the prior, label when below). Labels are two to four
+# words, no numbers; the qualifier arrow says which way it pushes glucose.
+CHIP = {
+    "tau_carb": ("🍞", "carbs hit slow ↓", "carbs hit fast ↑"),
+    "carb_ratio": ("🍞", "carbs count more ↑", "carbs count less ↓"),
+    "si_tod0": ("💉", "insulin best overnight", "insulin weak overnight ↓"),
+    "si_tod1": ("💉", "insulin best daytime", "insulin weak daytime ↓"),
+    "si_tod2": ("💉", "insulin best evenings", "insulin weak evenings ↓"),
+    "exercise_mult": ("🏃", "exercise drops a lot ↓", "exercise drops little"),
+    "sleep_debt_coef": ("😴", "sleep hurts insulin ↓", "short sleep barely matters"),
+    "insulin_today": ("😴", "insulin down after nights ↓", "insulin down after nights ↓"),
+    "alcohol_gain": ("🍺", "alcohol drops a lot ↓", "alcohol drops little"),
+    "basal_drift": ("💉", "basal runs strong ↓", "basal runs weak ↑"),
+}
+CHIP_RANK = {"food": 0, "insulin": 0, "exercise": 1, "sleep": 1, "alcohol": 2}
+
+
+def fact_chips(twin, n: int = 3) -> List[Dict[str, Any]]:
+    """Up to `n` chips: food and insulin facts first, then sleep and exercise, alcohol last and only when
+    it is strong (40 % or more). Each chip: icon, a short label, the fact's category and key."""
+    cands = fact_candidates(twin)
+    ranked = sorted(cands, key=lambda f: (CHIP_RANK.get(f["category"], 2), -rank_score(f)))
+    out: List[Dict[str, Any]] = []
+    for f in ranked:
+        if f["category"] == "alcohol" and f["magnitude"] < 40:
+            continue
+        spec = CHIP.get(f["key"])
+        if not spec:
+            continue
+        icon, up, down = spec
+        if f["key"] == "insulin_today":
+            habit = str((twin.profile or {}).get("habit", ""))
+            label = "insulin down after shifts ↓" if "night" in habit else "insulin down after short nights ↓"
+        else:
+            label = up if f["ratio"] > 1 else down
+        if any(c["label"] == label for c in out):
+            continue
+        out.append({"icon": icon, "label": label, "category": f["category"], "key": f["key"]})
+        if len(out) >= n:
+            break
+    fill = [("💉", "insulin about average", "insulin"), ("🍞", "carbs about average", "food"), ("🏃", "exercise about average", "exercise")]
+    for icon, label, cat in fill:
+        if len(out) >= n:
+            break
+        if not any(c["category"] == cat for c in out):
+            out.append({"icon": icon, "label": label, "category": cat, "key": "average"})
+    return out[:n]

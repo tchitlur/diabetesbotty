@@ -254,9 +254,27 @@ class Twin:
     def accept_event(self, e: Event) -> None:
         self.session_events.append(e)
 
+    def pending_meal(self) -> List[Event]:
+        """A meal bolus logged in the last 45 minutes with no meal after it means the meal is about to
+        happen (people pre-bolus): the forecast replays that meal, sized from the dose and the carb
+        ratio, rather than a dose on an empty stomach that crashes the forecast."""
+        recent = self.events_recent(0.75)
+        bol = [e for e in recent if e.type == "insulin" and e.insulin_kind == "bolus" and e.insulin_units >= 0.5 and "bolus for" in (e.label or "")]
+        if not bol:
+            return []
+        b = bol[-1]
+        if any(e.type == "meal" and e.carbs_g >= 15 and e.start >= b.start - timedelta(minutes=10) for e in recent):
+            return []
+        name = (b.label or "bolus for meal").replace("bolus for ", "")
+        ratio = float(self.params.get("carb_ratio_g_per_u", 10.0))
+        t = max(self.now + timedelta(minutes=5), b.start + timedelta(minutes=15))
+        return [Event(type="meal", start_time=t.isoformat(timespec="minutes"), duration_min=15, carbs_g=float(b.insulin_units * ratio), fat_g=15.0, protein_g=20.0,
+                      uncertainty=0.3, source="synthetic", label=f"expected {name}")]
+
     def context_events(self, extra: Optional[List[Event]] = None, past_hours: float = 8.0) -> List[Event]:
-        """Events the forecast replays: recent past (for tau_g / basal overrides), accepted future, and extras."""
-        ev = self.events_recent(past_hours) + self.future_events() + list(extra or [])
+        """Events the forecast replays: recent past (for tau_g / basal overrides), the meal a recent bolus
+        was taken for, accepted future, and extras."""
+        ev = self.events_recent(past_hours) + self.pending_meal() + self.future_events() + list(extra or [])
         return sorted(ev, key=lambda e: e.start)
 
     # ------------------------------------------------------------ forecasting
