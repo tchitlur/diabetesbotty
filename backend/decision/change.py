@@ -146,6 +146,12 @@ def evaluate_change(twin, name: str) -> ChangeResponse:
             b10, c10 = getattr(b["slow"].final_state, k), getattr(c["slow"].final_state, k)
         diff.append(DiffRow(variable=k, unit=UNITS[k], baseline_30d=round(b30, 4), change_30d=round(c30, 4), baseline_10y=round(b10, 4), change_10y=round(c10, 4)))
     pb, pc = b["slow"].probabilities, c["slow"].probabilities
+    summary = [
+        {"key": "tir", "label": "Time in range", "unit": "%", "before": round(100 * b["profile"].mean("tir"), 1), "after": round(100 * c["profile"].mean("tir"), 1), "higher_is_better": True},
+        {"key": "lows", "label": "Predicted lows", "unit": "per week", "before": _low_episodes(G[0]), "after": _low_episodes(G[1]), "higher_is_better": False},
+        {"key": "energy", "label": "Average energy", "unit": "/100", "before": round(b["fast"]["energy_score"], 1), "after": round(c["fast"]["energy_score"], 1), "higher_is_better": True},
+        {"key": "insulin", "label": "How well insulin works", "unit": "% of usual", "before": round(100 * b["m30"].insulin_sensitivity, 1), "after": round(100 * c["m30"].insulin_sensitivity, 1), "higher_is_better": True},
+    ]
     risk_b, risk_c = float(np.mean(list(pb.values()))), float(np.mean(list(pc.values())))
     hypo_b, hypo_c = b["profile"].total("hypo_minutes"), c["profile"].total("hypo_minutes")
     tir_b, tir_c = b["profile"].mean("tir"), c["profile"].mean("tir")
@@ -164,10 +170,23 @@ def evaluate_change(twin, name: str) -> ChangeResponse:
     return ChangeResponse(change=name, verdict=verdict, reason=reason, diff=diff,
                           organ_risk_baseline={k: round(v, 4) for k, v in pb.items()},
                           organ_risk_change={k: round(v, 4) for k, v in pc.items()},
+                          summary_30d=summary,
                           week_summary={"baseline": b["profile"].summary(), "change": c["profile"].summary(),
                                         "week_start": week_start.date().isoformat(),
                                         "events_removed": len(base_ev) - len(new_ev) if len(new_ev) < len(base_ev) else 0,
                                         "events_added": len(new_ev) - len(base_ev) if len(new_ev) > len(base_ev) else 0})
+
+
+def _low_episodes(g: np.ndarray, thresh: float = 70.0, gap_steps: int = 6) -> int:
+    """Distinct dips below `thresh` in one simulated week (a new dip needs >= 30 min above it)."""
+    low = np.asarray(g) < thresh
+    n, last = 0, -10 ** 6
+    for i, x in enumerate(low):
+        if x:
+            if i - last > gap_steps:
+                n += 1
+            last = i
+    return int(n)
 
 
 def _series(X: np.ndarray, k: str, p: Dict) -> np.ndarray:
