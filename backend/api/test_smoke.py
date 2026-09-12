@@ -67,6 +67,23 @@ def test_replay_alcohol_slider(client):
     assert r0["min_glucose_modified"] >= r1["min_glucose_original"] - 1
 
 
+def test_profiles_home_timeline(client):
+    profs = client.get("/profiles").json()
+    assert any(p["id"] == "demo" for p in profs) and client.get("/profiles/active").json()["id"] == "demo"
+    h = client.get("/home").json()
+    assert h["glucose"]["word"] in ("rising", "steady", "falling") and len(h["forecast"]["times"]) == 37
+    keys = [t["key"] for t in h["tiles"]]
+    assert {"carbs", "liver", "ketones", "hydration", "energy", "body", "training", "insulin"} <= set(keys)
+    assert all(t["status"] and t["tone"] in ("good", "warn", "bad") and len(t["forecast"]["values"]) == 37 for t in h["tiles"])
+    assert [c["key"] for c in h["coming_up"]] == ["meal", "workout", "risk", "best"]
+    tl = client.post("/plan/timeline", json={"workout": {"start": h["forecast"]["times"][-1], "duration_min": 30}}).json()
+    assert tl["slots"] and all(s["color"] in ("green", "amber", "red") for s in tl["slots"])
+    assert all(s["reason"] for s in tl["slots"] if s["color"] != "green")
+    assert any(i["movable"] for i in tl["items"])
+    card = client.get("/why").json()
+    assert "plain" in card and card["plain"]["headline"]
+
+
 def test_drift_clinician_why(client):
     d = client.get("/drift").json()
     assert "score" in d and "flagged" in d

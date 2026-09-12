@@ -1,6 +1,6 @@
 # GlucoPilot
 
-A personalised, mechanistic-plus-learned simulation of a Type 1 diabetic's body. Every intake and activity (food, alcohol, caffeine, insulin, exercise, sleep, illness, stress, water) goes into a physiology model, and everything you see is the output of a simulator, estimator or optimiser: a short-horizon glucose forecast with uncertainty, a permission decision ("can I have two more beers tonight?") with the condition that makes it safe, and a 10-year projection of organ risk for your current or proposed lifestyle.
+A personalised, mechanistic-plus-learned simulation of a Type 1 diabetic's body. Every intake and activity (food, alcohol, caffeine, insulin, exercise, sleep, illness, stress, water) goes into a physiology model, and everything you see is the output of a simulator, estimator or optimiser: a short-horizon glucose forecast with uncertainty, a permission decision ("can I have two more beers tonight?") with the condition that makes it safe, and 30-day comparisons of lifestyle changes. The screens are built for a person with no technical background: what you eat and drink, and how your body handles it.
 
 All data are synthetic. There is no real patient. Decision support only; nothing doses insulin.
 
@@ -37,20 +37,30 @@ All data are synthetic. There is no real patient. Decision support only; nothing
 
 ## The demo, in order
 
-The twin's clock is frozen at **Friday 2025-08-29 19:00** (just after dinner, glucose in the low 90s), inside 90 days of synthetic data. It never sees anything after that moment.
+The clock is frozen at **Friday 2025-08-29 19:00** (just after dinner, glucose in the low 90s) inside 90 days of synthetic data. Everything on screen is as of that moment.
 
-1. **Now tab.** Estimated state with +-std (UKF over the last 12 h), the 8-hour forecast (median and p10-p90 band from 200 Monte Carlo runs), P(hypo) around 20 %, substance decay curves, energy gauge.
-2. **Chat: `can I have two more beers tonight?`** The parsed event appears as JSON with the parser badge (Gemini or local fallback), then "simulating...", then a card: *approved with condition: eat 15 g carbs before bed, no bolus*, with the mini curve (do nothing / as proposed / best variant), the top-3 factors, the 10-year delta if repeated weekly, and the data used / missing. The card also lands in the Today tab. "Add to plan" commits the beers **and** the bedtime snack to the forecast.
-3. **Chat: `fasted run tomorrow at 7 for 30 min`.** Approved: judged in its own window (06:00 to 11:30) the run carries about 2 % hypo risk. For the other two verdict paths try the tap button **lift 45 min** (approved with a condition: 15 g fast carbs at the start, plus a safe alternative window) and **`two shots of vodka at 11pm`** (denied: even the safest variant leaves P(hypo) above 20 %).
-4. **`/change morning_workouts`** (also `cut_caffeine`, `drink_fridays_only`, `fasting_16_8`). The representative week is rewritten and simulated for 30 days (medium layer) and 10 years (slow layer); you get a verdict and the diff of all 22 state variables. **Body tab**: toggle "pending change" and the five organs recolour with the per-organ risk deltas.
-5. **`/budget`.** Three numbers: weekly alcohol (g), caffeine (mg) and off-plan meals that keep 10-year organ risk within 5 % of the current trajectory.
-6. **`/plan tomorrow`** (or `/plan tomorrow 3 drinks`). Grid search over workout start, snack placement and drink cutoff; the Today tab shows the hourly green/amber/red timeline and the pending alerts with the past event most responsible.
-7. **Replay tab.** Opens on Saturday 2025-08-09 (4 wines). Drag *Alcohol x* to 0: the twin's overnight nadir rises from 69 to about 125 mg/dL and the low disappears. Other sliders: carbs, exercise, bolus insulin.
-8. **Trends tab.** A1c twin estimate + 90-day projection, insulin-sensitivity drift with sleep debt, hypo hours per day, sleep-vs-sensitivity scatter.
-9. **Clinician view** (header link, `/clinician`). Parameter drift from sliding refits, residual log, fitted posterior, escalation history.
-10. **`/why`** prints the explanation of the last card. The tap bar (beer/wine/spirit x count, coffee, run 30 min, lift 45 min) creates proposals without typing. Remove `.env` (or set an invalid key) and the badge switches to *local fallback*; everything still works. `POST /permission?stale=30` returns a request-for-data card instead of a verdict. The photo button is enabled only when a Gemini key is configured.
+1. **Login.** Tap **Alex** (the demo person) or **Add profile**: name, age, sex, weight, height, carb ratio, correction factor, target range. A new profile is matched to the closest virtual person in the 30-patient cohort and that person's model is fitted on the spot (about 10 s). Profiles are JSON files on the backend; no passwords, nothing in the browser.
+2. **Home.** One big number with a trend word, coloured by your target range; 3 hours of sensor and 3 hours of forecast. Under it the **Right now** tiles (carbs digesting, liver energy stores, ketones, hydration, energy, body composition, training load, how well insulin is working; alcohol and caffeine only when you have had some). Tap a tile for its next 3 hours. **Coming up**: next meal, next workout, the next risk, the best window for what you do most.
+3. **Chat: `can I have two more beers tonight?`** The line "Understood: 2 beers tonight at 19:00" appears under your message (JSON behind *details*), then the answer card: a headline (**Go ahead** / **Yes, with a snack** / **Better not tonight**), one or two plain sentences, and the next 6 hours as a shaded band with a marker for the beers. **Add to plan** commits the beers (and the snack if there is one) to the forecast and the Plan tab.
+4. **`fasted run tomorrow at 7 for 30 min`** (approved: "Go for it"), **`large coffee now`** ("Yes, with a snack": the coffee is harmless but you are already heading low), the **Workout** button with **Lift 45 min** and **`two shots of vodka at 11pm`** ("Better not tonight") show the other paths.
+5. **Quick-log buttons** (chat panel and the header's **Log something**): Meal (describe it, type the carbs, or a photo when a Gemini key is set), Snack, Coffee, Drink (how many, beer / wine / spirit), Workout.
+6. **Plan tab.** One vertical timeline from now until bedtime (through tomorrow when the evening is nearly over): green / amber / red bands for exercising, dashed predicted meals, planned workouts. **Plan my day** places the workout and a snack if one is needed; tap the workout, then a time, to move it and the bands recompute; tap an amber or red band for the one-sentence reason ("insulin from lunch still active").
+7. **`/plan tomorrow`** and **`/change morning_workouts`** (also `cut_caffeine`, `drink_fridays_only`, `fasting_16_8`) answer as cards too; `/change` shows the 30-day comparison for time in range, predicted lows per week, average energy and how well insulin works. **`/why`** repeats the reason for the last answer in plain words.
+8. **Details tab.** The numbers behind the tiles, the 8-hour chances of a low or a high, what is still in your body (insulin, caffeine, alcohol decay), sensor data quality, whether the model is still in sync with your sensor, your settings. **I'm nerdy** at the bottom opens Replay (re-run a past day with the sliders; on Sat 2025-08-09 set Alcohol to 0 and the overnight low rises from 69 to about 125 mg/dL) and Trends.
 
-`frontend/audit.spec.ts` (Playwright) walks every screen and interaction and fails on any console error, failed request, placeholder text or empty chart; `audit/FINDINGS.md` lists what it found and what was changed.
+Remove `.env` (or set an invalid key) and text is read by the built-in reader instead of Gemini; everything still works. `POST /permission?stale=30` returns a "need a fresh reading first" card.
+
+## Screenshots
+
+From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v2/` after a run). A curated set is committed under `docs/screens/`:
+
+| Screen | File |
+|---|---|
+| Home: glucose, tiles, coming up | `docs/screens/home.png` |
+| Chat answer card (beers) | `docs/screens/chat-beers.png` |
+| Plan: bands and the planned workout | `docs/screens/plan.png` |
+| Details | `docs/screens/details.png` |
+| Login and add profile | `docs/screens/login.png`, `docs/screens/add-profile.png` |
 
 ## What is in the box
 
@@ -65,7 +75,7 @@ backend/
   data/       synthetic cohort generator (30 patients), committed demo patient
   api/        FastAPI app and the Twin session object
   validation/ scripts that write validation/plots/*.png and validation/RESULTS.md
-frontend/     Vite + React + Recharts (Now / Today / Body / Trends / Replay, chat, tap bar, /clinician)
+frontend/     Vite + React + Recharts (login, Home / Plan / Details, chat with quick-log buttons, "I'm nerdy" replay + trends)
 ```
 
 ## Why this is not an LLM wrapper
@@ -77,7 +87,7 @@ Every number on screen comes from a model you can read:
 - **Physiology.** The Hovorka (2004) glucose-insulin model with published parameters, plus one or two ODEs each for gut absorption (fat and fibre slow it), liver and muscle glycogen, blood alcohol (Widmark absorption, zero-order clearance, hepatic glucose output suppressed by BAC and a lingering state so the low arrives 4-10 hours after drinking), caffeine (5-hour half-life, transient insulin resistance, worse sleep), exercise (aerobic uptake and a decaying sensitivity window; anaerobic transient rise), ketones with a DKA flag, hydration, and an energy score. `params.yaml` cites every constant.
 - **Personalisation.** Nine parameters are fitted per patient by least squares on 6-hour windows of their own CGM (three time-of-day sensitivities, carb bioavailability, absorption time constant, exercise and alcohol gains, basal drift, sleep-debt coefficient), with a 30-resample bootstrap for a posterior. A UKF estimates the hidden state now. A gradient-boosted residual model learns what the ODE still gets wrong at 30/60/120 min.
 - **Decisions.** Every card is a Monte Carlo experiment: 200 trajectories sampled from the posterior and from the uncertainty of the logged amounts, for do-nothing, the proposal, and its variants. Approval needs P(glucose < 70) under 5 % with no hyper breach; otherwise the best passing variant becomes the condition. The planner batches hundreds of candidate days through the same integrator. Change requests loop a rewritten week through the daily and the 10-year layers. The safety gate runs first and can refuse to decide (stale CGM, bad data) or escalate (DKA pattern, repeated severe lows, model drift).
-- **Long term.** Organ accumulators are cumulative hazards with DCCT/UKPDS coefficients; A1c 9 -> 7 reproduces the DCCT retinopathy reduction.
+- **Long term.** Organ accumulators are cumulative hazards with DCCT/UKPDS coefficients; A1c 9 -> 7 reproduces the DCCT retinopathy reduction. (Computed and tested, but the 10-year numbers are kept off the screens in this version; the UI shows 30-day comparisons.)
 
 An LLM could not have produced the delayed alcohol low, the p10-p90 band, or the "eat 15 g at bedtime" condition, because those are consequences of equations fitted to this patient's data, not of a prompt.
 
@@ -97,7 +107,7 @@ Sanity plots from the engine checkpoint: `sanity_alcohol.png` (4 beers at 21:00 
 
 ## API
 
-`http://127.0.0.1:8000/docs` lists everything. Main routes: `GET /state`, `GET /forecast`, `POST /permission` (`?stale=30` to test the gate), `GET|POST /plan`, `POST /change`, `GET /budget`, `GET /alerts`, `POST /replay`, `POST /parse`, `POST /parse/image`, `GET /drift`, `GET /clinician`, plus session helpers (`/events/accept`, `/cards`, `/why`, `/demo/reset`).
+`http://127.0.0.1:8000/docs` lists everything. Main routes: `GET /profiles`, `POST /profiles`, `POST /profiles/{id}/select`, `GET /home`, `POST /plan/timeline`, `GET /state`, `GET /forecast`, `POST /permission` (`?stale=30` to test the gate), `GET|POST /plan`, `POST /change`, `GET /alerts`, `POST /replay`, `POST /parse`, `POST /parse/image`, `GET /drift`, plus session helpers (`/events/accept`, `/cards`, `/why`, `/demo/reset`). `GET /budget` and `GET /clinician` still exist but are not used by the UI.
 
 ## Notes
 

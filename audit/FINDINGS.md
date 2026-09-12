@@ -63,3 +63,7 @@ Pass 1 ran `frontend/audit.spec.ts` (Playwright, 1440x900, 24 screenshots in `au
 - Found: 41 (13 automated, 9 API-level, 28 visual or behavioural; some overlap).
 - Fixed: 40. Removed: 1 (#35, photo input is disabled unless a Gemini key is configured). No change needed: 1 (#7, CGM gaps are real).
 - Pass 3: the audit completes with 0 console errors, 0 console warnings, 0 failed requests, 0 placeholder text and 0 empty charts; the route audit reports 0 findings.
+
+## Redesign audit (v2, `audit/screens_v2/`)
+
+After the food-first redesign the audit was rewritten to walk login, add profile, Home and a tile, the header quick-log, Plan with "Plan my day" and a workout move, every quick-log button, the six chat messages, Details and "I'm nerdy", and to grep every screen for NaN / undefined / null / [object Object] and the old technical words (compartment, posterior, UKF, residual, Monte Carlo, p_hypo). Issues found and fixed during the redesign passes: Home and Plan screenshots taken mid-load (audit waits tightened), chart "now" label clipped and ticks off the hour, tile values wrapping (short value + sub line), the /plan strip shifted by the UTC offset, marker labels clipped at the strip edge, the substances y-axis label clipped, the header quick-log popover not closing on Escape, and the beers verdict preferring "half as much" over a plain snack. Final run: 0 console errors, 0 warnings, 0 failed requests, 0 placeholders, 0 empty charts, 0 technical words; 24 screenshots.
