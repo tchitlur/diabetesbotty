@@ -127,3 +127,28 @@ def replay_day(twin, date: str, carbs_scale: float = 1.0, alcohol_scale: float =
         modified_events=[EventModel(**e.to_dict()) for e in modified if day <= e.start < day + timedelta(days=1) and e.type != "water"],
         min_glucose_original=round(float(g0.min()), 1), min_glucose_modified=round(float(g1.min()), 1),
         hypo_minutes_original=round(float(np.sum(g0 < 70) * DT), 0), hypo_minutes_modified=round(float(np.sum(g1 < 70) * DT), 0))
+
+
+def suggest_day(twin, max_checks: int = 8) -> Dict[str, object]:
+    """Most recent drink night where the twin's alcohol-free counterfactual
+    lifts the overnight low (min < 72 as logged, > +15 mg/dL without alcohol).
+    Cached on the twin; a handful of 2-segment replays (~1 s each)."""
+    cached = getattr(twin, "_replay_suggest", None)
+    if cached is not None:
+        return cached
+    days = [d for d in list_days(twin) if d["drinks"] > 0][::-1]
+    best = None
+    checked = []
+    for d in days[:max_checks]:
+        r1 = replay_day(twin, d["date"])
+        r0 = replay_day(twin, d["date"], alcohol_scale=0.0)
+        night = [i for i, t in enumerate(r1.times) if t >= d["date"] + "T22:00"]
+        o = min(r1.simulated_original[i] for i in night)
+        m = min(r0.simulated[i] for i in night)
+        checked.append({"date": d["date"], "overnight_min_as_logged": round(o, 1), "overnight_min_no_alcohol": round(m, 1)})
+        if o < 72 and m > o + 15:
+            best = {"date": d["date"], "weekday": d["weekday"], "drinks": d["drinks"], "overnight_min_as_logged": round(o, 1), "overnight_min_no_alcohol": round(m, 1)}
+            break
+    out = {"suggested": best, "checked": checked}
+    twin._replay_suggest = out  # type: ignore[attr-defined]
+    return out

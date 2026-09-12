@@ -80,6 +80,14 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - The local parser handles the five required phrasings and more (insulin units, sleep hours, illness, stress, water, multi-item meals). "tonight" resolves to *now* when it is already evening (after 17:00), otherwise 20:00.
 - No key is configured in this environment, so the Gemini path is tested with a monkeypatched `generate()` (fenced JSON, prose-wrapped JSON, garbage -> fallback); the local path is exercised for real.
 
+## Frontend decisions (checkpoint 8)
+
+- Vite + React 18 + Recharts + react-router (for `/clinician`), plain CSS, no state persistence (no localStorage / sessionStorage; everything lives in React state and the backend session). All requests go through the Vite proxy `/api/*` -> `127.0.0.1:8000`.
+- Tabs render `schema/api.py` shapes only: Now (state +-std, 6 h CGM history + 8 h median with p10-p90 band, substance decay lines, energy gauge), Today (24 hourly green/amber/red blocks from the planner, alerts with the responsible event, committed events, session cards), Body (five hand-drawn SVG organs coloured by 10-year risk; toggle current vs pending change with per-organ deltas; "current lifestyle" is the `no_change` request so both sides use the same engine), Trends (A1c twin estimate + 90-day projection, sensitivity drift with sleep debt, hypo hours/day, sleep-vs-sensitivity scatter), Replay (day picker flagged with drinks/exercise/overnight-low, four sliders, actual vs twin-as-logged vs twin-with-sliders).
+- Chat: text -> parsed JSON block with the parser badge -> "simulating..." -> PermissionCard with the mini curve (do nothing / as proposed / best variant, p10-p90 band). Cards also land in Today. "Add to plan" commits `plan_events` (event + condition extras) to the backend session, which changes every later forecast. Slash intents: `/change <name>`, `/plan tomorrow [N drinks]`, `/budget`, `/why`. Tap bar: beer/wine/spirit x count, coffee, run 30 min, lift 45 min (events with `start_time: "now"`, mapped to the twin clock server-side). A photo button posts to `/parse/image`.
+- Header: Twin sync from `/drift` (green ok / amber flagged / red when >= 5 days), data-quality score, CGM staleness, parser badge (Gemini vs local fallback, with "(no key)" when unconfigured), the twin clock.
+- Replay opens on the most recent drink night where the twin's alcohol-free counterfactual actually lifts the overnight low (`/replay/suggest`, cached; currently Sat 2025-08-09: 69 -> 125 mg/dL).
+
 ## Checkpoint status
 
 - [x] 1. Environment + contracts (stub simulator)
@@ -89,10 +97,10 @@ Running log of decisions, substitutions, cuts, and how to run. Updated at every 
 - [x] 5. Medium + slow layers
 - [x] 6. Decision + safety + API
 - [x] 7. Parsers
-- [ ] 8. Frontend
+- [x] 8. Frontend
 - [ ] 9. Validation + docs
 - [ ] 10. Final release
 
 ## Next
 
-Checkpoint 8: frontend (Vite + React + Recharts): Now / Today / Body / Trends / Replay tabs, chat with parser badge and cards, tap inputs, header twin-sync, /clinician page.
+Checkpoint 9: validation scripts 2-4 (forecast RMSE, hypo calibration, alcohol-night overlay), RESULTS.md, README.md.

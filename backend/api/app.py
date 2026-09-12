@@ -25,7 +25,7 @@ from backend.decision.planner import plan_day
 from backend.decision.change import evaluate_change, CHANGES
 from backend.decision.budget import compute_budget
 from backend.decision.alerts import compute_alerts
-from backend.decision.replay import replay_day, list_days
+from backend.decision.replay import replay_day, list_days, suggest_day
 from backend.adapters.parse import parse_text, parse_image, parser_status
 
 log = logging.getLogger("glucopilot.api")
@@ -92,8 +92,11 @@ def forecast(horizon_min: int = Query(default=480, ge=60, le=1440)) -> ForecastR
 @app.post("/permission", response_model=PermissionCard)
 def permission(req: PermissionRequest, stale: Optional[float] = Query(default=None)) -> PermissionCard:
     tw = get_twin()
+    d = req.event.model_dump()
+    if str(d.get("start_time", "")).lower() in ("", "now"):   # tap inputs use the twin clock, not the wall clock
+        d["start_time"] = tw.now.isoformat(timespec="minutes")
     try:
-        ev = Event.from_dict(req.event.model_dump())
+        ev = Event.from_dict(d)
     except ValueError as ex:
         raise HTTPException(400, str(ex))
     return evaluate_permission(tw, ev, stale_override=stale if stale is not None else req.stale)
@@ -142,6 +145,11 @@ def alerts() -> List[Alert]:
 @app.get("/replay/days")
 def replay_days() -> List[Dict[str, Any]]:
     return list_days(get_twin())
+
+
+@app.get("/replay/suggest")
+def replay_suggest() -> Dict[str, Any]:
+    return suggest_day(get_twin())
 
 
 @app.post("/replay", response_model=ReplayResponse)

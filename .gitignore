@@ -22,3 +22,6 @@ backend/data/demo_patient/fit_cache.tmp
 # runtime
 *.log
 .demo_pids
+
+# local tooling
+.claude/
