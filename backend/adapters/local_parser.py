@@ -220,6 +220,13 @@ def parse_text_local(text: str, now: datetime) -> ParsedEvent:
     if not found:
         ev = Event(type="meal", start_time=when.isoformat(timespec="minutes"), duration_min=15, carbs_g=45, fat_g=15, protein_g=20, fiber_g=3, uncertainty=0.5, source="local", label=text.strip()[:40] or "unrecognised meal")
         return ParsedEvent(event=EventModel(**ev.to_dict()), parser="local", confidence=0.3, raw_items=[{"item": text, "note": "not in table; generic meal assumed"}], notes="; ".join(notes + ["no table match: generic 45 g meal"]))
+    # a named food beats the generic "dinner / lunch / food" row; "small" and "large" scale a meal portion
+    if any(c not in ("meal", "snack") and r["kind"] == "meal" for c, r, _ in found):
+        found = [f for f in found if f[0] != "meal"]
+    portion = 0.6 if re.search(r"\b(small|little|half a|light)\b", t) else 1.5 if re.search(r"\b(large|big|huge|double)\b", t) else 1.0
+    if portion != 1.0:
+        found = [(c, r, n * portion) if r["kind"] == "meal" and c != "large coffee" else (c, r, n) for c, r, n in found]
+        notes.append(f"portion x{portion:g} from the wording")
     kinds = [f[1]["kind"] for f in found]
     if "alcohol" in kinds:
         etype = "alcohol"
@@ -236,7 +243,10 @@ def parse_text_local(text: str, now: datetime) -> ParsedEvent:
             row = food_table()["large coffee"]; canon = "large coffee"
         for k in tot:
             tot[k] += float(row.get(k, 0.0)) * count
-        labels.append(f"{count:g} {canon}" if count != 1 else canon)
+        if count == portion and portion != 1.0:
+            labels.append(("small " if portion < 1 else "large ") + canon)
+        else:
+            labels.append(f"{count:g} {canon}" if count != 1 else canon)
         raw_items.append({"item": canon, "count": count, "serving": row.get("serving"), **{k: row.get(k, 0) for k in ("carbs_g", "fat_g", "protein_g", "alcohol_g", "caffeine_mg")}})
     n_drinks = tot["alcohol_g"] / 14.0
     dur = parse_duration(t, 0.0)

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { ComposedChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts'
-import { api, fmtTime, pct, likely, num } from '../api.js'
+import { api, fmtTime, fmtDate, pct, likely, num } from '../api.js'
 import Status, { ChartBox } from './Status.jsx'
 import { TICK, TIP, GRID, xLabel, yLabel, MARGIN, COLORS } from './chart.js'
 import ReplayTab from './ReplayTab.jsx'
@@ -12,10 +12,11 @@ export default function DetailsTab({ profile, parser, health, home }) {
   const [fc, setFc] = useState(null)
   const [state, setState] = useState(null)
   const [drift, setDrift] = useState(null)
+  const [twin, setTwin] = useState(null)
   const [err, setErr] = useState(null)
   useEffect(() => {
     let alive = true
-    Promise.all([api.forecast(480), api.state(), api.drift()]).then(([f, s, d]) => { if (alive) { setFc(f); setState(s); setDrift(d) } }).catch((e) => alive && setErr(String(e.message)))
+    Promise.all([api.forecast(480), api.state(), api.drift(), api.twinSummary()]).then(([f, s, d, t]) => { if (alive) { setFc(f); setState(s); setDrift(d); setTwin(t) } }).catch((e) => alive && setErr(String(e.message)))
     return () => { alive = false }
   }, [profile?.id])
   const sub = fc ? fc.times.map((t, i) => ({ t: fmtTime(t), insulin: fc.substances.insulin?.[i], alcohol: fc.substances.alcohol?.[i], caffeine: fc.substances.caffeine?.[i] })) : []
@@ -24,6 +25,23 @@ export default function DetailsTab({ profile, parser, health, home }) {
   const q = state?.data_quality
   return (
     <>
+      <div className="card" data-testid="your-twin">
+        <h3>Your twin</h3>
+        <Status loading={!twin && !err} error={err} loadingText="Comparing your fit with the average…">
+          {twin ? <>
+            <div className="twin-rows">
+              {twin.lines.map((l) => (
+                <div key={l.key} className="twin-row">
+                  <span className="text">{l.text}</span>
+                  <span className="track" title={`${l.ratio}x the average`}><i className="mid" /><i className="dot" style={{ left: `${Math.round(100 * l.pos)}%` }} /></span>
+                </div>
+              ))}
+            </div>
+            <div className="note">{twin.learned}. The marker shows where you sit against the average person with T1D (centre = average; the ends = half or double).</div>
+          </> : null}
+        </Status>
+      </div>
+
       <div className="grid two">
         <div className="card">
           <h3>Right now, in numbers</h3>
@@ -53,7 +71,7 @@ export default function DetailsTab({ profile, parser, health, home }) {
           <ResponsiveContainer width="100%" height={220}>
             <ComposedChart data={sub} margin={MARGIN}>
               <CartesianGrid {...GRID} />
-              <XAxis dataKey="t" tick={TICK} interval={11} label={xLabel('time (HH:MM)')} />
+              <XAxis dataKey="t" tick={TICK} interval={11} label={xLabel('time')} />
               <YAxis yAxisId="l" tick={TICK} width={46} label={yLabel('insulin · caffeine')} />
               <YAxis yAxisId="r" orientation="right" tick={TICK} width={50} domain={[0, 0.15]} label={yLabel('alcohol (% BAC)', 'right')} />
               <Tooltip contentStyle={TIP} formatter={(v, n) => [n.startsWith('alcohol') ? Number(v).toFixed(3) : Math.round(v), n]} />
@@ -75,7 +93,7 @@ export default function DetailsTab({ profile, parser, health, home }) {
               <span className="k">Sensor data quality</span><b className={`v ${q >= 0.7 ? 'good' : q >= 0.4 ? 'warn' : 'bad'}`}>{pct(q)}</b><span className="u">coverage and clean readings, last 24 h and overall</span>
               <span className="k">Model sync with your sensor</span><b className={`v ${sync[0]}`}>{sync[1]}</b><span className="u">{drift ? (drift.flagged ? `errors rising for ${drift.days_flagged} day(s)` : 'its 1-hour forecasts still match your sensor') : ''}</span>
               <span className="k">Text and photo reader</span><b className="v">{parser ? (parser.gemini_configured ? `Gemini (${parser.model})` : 'built-in reader (no key)') : '…'}</b><span className="u">{parser?.last_parser ? `last used: ${parser.last_parser === 'gemini' ? 'Gemini' : 'built-in'}` : ''}</span>
-              <span className="k">As of</span><b className="v">{health ? `${health.now.slice(0, 10)} ${health.now.slice(11, 16)}` : '…'}</b><span className="u">the demo clock</span>
+              <span className="k">Latest reading</span><b className="v">{health ? `${fmtDate(health.now)} ${fmtTime(health.now)}` : '…'}</b><span className="u">the data follows the real clock</span>
             </div> : null}
           </Status>
         </div>

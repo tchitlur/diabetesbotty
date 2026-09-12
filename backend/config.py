@@ -26,10 +26,29 @@ load_dotenv(REPO_ROOT / ".env")
 # The only LLM in the project. Change it here and nowhere else.
 GEMINI_MODEL = "gemini-3.5-flash-lite"   # 2.5-flash-lite was retired for new keys (404 from the API on 2026-09-12)
 
-# The demo clock: the synthetic data runs to 2025-08-31 00:00; the twin lives at this
-# moment and never sees anything after it. A Friday evening just after dinner, glucose
-# in the low 90s: the interesting regime for "two more beers" and a fasted run.
-DEMO_NOW = "2025-08-29T19:00"
+# The demo anchor: the moment in the synthetic data that is mapped onto the real wall clock when
+# the server starts (an evening just after dinner, glucose in the low 90s: the interesting regime
+# for "two more beers" and a morning run). The data runs about 29 hours past it, so as real time
+# passes new readings appear and the app stays live. See time_shift() and backend/api/twin.py.
+DEMO_ANCHOR = "2025-08-29T19:00"
+DEMO_NOW = DEMO_ANCHOR   # legacy name (validation scripts use the unshifted synthetic clock)
+LIVE_CLOCK = os.environ.get("GLUCOPILOT_LIVE_CLOCK", "1") != "0"   # set to 0 to freeze the app at the anchor (tests)
+
+_SHIFT_ANCHOR_WALL = None
+
+
+def time_shift():
+    """Offset added to every synthetic timestamp: a whole number of days, so that the anchor's
+    day becomes today and the person's day keeps its shape (breakfast in the morning, bedtime at
+    night). The latest reading is then the one at the current wall-clock time; the data runs to
+    the end of tomorrow. Fixed for the life of the process."""
+    global _SHIFT_ANCHOR_WALL
+    from datetime import datetime, timedelta
+    if not LIVE_CLOCK:
+        return timedelta(0)
+    if _SHIFT_ANCHOR_WALL is None:
+        _SHIFT_ANCHOR_WALL = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    return _SHIFT_ANCHOR_WALL - datetime.fromisoformat(DEMO_ANCHOR).replace(hour=0, minute=0)
 
 DT_MIN = 5  # fast-layer step, minutes
 FORECAST_HORIZON_MIN = 8 * 60

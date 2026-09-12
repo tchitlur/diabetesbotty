@@ -154,10 +154,12 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
     scenarios: List[Scenario] = [Scenario("do_nothing", "", []), Scenario("proposed", "", [proposed])]
     for name, cond, evs in build_variants(proposed):
         scenarios.append(Scenario(name, cond, evs))
+    extremes: Dict[str, Dict[str, Any]] = {}
     for i, sc in enumerate(scenarios):
         sc.mc = twin.forecast(extra=sc.events, horizon_min=horizon, n=n, seed=i)
         # the verdict is judged inside the window the proposal controls; TIR and energy over the full horizon
         sc.p_hypo, sc.p_hyper, sc.tir, sc.energy = _window_p_hypo(sc.mc, win_a, win_b), sc.mc.p_hyper, sc.mc.tir, sc.mc.energy
+        extremes[sc.name] = _extremes(sc.mc, win_a, win_b)
     do_nothing, prop = scenarios[0], scenarios[1]
     variants = scenarios[2:]
 
@@ -207,7 +209,8 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
             from datetime import datetime as _dt
             when = _dt.fromisoformat(alternative["start"])
             day = "today" if when.date() == twin.now.date() else ("tomorrow" if (when.date() - twin.now.date()).days == 1 else when.strftime("%a"))
-            condition = (condition + f"; {tag}: {day} {when.strftime('%H:%M')} (P(hypo) {alternative['p_hypo']:.0%})").strip("; ")
+            from backend.decision.plain import fmt12 as _f12
+            condition = (condition + f"; {tag}: {day} {_f12(when)} (P(hypo) {alternative['p_hypo']:.0%})").strip("; ")
     best_event = next((x for x in best.events if x.type == proposed.type), None) or proposed
     factors = factors_from_mc(prop.mc)
     conf = confidence_score(twin.pt.cgm.data_quality, twin.posterior, prop.mc, twin.staleness_min(stale_override), twin.drift_status().score)
@@ -223,10 +226,13 @@ def evaluate_permission(twin, proposed: Event, stale_override: Optional[float] =
                              best_variant=_r(best.mc.median), p10=_r(prop.mc.p10), p90=_r(prop.mc.p90)),
         variants=[{"name": s.name, "condition": s.condition, "p_hypo": round(s.p_hypo, 3), "p_hyper": round(s.p_hyper, 3),
                    "tir": round(s.tir, 3), "energy": round(s.energy, 1), "min_glucose": round(float(np.median(s.mc.min_glucose_samples)), 1),
-                   "passes": s.passes(p_hypo_max), "blocked": s.blocked} for s in scenarios],
-        explanation=explanation, gate=gate.to_dict())
+                   "passes": s.passes(p_hypo_max), "blocked": s.blocked, **extremes[s.name]} for s in scenarios],
+        explanation=explanation, gate=gate.to_dict(),
+        engine={"start": proposed.start_time, "horizon_min": int(horizon), "window_min": [int(win_a), int(win_b)], "n_samples": int(n),
+                "params": "personal" if twin.posterior else "population", "p_hypo_max": p_hypo_max})
     if alternative is not None:
-        card.variants.append({"name": "alternative_window", "condition": f"move to {alternative['start'][11:16]}", "p_hypo": alternative["p_hypo"],
+        from backend.decision.plain import fmt12 as _f12b
+        card.variants.append({"name": "alternative_window", "condition": f"move to {_f12b(alternative['start'])}", "p_hypo": alternative["p_hypo"],
                               "p_hyper": alternative["p_hyper"], "tir": alternative["tir"], "energy": alternative["energy"],
                               "min_glucose": alternative["min_glucose"], "passes": alternative["p_hypo"] < p_hypo_max, "blocked": False,
                               "start": alternative["start"]})
@@ -277,6 +283,19 @@ def alternative_window(twin, e: Event, max_shift_h: float = 12.0):
         if p_hypo < 0.05:
             return row
     return best
+
+
+def _extremes(mc: MCResult, a_min: int, b_min: int) -> Dict[str, Any]:
+    """Median-trajectory low and high inside the decision window, with their times."""
+    a, b = a_min // 5, min(b_min // 5 + 1, len(mc.median))
+    if b <= a + 1:
+        a, b = 0, len(mc.median)
+    seg = np.asarray(mc.median[a:b])
+    i_lo, i_hi = int(np.argmin(seg)), int(np.argmax(seg))
+    after = seg[i_hi:]
+    j = int(np.argmin(after)) + i_hi
+    return {"nadir": round(float(seg[i_lo]), 1), "nadir_time": mc.times[a + i_lo], "peak": round(float(seg[i_hi]), 1), "peak_time": mc.times[a + i_hi],
+            "after_peak": round(float(seg[j]), 1), "after_peak_time": mc.times[a + j]}
 
 
 def _r(a) -> List[float]:

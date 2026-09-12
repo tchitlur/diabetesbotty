@@ -1,31 +1,26 @@
 {
   "suggested": {
-    "date": "2025-08-09",
-    "weekday": "Sat",
-    "drinks": 4,
-    "overnight_min_as_logged": 69.3,
-    "overnight_min_no_alcohol": 120.2
+    "date": "2025-08-15",
+    "weekday": "Fri",
+    "drinks": 6,
+    "overnight_min_as_logged": 54.6,
+    "overnight_min_no_alcohol": 76.5
   },
   "checked": [
     {
       "date": "2025-08-23",
-      "overnight_min_as_logged": 38.1,
-      "overnight_min_no_alcohol": 38.1
+      "overnight_min_as_logged": 64.4,
+      "overnight_min_no_alcohol": 64.6
     },
     {
-      "date": "2025-08-16",
-      "overnight_min_as_logged": 76.0,
-      "overnight_min_no_alcohol": 63.3
+      "date": "2025-08-22",
+      "overnight_min_as_logged": 57.8,
+      "overnight_min_no_alcohol": 65.4
     },
     {
       "date": "2025-08-15",
-      "overnight_min_as_logged": 73.8,
-      "overnight_min_no_alcohol": 75.7
-    },
-    {
-      "date": "2025-08-09",
-      "overnight_min_as_logged": 69.3,
-      "overnight_min_no_alcohol": 120.2
+      "overnight_min_as_logged": 54.6,
+      "overnight_min_no_alcohol": 76.5
     }
   ]
 }

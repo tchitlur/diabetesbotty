@@ -5,6 +5,7 @@ decision function goes through it."""
 from __future__ import annotations
 
 import json
+import re
 import threading
 from collections import Counter
 from datetime import datetime, timedelta
@@ -13,7 +14,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-from backend.config import DEMO_NOW, FORECAST_HORIZON_MIN, MC_SAMPLES
+from backend.config import DEMO_ANCHOR, LIVE_CLOCK, FORECAST_HORIZON_MIN, MC_SAMPLES, time_shift
 from backend.schema.state import State, FAST_FIELDS, MEDIUM_FIELDS, UNITS
 from backend.schema.events import Event
 from backend.schema.api import DriftStatus, Escalation, PermissionCard, StateNow
@@ -31,16 +32,20 @@ from backend.safety.gate import GateContext, run_gate, GateDecision
 
 class Twin:
     def __init__(self, patient_id: str = "demo", now: Optional[datetime] = None, profile: Optional[Dict[str, Any]] = None):
-        self.now: datetime = now or datetime.fromisoformat(DEMO_NOW)
-        self.pt: PatientData = load_patient(patient_id, until=self.now)
+        # the synthetic anchor is mapped onto the wall clock (config.time_shift); "now" is the time of
+        # the latest sensor reading at or before the wall clock, and tick() moves it as time passes
+        self.shift: timedelta = time_shift() if now is None else timedelta(0)
         self.patient_id = patient_id
+        wall = now or self.wall_now()
+        self.pt: PatientData = load_patient(patient_id, until=wall, shift=self.shift)
+        self.now: datetime = now or self._latest_reading(wall)
         # the person's own settings (carb ratio, correction factor, target range); see api/profiles.py
         self.profile: Dict[str, Any] = dict(profile or {})
         self.params: Dict[str, Any] = fitted_params(self.pt)
         self.posterior: Dict[str, Dict[str, float]] = load_posterior(self.pt)
         self.residual: Optional[ResidualModel] = load_residual_model(self.pt)
         dpath = self.pt.path / "drift.json"
-        self.drift_data: Dict[str, Any] = json.loads(dpath.read_text(encoding="utf-8")) if dpath.exists() else {}
+        self.drift_data: Dict[str, Any] = self._shift_dates(json.loads(dpath.read_text(encoding="utf-8"))) if dpath.exists() else {}
         self.session_events: List[Event] = []
         self.cards: List[Dict[str, Any]] = []
         self.escalations: List[Escalation] = []
@@ -64,7 +69,60 @@ class Twin:
         self._state_cache: Optional[Tuple[State, Dict[str, float]]] = None
         self._week_cache: Optional[WeekProfile] = None
         spath = self.pt.path / "replay_suggest.json"
-        self._replay_suggest = json.loads(spath.read_text(encoding="utf-8")) if spath.exists() else None
+        self._replay_suggest = self._shift_dates(json.loads(spath.read_text(encoding="utf-8"))) if spath.exists() else None
+
+    # ------------------------------------------------------------ live clock
+    def wall_now(self) -> datetime:
+        """The real clock (to the minute), or the anchor when the live clock is off (tests)."""
+        return datetime.now().replace(second=0, microsecond=0) if LIVE_CLOCK else datetime.fromisoformat(DEMO_ANCHOR)
+
+    def _latest_reading(self, wall: datetime) -> datetime:
+        t = self.pt.cgm.times
+        t = t[t <= pd.Timestamp(wall)]
+        return t[-1].to_pydatetime() if len(t) else wall
+
+    def _shift_dates(self, obj):
+        """Shift ISO dates / datetimes found in a loaded artifact (drift log, replay suggestion) by self.shift."""
+        if not self.shift:
+            return obj
+        if isinstance(obj, dict):
+            return {k: self._shift_dates(v) for k, v in obj.items()}
+        if isinstance(obj, list):
+            return [self._shift_dates(v) for v in obj]
+        if isinstance(obj, str):
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}", obj):
+                return (datetime.fromisoformat(obj) + self.shift).date().isoformat()
+            if re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?", obj):
+                return (datetime.fromisoformat(obj) + self.shift).isoformat(timespec="minutes")
+        return obj
+
+    def tick(self) -> bool:
+        """Advance to the latest sensor reading at or before the wall clock. Returns True when
+        it moved (caches cleared, data reloaded; the session's accepted events and cards stay)."""
+        if not LIVE_CLOCK:
+            return False
+        wall = self.wall_now()
+        if wall < self.now + timedelta(minutes=5):
+            return False
+        pt = load_patient(self.patient_id, until=wall, shift=self.shift)
+        new_now = self._latest_reading_of(pt, wall)
+        if new_now <= self.now:
+            return False
+        with self._lock:
+            self.pt = pt
+            self.now = new_now
+            self._ukf = None
+            self._state_cache = None
+            self._week_cache = None
+            self._cache = {}
+            self._daily = twin_daily_states(self.pt)
+        return True
+
+    @staticmethod
+    def _latest_reading_of(pt: PatientData, wall: datetime) -> datetime:
+        t = pt.cgm.times
+        t = t[t <= pd.Timestamp(wall)]
+        return t[-1].to_pydatetime() if len(t) else wall
 
     # ------------------------------------------------------------ caching
     def session_key(self) -> str:
@@ -117,19 +175,24 @@ class Twin:
         return float(self.pt.cgm.staleness_min)
 
     def readings_below_54_24h(self) -> int:
-        """Number of distinct severe-hypo episodes (< 54 mg/dL) in the last 24 h.
-        Consecutive readings form one episode; a new episode needs >= 30 min above 54."""
+        """Number of distinct severe-hypo episodes (< 54 mg/dL) in the last 24 h. An episode
+        starts at a valid reading under 54 and ends only once glucose has been back above 70 for
+        30 minutes: a long hover around 54 with noisy readings is one low, not many."""
         t = self.pt.cgm.times
         m = (t > pd.Timestamp(self.now - timedelta(hours=24))) & (t <= pd.Timestamp(self.now))
         g = self.pt.cgm.glucose[m]
         v = self.pt.cgm.valid[m]
-        low = (g < 54) & v
-        episodes, last_low = 0, -100
-        for i, is_low in enumerate(low):
-            if is_low:
-                if i - last_low > 6:
-                    episodes += 1
-                last_low = i
+        episodes, in_episode, above = 0, False, 0
+        for x, ok in zip(g, v):
+            if not ok or np.isnan(x):
+                continue
+            if in_episode:
+                above = above + 1 if x > 70 else 0
+                if above >= 6:
+                    in_episode = False
+            elif x < 54:
+                episodes += 1
+                in_episode, above = True, 0
         return int(episodes)
 
     def drift_status(self) -> DriftStatus:
@@ -280,7 +343,8 @@ def get_twin() -> Twin:
         if tw is None or tw.profile.get("patient_id") != prof["patient_id"]:
             tw = Twin(prof["patient_id"], profile=prof)
             _TWINS[key] = tw
-        return tw
+    tw.tick()
+    return tw
 
 
 def reset_twin() -> Twin:

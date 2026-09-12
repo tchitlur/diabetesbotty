@@ -23,19 +23,33 @@ def likelihood(p: Optional[float]) -> str:
     return "very likely"
 
 
+def fmt12(x) -> str:
+    """12-hour clock: '7:30 pm', '12:05 am'."""
+    d = datetime.fromisoformat(x) if isinstance(x, str) else x
+    if d is None:
+        return ""
+    h = d.hour % 12 or 12
+    return f"{h}:{d.minute:02d} {'am' if d.hour < 12 else 'pm'}"
+
+
+def fmt_date(x) -> str:
+    """'Sat, Sep 12'."""
+    d = datetime.fromisoformat(x) if isinstance(x, str) else x
+    return f"{d.strftime('%a')}, {d.strftime('%b')} {d.day}"
+
+
 def _t(iso: Optional[str]) -> str:
-    """Clock time like 22:00 without seconds."""
-    return iso[11:16] if iso and len(iso) >= 16 else ""
+    return fmt12(iso) if iso and len(iso) >= 16 else ""
 
 
 def _when(iso: str, now: datetime) -> str:
     try:
         d = datetime.fromisoformat(iso)
-    except ValueError:
+    except (ValueError, TypeError):
         return _t(iso)
     days = (d.date() - now.date()).days
     day = ("tonight" if d.hour >= 17 else "today") if days == 0 else "tomorrow" if days == 1 else d.strftime("%A")
-    return f"{day} at {d.strftime('%H:%M')}"
+    return f"{day} at {fmt12(d)}"
 
 
 def event_phrase(e: Dict[str, Any]) -> str:
@@ -101,47 +115,91 @@ def _v(card: PermissionCard, name: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def permission_plain(card: PermissionCard, now: datetime) -> Dict[str, Any]:
+CAUSE = {
+    "alcohol": "alcohol stops your liver releasing sugar for hours",
+    "exercise": "exercise burns through sugar faster",
+    "meal": "the carbs digest",
+    "caffeine": "caffeine makes insulin work a little less well",
+}
+
+
+def _cause_text(cause_event: Optional[Dict[str, Any]]) -> str:
+    if not cause_event:
+        return ""
+    lbl = (cause_event.get("label") or cause_event.get("type") or "").replace("bolus for ", "the insulin for ")
+    return f" from {lbl} at {_t(cause_event.get('start_time'))}" if lbl else ""
+
+
+def permission_plain(card: PermissionCard, now: datetime, cause_event: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Headline + reason built from the simulation results: the predicted peak or low with its
+    time, what causes it, and what the condition changes."""
     e = card.proposed.model_dump() if card.proposed else {}
     what = event_phrase(e)
+    What = what[0].upper() + what[1:]
     typ = e.get("type")
     nothing, prop = _v(card, "do_nothing"), _v(card, "proposed")
+    best = _v(card, card.variant_name) if card.variant_name else None
     p_prop = prop["p_hypo"] if prop else card.p_hypo
     p_none = nothing["p_hypo"] if nothing else None
-    min_prop = prop.get("min_glucose") if prop else None
-    low_word = "low" if typ != "alcohol" else "low overnight"
     if card.verdict == "request_data":
         return {"headline": "Need a fresh reading first", "tone": "off",
                 "reason": "Your sensor data is too old to judge this safely. Check your sensor and ask again."}
     if card.verdict == "escalate":
         return {"headline": "Check with your care team", "tone": "bad",
                 "reason": card.condition or "Something in your recent readings needs a person, not an app."}
+    if not prop:
+        return {"headline": card.verdict.replace("_", " "), "tone": "off", "reason": card.condition or ""}
+
+    def _at(iso: str) -> str:
+        # same day: just the time; another day: "tomorrow at 8:20 am"
+        try:
+            return _t(iso) if datetime.fromisoformat(iso).date() == now.date() else _when(iso, now)
+        except (ValueError, TypeError):
+            return _t(iso)
+
+    def peak_clause(v):
+        return f"about {int(round(v['peak']))} by {_at(v['peak_time'])}"
+
+    def low_clause(v):
+        return f"about {int(round(v['nadir']))} around {_at(v['nadir_time'])}"
+
+    cause = CAUSE.get(typ, "")
+    rises = typ == "meal" and prop["peak"] - (nothing["peak"] if nothing else prop["peak"]) > 8
+    drops = (nothing["nadir"] if nothing else prop["nadir"]) - prop["nadir"] > 8
     if card.verdict == "approved":
         head = {"exercise": "Go for it", "meal": "Enjoy it", "alcohol": "Go ahead", "caffeine": "Go ahead"}.get(typ, "Go ahead")
-        reason = f"Going {low_word} after {what} is {likelihood(p_prop)}."
-        if min_prop:
-            reason += f" The lowest we expect is about {int(round(min_prop))} mg/dL."
+        if rises:
+            back = {"nadir": prop.get("after_peak", prop["nadir"]), "nadir_time": prop.get("after_peak_time", prop["nadir_time"])}
+            reason = f"{What} would take you to {peak_clause(prop)} as {cause}, then back to {low_clause(back)}."
+        elif drops:
+            reason = f"{What} would bring you down to {low_clause(prop)} because {cause}, which is still a safe margin."
+        else:
+            reason = f"{What} barely moves you: you stay between about {int(round(prop['nadir']))} and {int(round(prop['peak']))} over the next few hours."
+        reason += f" A low is {likelihood(p_prop)}."
         return {"headline": head, "tone": "good", "reason": reason}
+    cond = condition_plain(card)
     if card.verdict == "approved_with_condition":
-        cond = condition_plain(card)
         head = HEADLINE_COND.get(card.variant_name or "", "Yes, with one change")
         if p_none is not None and p_none >= 0.05 and p_prop <= p_none + 0.02:
-            # the proposal itself is harmless; the person is already trending low
-            plural = bool(re.match(r"^([2-9]|\d{2,})", what)) or what.endswith("s")
-            reason = f"{what[0].upper() + what[1:]} {'add' if plural else 'adds'} no risk {'by themselves' if plural else 'by itself'}, but you are already heading {low_word}: a low is {likelihood(p_none)} in the next few hours anyway. "
-            reason += f"Best to {cond}, then go ahead."
+            # the proposal is not the problem: a low is already coming
+            reason = (f"Even without {what}, the model expects a low of {low_clause(nothing)}{_cause_text(cause_event)}, and {what} does not change that. "
+                      f"If you {cond}, the low point rises to about {int(round(best['nadir']))}." if best else
+                      f"Even without {what}, the model expects a low of {low_clause(nothing)}{_cause_text(cause_event)}; {cond} first.")
         else:
-            reason = f"On its own, {what} makes going {low_word} {likelihood(p_prop)}. If you {cond}, it becomes {likelihood(card.p_hypo)}."
+            reason = f"On its own, {what} would drop you to {low_clause(prop)} because {cause}."
+            if best:
+                reason += f" If you {cond}, the low point becomes about {int(round(best['nadir']))} and a low is {likelihood(card.p_hypo)}."
         alt = _alt(card)
         if alt and typ == "exercise" and alt.get("start"):
-            reason += f" A good time to move it to would be {_when(alt['start'], now)}."
+            reason += f" A better time would be {_when(alt['start'], now)}."
         return {"headline": head, "tone": "warn", "reason": reason}
-    # denied
     alt = _alt(card)
     head = "Better to wait" if (alt and typ == "exercise") else ("Better not tonight" if now.hour >= 17 else "Better not right now")
-    best_cond = condition_plain(card).split(";")[0]
-    reason = f"Going {low_word} after {what} is {likelihood(p_prop)}"
-    reason += f", and even if you {best_cond} it stays {likelihood(card.p_hypo)}." if best_cond else "."
+    reason = f"{What} would drop you to {low_clause(prop)} because {cause}"
+    if best and cond:
+        reason += f"; even if you {cond} it only lifts to about {int(round(best['nadir']))}, so a low stays {likelihood(card.p_hypo)}."
+    else:
+        reason += "."
     if alt and alt.get("start"):
         reason += f" A better time would be {_when(alt['start'], now)}."
     return {"headline": head, "tone": "bad", "reason": reason}

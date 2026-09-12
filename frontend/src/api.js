@@ -48,33 +48,37 @@ export const api = {
   drift: () => req('/drift'),
   trends: () => req('/trends'),
   why: () => req('/why'),
+  twinSummary: () => req('/twin/summary'),
+  permissionCompare: (event) => req('/permission/compare', { method: 'POST', body: JSON.stringify({ event }) }),
   reset: () => req('/demo/reset', { method: 'POST' }),
 }
 
 // ------------------------------------------------------------ formatting rules
-// glucose: integer mg/dL · probabilities: whole percent · times: HH:MM · dates: weekday + date
-export const fmtTime = (iso) => (iso ? iso.slice(11, 16) : '')
+// times: 12-hour clock "7:30 pm" · dates: "Sat, Sep 12" · glucose: integer mg/dL · probabilities: whole percent
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-export const fmtWhen = (iso) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return iso
-  return `${WD[d.getDay()]} ${iso.slice(5, 10)} ${iso.slice(11, 16)}`
+export const fmtTime = (iso) => {
+  if (!iso || iso.length < 16) return ''
+  const h24 = Number(iso.slice(11, 13)), m = iso.slice(14, 16)
+  if (Number.isNaN(h24)) return ''
+  return `${h24 % 12 || 12}:${m} ${h24 < 12 ? 'am' : 'pm'}`
 }
 export const fmtDate = (iso) => {
   if (!iso) return ''
   const d = new Date(iso.length === 10 ? iso + 'T00:00' : iso)
-  return Number.isNaN(d.getTime()) ? iso : `${WD[d.getDay()]} ${iso.slice(0, 10)}`
+  return Number.isNaN(d.getTime()) ? iso : `${WD[d.getDay()]}, ${MON[d.getMonth()]} ${d.getDate()}`
 }
-// "today at 19:00" / "tonight at 22:00" / "tomorrow at 07:00", relative to the twin's clock
+export const fmtWhen = (iso) => (iso ? `${fmtDate(iso)} ${fmtTime(iso)}` : '')
+// "today at 7:00 pm" / "tonight at 10:00 pm" / "tomorrow at 7:00 am", relative to the twin's clock
 export const fmtRel = (iso, nowIso) => {
   if (!iso) return ''
   const d = new Date(iso), n = new Date(nowIso || iso)
   if (Number.isNaN(d.getTime())) return iso
   const days = Math.round((new Date(d.toDateString()) - new Date(n.toDateString())) / 86400000)
   const day = days === 0 ? (d.getHours() >= 17 ? 'tonight' : 'today') : days === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'long' })
-  return `${day} at ${iso.slice(11, 16)}`
+  return `${day} at ${fmtTime(iso)}`
 }
+export const minutesBetween = (a, b) => (new Date(b) - new Date(a)) / 60000
 // shift an ISO minute string by whole minutes without going through UTC
 export const shiftIso = (iso, minutes) => {
   const d = new Date(iso)

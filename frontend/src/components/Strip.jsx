@@ -14,7 +14,7 @@ export default function Strip({ times, line, p10, p90, markerIso, markerLabel, h
   for (let i = a; i < a + n; i++) data.push({ t: fmtTime(times[i]), iso: times[i], line: line?.[i], p10: p10?.[i], band: p90 && p10 ? p90[i] - p10[i] : undefined })
   const m = markerIso ? data.find((d) => d.iso >= markerIso.slice(0, 16)) : null
   const mIdx = m ? data.indexOf(m) : -1
-  const ticks = data.filter((d) => d.t.endsWith(':00')).map((d) => d.t)
+  const ticks = data.filter((d) => d.iso.slice(14, 16) === '00').map((d) => d.t)
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ComposedChart data={data} margin={{ left: 0, right: 10, top: 14, bottom: 0 }}>

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 
-// The quick-log options, food first: Meal, Snack, Coffee, Drink, Workout.
+// The quick-log options, food first: Meal, Snack, Coffee, Workout (drinks are logged by typing).
 // Used by the chat panel and by the header's "Log something" button. Emits either
 // { text } (to be parsed) or { event } (built here, amounts from the food table) or { file }.
 const DRINKS = { beer: { alcohol_g: 14, carbs_g: 13 }, wine: { alcohol_g: 14, carbs_g: 4 }, spirit: { alcohol_g: 14, carbs_g: 0 } }
@@ -30,7 +30,6 @@ export default function QuickLog({ onAction, disabled, parser }) {
       <button type="button" className={sub === 'meal' ? 'active' : ''} onClick={() => setSub(sub === 'meal' ? null : 'meal')} disabled={disabled}>🍽 Meal</button>
       <button type="button" onClick={() => go({ event: { type: 'meal', start_time: now, duration_min: 5, carbs_g: 15, uncertainty: 0.2, source: 'tap', label: 'small snack' } })} disabled={disabled}>🍎 Snack</button>
       <button type="button" onClick={() => go({ event: { type: 'caffeine', start_time: now, caffeine_mg: 95, uncertainty: 0.15, source: 'tap', label: 'coffee' } })} disabled={disabled}>☕ Coffee</button>
-      <button type="button" className={sub === 'drink' ? 'active' : ''} onClick={() => setSub(sub === 'drink' ? null : 'drink')} disabled={disabled}>🍷 Drink</button>
       <button type="button" className={sub === 'workout' ? 'active' : ''} onClick={() => setSub(sub === 'workout' ? null : 'workout')} disabled={disabled}>🏃 Workout</button>
 
       {sub === 'meal' ? (

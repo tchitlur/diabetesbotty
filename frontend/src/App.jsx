@@ -47,7 +47,10 @@ export default function App() {
       } catch (e) { setError(String(e.message || e)) }
     })()
     refreshHome()
-    api.plan(0).catch(() => {})   // warm the planner cache so "Plan my day" and /plan tomorrow are quick
+    api.plan(0).catch(() => {})   // warm the planner cache so "Suggest my day" and /plan tomorrow are quick
+    // live: every 60 s re-read the sensor (the backend follows the wall clock) and the header clock
+    const id = setInterval(() => { refreshHome(); api.health().then(setHealth).catch(() => {}) }, 60_000)
+    return () => clearInterval(id)
   }, [profile, refreshHome])
 
   const onAccepted = useCallback(() => { refreshHome(); setVersion((v) => v + 1) }, [refreshHome])

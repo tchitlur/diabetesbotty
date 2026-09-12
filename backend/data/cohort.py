@@ -91,6 +91,7 @@ def sample_patient(rng: np.random.Generator, idx: int) -> Dict[str, Any]:
         "workouts_per_week": int(rng.integers(2, 5)),
         "coffee_prob": float(rng.uniform(0.6, 0.95)),
         "illness_week": int(rng.integers(2, 11)) if rng.random() < 0.4 or idx == DEMO_INDEX else -1,
+        "bolus_scale": 1.0,
         "true_params": over,
         "start": START.isoformat(),
         "days": N_DAYS,
@@ -126,30 +127,28 @@ def generate_events(meta: Dict[str, Any], rng: np.random.Generator) -> Tuple[Lis
             workout_days = set(wk_days)
             stress_day = int(rng.integers(0, 5))
         # --- sleep (previous night, logged at bedtime of previous day)
-        sleep_h = float(np.clip(rng.normal(7.0, 1.0), 5.0, 9.0))
+        sleep_h = float(np.clip(rng.normal(7.2, 0.7), 6.0, 8.5))
         if wd in (5, 6):
-            sleep_h = float(np.clip(sleep_h + rng.normal(0.4, 0.4), 5.0, 9.0))
-        bedtime = day - timedelta(hours=1) + timedelta(minutes=int(rng.integers(-30, 60)))
+            sleep_h = float(np.clip(sleep_h + rng.normal(0.4, 0.3), 6.0, 8.5))
+        bedtime = day - timedelta(hours=1) + timedelta(minutes=int(rng.integers(-30, 31)))   # 22:30-23:30
         add(Event(type="sleep", start_time=bedtime.isoformat(timespec="minutes"), duration_min=sleep_h * 60, sleep_hours=sleep_h, source="synthetic", label="sleep"))
         wake = bedtime + timedelta(hours=sleep_h)
         # --- basal (informational: the pump/long-acting setting; total units over the day)
         add(Event(type="insulin", start_time=day.isoformat(timespec="minutes"), duration_min=1440, insulin_units=basal * 24, insulin_kind="basal", source="synthetic", label="basal"))
         # --- caffeine
-        if rng.random() < meta["coffee_prob"]:
+        if rng.random() < meta["coffee_prob"]:   # coffee is a morning thing: 15-60 min after waking
             t = wake + timedelta(minutes=int(rng.integers(15, 60)))
             mg = float(rng.choice([80, 120, 160, 200]))
             add(Event(type="caffeine", start_time=t.isoformat(timespec="minutes"), caffeine_mg=mg, source="synthetic", label="coffee"))
-            if rng.random() < 0.3:
-                t2 = day.replace(hour=14, minute=int(rng.integers(0, 59)))
-                add(Event(type="caffeine", start_time=t2.isoformat(timespec="minutes"), caffeine_mg=float(rng.choice([80, 120])), source="synthetic", label="afternoon coffee"))
         # --- meals + boluses
         meals = []
+        jitter = lambda: timedelta(minutes=int(rng.integers(-30, 31)))   # meals at about 8:00 / 12:30 / 18:30, +-30 min
         if rng.random() > 0.10:
-            meals.append(("breakfast", wake + timedelta(minutes=int(rng.integers(20, 70))), rng.uniform(30, 60), rng.uniform(8, 20), rng.uniform(10, 25), rng.uniform(2, 6)))
-        meals.append(("lunch", day.replace(hour=12, minute=30) + timedelta(minutes=int(rng.integers(-45, 45))), rng.uniform(45, 90), rng.uniform(10, 30), rng.uniform(20, 40), rng.uniform(3, 8)))
-        meals.append(("dinner", day.replace(hour=19, minute=0) + timedelta(minutes=int(rng.integers(-60, 60))), rng.uniform(50, 100), rng.uniform(15, 35), rng.uniform(25, 45), rng.uniform(3, 8)))
+            meals.append(("breakfast", max(day.replace(hour=8, minute=0) + jitter(), wake + timedelta(minutes=15)), rng.uniform(30, 60), rng.uniform(8, 20), rng.uniform(10, 25), rng.uniform(2, 6)))
+        meals.append(("lunch", day.replace(hour=12, minute=30) + jitter(), rng.uniform(45, 90), rng.uniform(10, 30), rng.uniform(20, 40), rng.uniform(3, 8)))
+        meals.append(("dinner", day.replace(hour=18, minute=30) + jitter(), rng.uniform(50, 100), rng.uniform(15, 35), rng.uniform(25, 45), rng.uniform(3, 8)))
         if rng.random() < 0.3:
-            snack_t = day.replace(hour=15 if rng.random() < 0.5 else 22, minute=int(rng.integers(0, 59)))
+            snack_t = day.replace(hour=15 if rng.random() < 0.5 else 21, minute=int(rng.integers(0, 59)))
             meals.append(("snack", snack_t, rng.uniform(20, 40), rng.uniform(3, 15), rng.uniform(2, 10), rng.uniform(0, 3)))
         for name, t, carbs, fat, prot, fib in meals:
             true_meal = Event(type="meal", start_time=t.isoformat(timespec="minutes"), duration_min=15, carbs_g=float(carbs), fat_g=float(fat), protein_g=float(prot), fiber_g=float(fib), uncertainty=0.3, source="synthetic", label=name)
@@ -158,20 +157,13 @@ def generate_events(meta: Dict[str, Any], rng: np.random.Generator) -> Tuple[Lis
             add(true_meal, logged_meal)
             bolused = name != "snack" or rng.random() < 0.5
             if bolused:
-                units = float(max(0.2, logged_carbs / cr * (1 + rng.normal(0, 0.2))))
-                bt = t + timedelta(minutes=int(rng.choice([0, 0, 0, 15, -10])))
+                units = float(max(0.2, logged_carbs / cr * meta.get("bolus_scale", 1.0) * (1 + rng.normal(0, 0.2))))
+                bt = t - timedelta(minutes=10)   # bolus 10 minutes before the meal
                 add(Event(type="insulin", start_time=bt.isoformat(timespec="minutes"), insulin_units=units, insulin_kind="bolus", uncertainty=0.05, source="synthetic", label=f"bolus for {name}"))
         # --- exercise
         if wd in workout_days:
             kind = str(rng.choice(["aerobic", "aerobic", "aerobic", "anaerobic", "anaerobic", "mixed"]))
-            slot = rng.random()
-            if slot < 0.3:
-                t = day.replace(hour=7, minute=0)
-            elif slot < 0.8:
-                t = day.replace(hour=17, minute=30)
-            else:
-                t = day.replace(hour=12, minute=0)
-            t += timedelta(minutes=int(rng.integers(-20, 20)))
+            t = day.replace(hour=7, minute=0) if rng.random() < 0.35 else day.replace(hour=17, minute=30)   # morning or after work
             dur = float(rng.choice([30, 40, 45, 60]))
             inten = float(rng.uniform(0.5, 0.8))
             if rng.random() < 0.4:
@@ -269,26 +261,34 @@ def sensor_noise(n: int, rng: np.random.Generator, sd: float = CGM_NOISE_SD, rho
     return e
 
 
-def add_cgm_noise(g_true: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+def add_cgm_noise(g_true: np.ndarray, rng: np.random.Generator, protect_from: int | None = None) -> np.ndarray:
+    """Sensor error plus dropouts, warm-up gaps and compression lows. Indices >= protect_from
+    keep the noise but get no dropouts or artifacts (the demo person's recent day stays clean)."""
     g = g_true + sensor_noise(len(g_true), rng)
     n = len(g)
+    lim = n if protect_from is None else int(protect_from)
     # 5 % dropouts in short runs
     n_drop = int(0.05 * n)
     dropped = 0
     while dropped < n_drop:
         a = int(rng.integers(0, n))
         ln = int(rng.integers(1, 7))
+        if a + ln > lim:
+            continue
         g[a:a + ln] = np.nan
         dropped += ln
     # sensor warm-up gaps every 10 days (2 h)
     for start_day in range(10, N_DAYS, 10):
         a = start_day * STEPS_PER_DAY + int(rng.integers(0, 60))
-        g[a:a + 24] = np.nan
+        if a + 24 <= lim:
+            g[a:a + 24] = np.nan
     # compression lows: ~1 per 5 nights, 20-40 min, -30..-50 mg/dL, ramping in and out (half-sine) like a real one
     for d in range(N_DAYS):
         if rng.random() < 0.2:
             a = d * STEPS_PER_DAY + int(rng.integers(12, 60))  # 01:00-05:00
             ln = int(rng.integers(4, 9))
+            if a + ln > lim:
+                continue
             g[a:a + ln] -= rng.uniform(30, 50) * np.sin(np.linspace(0, np.pi, ln))[: len(g[a:a + ln])]
     return np.clip(g, 39, 401)
 
@@ -296,10 +296,10 @@ def add_cgm_noise(g_true: np.ndarray, rng: np.random.Generator) -> np.ndarray:
 # ------------------------------------------------------------------ writing
 
 def write_patient(out_dir: Path, meta: Dict[str, Any], ev_true: List[Event], ev_logged: List[Event],
-                  g_true: np.ndarray, daily_rows: List[Dict[str, Any]], rng: np.random.Generator) -> Dict[str, Any]:
+                  g_true: np.ndarray, daily_rows: List[Dict[str, Any]], rng: np.random.Generator, protect_from: int | None = None) -> Dict[str, Any]:
     out_dir.mkdir(parents=True, exist_ok=True)
     times = pd.date_range(START + timedelta(minutes=DT), periods=len(g_true), freq=f"{DT}min")
-    g_obs = add_cgm_noise(g_true, rng)
+    g_obs = add_cgm_noise(g_true, rng, protect_from)
     write_dexcom_csv(out_dir / "cgm.csv", times, g_obs)
     pd.DataFrame({"time": times, "glucose": g_true}).to_csv(out_dir / "truth_glucose.csv", index=False, lineterminator="\n")
     pd.DataFrame(daily_rows).to_csv(out_dir / "daily.csv", index=False, lineterminator="\n")
@@ -327,7 +327,11 @@ def generate(n_patients: int = N_PATIENTS, demo_only: bool = False, seed: int = 
     G, daily, _ = simulate_cohort(metas, ev_true, verbose)
     for i, m in enumerate(metas):
         out = DEMO_PATIENT_DIR if i == DEMO_INDEX else COHORT_DIR / m["patient_id"]
-        q = write_patient(out, m, ev_true[i], ev_logged[i], G[i], daily[i], np.random.default_rng(seed + 2000 + i))
+        protect = None
+        if i == DEMO_INDEX:   # the demo moment must sit on a clean sensor day: no dropouts in the 24 h before the anchor
+            from backend.config import DEMO_ANCHOR
+            protect = int((datetime.fromisoformat(DEMO_ANCHOR) - timedelta(hours=24) - START).total_seconds() // 60 // DT)
+        q = write_patient(out, m, ev_true[i], ev_logged[i], G[i], daily[i], np.random.default_rng(seed + 2000 + i), protect)
         if verbose:
             print(f"  {m['patient_id']}: mean glucose {np.mean(G[i]):.0f}  TIR {np.mean((G[i] >= 70) & (G[i] <= 180)):.2f}  quality {q['data_quality']:.2f} -> {out.relative_to(DATA_DIR.parent.parent)}")
     if verbose:

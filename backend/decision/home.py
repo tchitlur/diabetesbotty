@@ -24,7 +24,10 @@ from backend.engine.fast import IDX
 from backend.engine.simulate import events_to_inputs, state_params
 from backend.decision.planner import typical_day_events
 from backend.decision.alerts import compute_alerts
-from backend.decision.plain import likelihood
+from backend.decision.plain import likelihood, fmt12
+from backend.engine.simulate import simulate, initial_vector
+from backend.schema.state import State
+from backend.inference.windows import observed_at
 
 DT = 5
 TILE_ORDER = ["carbs", "liver", "ketones", "energy", "recovery", "insulin", "alcohol", "caffeine"]
@@ -35,7 +38,7 @@ def _iso(d: datetime) -> str:
 
 
 def _hhmm(d: datetime) -> str:
-    return d.strftime("%H:%M")
+    return fmt12(d)
 
 
 def _day_word(d: datetime, now: datetime) -> str:
@@ -59,7 +62,7 @@ def trend(twin) -> Dict[str, Any]:
     return {"word": word, "arrow": arrow, "slope_mgdl_per_min": round(slope, 2)}
 
 
-def history(twin, hours: float = 3.0, max_gap_min: int = 20) -> Dict[str, Any]:
+def history(twin, hours: float = 3.0, max_gap_min: int = 45) -> Dict[str, Any]:
     """The display series for the chart: one array on the 5-minute grid from now-hours to now.
     `raw` keeps the sensor's dropouts and flagged points as nulls; `display` fills gaps up to
     `max_gap_min` by linear interpolation (display only). Longer gaps stay null and are listed."""
@@ -171,7 +174,7 @@ def tiles(twin) -> List[Dict[str, Any]]:
         word, tone = _status(v, [(0.01, "almost gone", "good"), (0.05, "clearing", "warn")], ("in your blood", "bad"))
         gone = next((times[i] for i, x in enumerate(ser["blood_alcohol"]) if x < 0.005), None)
         out.append(tile("alcohol", "🍺", "Alcohol", round(v, 3), "% BAC", v / 0.10, word, tone, fc(ser["blood_alcohol"], 3),
-                        "While your liver clears alcohol it releases less sugar, so a low can come hours later, often overnight." + (f" Gone by about {gone[11:16]}." if gone else ""),
+                        "While your liver clears alcohol it releases less sugar, so a low can come hours later, often overnight." + (f" Gone by about {fmt12(gone)}." if gone else ""),
                         min(v / 0.10, 1.0) * 2 + 0.3))
     if caffeine_recent:
         v = float(ser["caffeine"][0])
@@ -181,7 +184,146 @@ def tiles(twin) -> List[Dict[str, Any]]:
                         min(v / 200.0, 1.0) + 0.2))
     hot = sorted([t for t in out if t["score"] >= 0.35], key=lambda t: -t["score"])
     rest = sorted([t for t in out if t["score"] < 0.35], key=lambda t: TILE_ORDER.index(t["key"]))
-    return hot + rest
+    tiles_out = hot + rest
+    add_details(twin, tiles_out, s, ser, times, p)
+    return tiles_out
+
+
+FAST_TILES = {"carbs": "gut", "caffeine": "caffeine", "alcohol": "blood_alcohol", "energy": "energy_score"}
+Y_RANGES = {"energy": [0, 100], "recovery": [0, 100], "insulin": [0, 150], "ketones": [0, 3], "carbs": [0, 100], "caffeine": [0, 300], "alcohol": [0, 0.15]}
+
+
+def past_series(twin, hours: float = 3.0) -> Dict[str, np.ndarray]:
+    """The twin's reconstruction of the last `hours`: a warm-up replay of the logged events
+    from a steady state 9 h ago (the sensor only measures glucose; carbs, caffeine and alcohol
+    in the body are what the model says they were)."""
+    t_warm = twin.now - timedelta(hours=9)
+    g0 = observed_at(twin.pt, t_warm) or 120.0
+    p = state_params(twin.medium_state(), twin.params)
+    s0 = State(glucose=g0, plasma_insulin=float(fast.steady_basal_insulin(p, max(g0, 70.0))), liver_glycogen=60.0)
+    ev = [e for e in twin.pt.events if t_warm - timedelta(hours=8) <= e.start <= twin.now]
+    tr = simulate(s0, ev, twin.params, int(9 * 60), t0=t_warm)
+    k = int(hours * 12)
+    out = {name: np.asarray(v, dtype=float)[-k - 1:] for name, v in tr.series.items()}
+    out["gut"] = out["gut_carbs_1"] + out["gut_carbs_2"]
+    out["times"] = tr.times()[-k - 1:]
+    return out
+
+
+def daily_history(twin, days: int = 7) -> Dict[str, List[Dict[str, Any]]]:
+    """Daily values for the slow tiles over the last `days` days (today = the current estimate):
+    recovery and insulin effect from the daily states, liver stores and ketones from a batched
+    replay of each day (day mean of liver glycogen, day max of ketones)."""
+    now = twin.now
+    dates = [(now - timedelta(days=d)).date() for d in range(days - 1, -1, -1)]
+    daily = twin._daily
+    p = state_params(twin.medium_state(), twin.params)
+    # batched day replays for liver / ketones
+    n_steps = 24 * 12
+    inputs, x0s = [], []
+    for d in dates:
+        t0 = datetime(d.year, d.month, d.day)
+        g0 = observed_at(twin.pt, t0) or 120.0
+        st = State(glucose=g0, plasma_insulin=float(fast.steady_basal_insulin(p, max(g0, 70.0))), liver_glycogen=70.0)
+        ev = [e for e in twin.pt.events if t0 - timedelta(hours=8) <= e.start < t0 + timedelta(days=1)]
+        from backend.engine.simulate import events_to_inputs as _e2i
+        inputs.append(_e2i(ev, t0, n_steps, 5, p))
+        x0s.append(initial_vector(st, p))
+    X = fast.integrate(np.concatenate(x0s, axis=0), np.stack(inputs, axis=1), p, 5, substeps=1)
+    L = X[:, :, IDX["L"]].mean(axis=0)
+    K = X[:, :, IDX["K"]].max(axis=0)
+    s_now, _ = twin.state_now()
+    out = {"recovery": [], "insulin": [], "liver": [], "ketones": []}
+    for i, d in enumerate(dates):
+        today = d == now.date()
+        st = daily.get(d.isoformat()) or daily.get((d - timedelta(days=1)).isoformat())
+        debt = float(s_now.sleep_debt) if today else (float(st.sleep_debt) if st else 0.0)
+        load = float(s_now.training_load) if today else (float(st.training_load) if st else 10.0)
+        sens = float(s_now.insulin_sensitivity) if today else (float(st.insulin_sensitivity) if st else 1.0)
+        eff = sens * (1 - twin.params.get("sleep_debt_coef", 0.2) * min(debt, 3.0) / 2.5)
+        out["recovery"].append({"date": d.isoformat(), "value": round(recovery_score(load, debt)), "today": today})
+        out["insulin"].append({"date": d.isoformat(), "value": round(100 * eff), "today": today})
+        out["liver"].append({"date": d.isoformat(), "value": round(float(s_now.liver_glycogen) if today else float(L[i])), "today": today})
+        out["ketones"].append({"date": d.isoformat(), "value": round(float(s_now.ketones) if today else float(K[i]), 2), "today": today})
+    return out
+
+
+def _first_time_below(times: List[str], vals: np.ndarray, thresh: float) -> Optional[str]:
+    for t, v in zip(times, vals):
+        if v < thresh:
+            return t
+    return None
+
+
+def add_details(twin, tiles_out: List[Dict[str, Any]], s: State, ser: Dict[str, np.ndarray], times: List[str], p: Dict[str, Any]) -> None:
+    """Attach the detail view to each tile: fast quantities get last 3 h + next 3 h on a fixed
+    axis; slow ones get the last 7 days as daily bars. Every view gets one sentence built from
+    the numbers."""
+    past = past_series(twin, 3.0)
+    hist = daily_history(twin, 7)
+    bt = bedtime(twin)
+    lmax = float(p.get("liver_L_max", 120.0))
+    debt, load = float(s.sleep_debt), float(s.training_load)
+    for t in tiles_out:
+        k = t["key"]
+        if k in FAST_TILES:
+            col = FAST_TILES[k]
+            fc = {"gut": ser["gut_carbs_1"] + ser["gut_carbs_2"], "caffeine": ser["caffeine"], "blood_alcohol": ser["blood_alcohol"], "energy_score": ser["energy_score"]}[col]
+            d = {"kind": "fast", "y": Y_RANGES[k], "zones": [],
+                 "past": {"times": list(past["times"][:-1]), "values": [round(float(x), 3 if k == "alcohol" else 1) for x in past[col][:-1]]},
+                 "forecast": {"times": times, "values": [round(float(x), 3 if k == "alcohol" else 1) for x in fc]}}
+            v = float(fc[0])
+            if k == "carbs":
+                done = _first_time_below(times, fc, 5.0)
+                d["sentence"] = ("Nothing left to digest: the next move in your glucose comes from insulin and your liver." if v < 3 else
+                                 f"About {v:.0f} g of carbs still to come through" + (f", mostly absorbed by {fmt12(done)}." if done else ", still absorbing in 3 hours: expect glucose to keep climbing."))
+            elif k == "caffeine":
+                at_bed = v * 0.5 ** (max((bt - twin.now).total_seconds() / 3600.0, 0) / 5.0)
+                d["sentence"] = f"{v:.0f} mg of caffeine left; it halves about every 5 hours, so about {at_bed:.0f} mg will still be in you at bedtime ({fmt12(bt)})" + (", enough to cost you sleep." if at_bed > 50 else ".")
+                d["zones"] = [{"from": 0, "to": 50, "label": "sleep-safe"}]
+            elif k == "alcohol":
+                gone = _first_time_below(times, fc, 0.005)
+                d["sentence"] = f"{v:.3f}% blood alcohol now" + (f", gone by about {fmt12(gone)}" if gone else ", still in your blood in 3 hours") + "; while your liver clears it, it releases less sugar, so a low can come hours later."
+            else:
+                if debt > 2:
+                    why = "short sleep is the main drag on it"
+                elif s.glucose > 180 or s.glucose < 70:
+                    why = "your glucose being out of range is the main drag on it"
+                elif s.caffeine > 100:
+                    why = "caffeine is propping it up for now"
+                else:
+                    why = "steady glucose and enough sleep make this a good time for effort"
+                nxt = float(fc[min(36, len(fc) - 1)])
+                d["sentence"] = f"Energy {v:.0f} out of 100: {why}; the model expects about {nxt:.0f} in 3 hours."
+                d["zones"] = [{"from": 70, "to": 100, "label": "good"}]
+        else:
+            rows = hist.get(k, [])
+            d = {"kind": "slow", "y": [0, lmax] if k == "liver" else Y_RANGES[k], "days": rows, "zones": []}
+            v = float(t["value"])
+            if k == "recovery":
+                need = max(0.0, (70.0 - v) / 10.0)
+                d["zones"] = [{"from": 70, "to": 100, "label": "recovered"}]
+                d["sentence"] = (f"Recovery {v:.0f}: you are rested; a normal training day is fine." if v >= 70 else
+                                 f"Recovery {v:.0f}: sleep debt is {debt:.1f} h" + (f" and the training load is heavy ({load:.0f})" if load > 25 else "") +
+                                 ("; one more good night's sleep and you'll be back at full." if need <= 2 else "; two easy days with full nights of sleep get you back."))
+            elif k == "insulin":
+                d["zones"] = [{"from": 90, "to": 110, "label": "usual"}]
+                why = (f"sleep debt of {debt:.1f} h" if debt > 1.5 else "a heavy training week" if load > 25 else "")
+                d["sentence"] = (f"Insulin is working at {v:.0f}% of your usual today" + (f" because of {why}" if why and v < 90 else "") +
+                                 (": meals will push you higher than normal, so expect to need a little more." if v < 90 else
+                                  ": lows come easier than usual, so go gently with corrections." if v > 110 else ": a normal day for doses."))
+            elif k == "liver":
+                d["zones"] = [{"from": 0.6 * lmax, "to": lmax, "label": "well stocked"}]
+                d["sentence"] = (f"Liver stores at {v:.0f} g of {lmax:.0f}: " +
+                                 ("plenty in reserve to cover a low-carb evening or a workout." if v >= 0.6 * lmax else
+                                  "half full: a long gap between meals or alcohol tonight would run it down." if v >= 0.3 * lmax else
+                                  "running low: a low would be harder for your body to recover from on its own."))
+            else:
+                d["zones"] = [{"from": 0, "to": 0.6, "label": "normal"}, {"from": 1.5, "to": 3, "label": "check"}]
+                d["sentence"] = (f"Ketones {v:.1f}: normal, no sign of an insulin shortage." if v < 0.6 else
+                                 f"Ketones {v:.1f}: raised; drink water, take your insulin as planned and check again in two hours." if v < 1.5 else
+                                 f"Ketones {v:.1f}: high; follow your sick-day plan and contact your care team.")
+        t["detail"] = d
 
 
 # ------------------------------------------------------------------ batched "what if at each time" scan
@@ -343,7 +485,7 @@ def coming_up(twin, mc) -> List[Dict[str, Any]]:
         kind = {"hypo": "low", "hyper": "high", "dka": "ketone problem"}[a.kind]
         cards.append({"key": "risk", "icon": "⚠️", "title": "Risk", "time": a.window_start, "tone": "bad" if a.kind != "hyper" else "warn",
                       "text": f"A {kind} is {likelihood(a.probability)} between {_hhmm(datetime.fromisoformat(a.window_start))} and {_hhmm(datetime.fromisoformat(a.window_end))}."
-                              + (f" Most likely because of {(a.cause_event.label or a.cause_event.type).replace('bolus for', 'the insulin for')} at {a.cause_event.start_time[11:16]}." if a.cause_event else "")})
+                              + (f" Most likely because of {(a.cause_event.label or a.cause_event.type).replace('bolus for', 'the insulin for')} at {fmt12(a.cause_event.start_time)}." if a.cause_event else "")})
     else:
         cards.append({"key": "risk", "icon": "✅", "title": "Risk", "time": None, "tone": "good", "text": "No risks in the next 8 hours."})
 
@@ -395,6 +537,54 @@ def wake_time(twin) -> datetime:
         if now.replace(hour=3, minute=0) <= w <= noon:
             return w.replace(minute=(w.minute // 5) * 5)
     return now.replace(hour=7, minute=0)
+
+
+def scan_past(twin, starts: List[datetime], t0: datetime) -> List[Dict[str, Any]]:
+    """Same judgement as scan_starts for slots already behind us: a 30-minute workout placed at
+    each past start on top of what really happened (replay from a steady state at t0)."""
+    if not starts:
+        return []
+    tmpl = TEMPLATES["exercise"]
+    dur, after = 30.0, AFTER_MIN["exercise"]
+    p = state_params(twin.medium_state(), twin.params)
+    basal_i = float(fast.steady_basal_insulin(p, 120.0))
+    g0 = observed_at(twin.pt, t0) or 120.0
+    s0 = State(glucose=g0, plasma_insulin=float(fast.steady_basal_insulin(p, max(g0, 70.0))), liver_glycogen=70.0)
+    ctx = [e for e in twin.pt.events if t0 - timedelta(hours=8) <= e.start <= twin.now]
+    last = max(starts) + timedelta(minutes=dur + after)
+    n_steps = max(int((last - t0).total_seconds() // 60) // DT, 2)
+    cands = [tmpl.copy(start_time=_iso(st)) for st in starts]
+    inputs = np.stack([events_to_inputs(sorted(ctx + [c], key=lambda e: e.start), t0, n_steps, DT, p) for c in cands], axis=1)
+    x0 = np.repeat(initial_vector(s0, p), len(cands), axis=0)
+    X = fast.integrate(x0, inputs, p, DT, substeps=2)
+    G = fast.glucose_mgdl(X, p)
+    I = X[:, :, IDX["I"]]
+    BAC = X[:, :, IDX["BAC"]]
+    out = []
+    for i, st in enumerate(starts):
+        a = int((st - t0).total_seconds() // 60) // DT
+        b = min(a + int((dur + after) // DT), G.shape[0] - 1)
+        seg = G[a:b + 1, i]
+        k = int(np.argmin(seg))
+        t_min = st + timedelta(minutes=k * DT)
+        g_start, i0, bac0, gmin = float(G[a, i]), float(I[a, i]), float(BAC[a, i]), float(seg.min())
+        color, reason = "green", "was a good time to exercise"
+        if g_start < 90:
+            color, reason = "red", f"glucose was too low to start (about {g_start:.0f})"
+        elif gmin < 70:
+            color, reason = "red", f"a workout then would have led to a low around {_hhmm(t_min)}"
+        elif g_start > 250:
+            color, reason = "amber", f"glucose was high (about {g_start:.0f})"
+        elif gmin < 85:
+            color, reason = "amber", f"a workout then would have gone close to low around {_hhmm(t_min)}"
+        elif i0 > 1.8 * basal_i:
+            bol = [e for e in ctx if e.type == "insulin" and e.insulin_kind == "bolus" and e.start <= st]
+            src = (bol[-1].label or "your last dose").replace("bolus for ", "insulin from ") if bol else "insulin from your last dose"
+            color, reason = "amber", f"{src} was still active"
+        elif bac0 > 0.02:
+            color, reason = "amber", "alcohol was still in your system"
+        out.append({"start": _iso(st), "color": color, "reason": reason, "min_glucose": round(gmin), "glucose_at_start": round(g_start)})
+    return out
 
 
 def _band_color_glucose(seg: np.ndarray) -> Tuple[str, str]:
@@ -451,16 +641,25 @@ def timeline(twin, workout: Optional[Dict[str, Any]] = None, snacks: Optional[Li
     g_by_t = {t: v for t, v in zip(spark_t, spark_v)}
     slot = wake.replace(minute=(wake.minute // 30) * 30)
     glucose_band = []
+    slot = max(slot, wake) if slot >= wake else slot
     while slot < bt:
         seg = np.array([np.nan if g_by_t.get(_iso(slot + timedelta(minutes=k * 5))) is None else g_by_t.get(_iso(slot + timedelta(minutes=k * 5))) for k in range(7)], dtype=float)
         if np.all(np.isnan(seg)):
             color, reason = "none", "no sensor data"
         else:
             color, reason = _band_color_glucose(seg)
-        glucose_band.append({"start": _iso(slot), "end": _iso(slot + timedelta(minutes=30)), "color": color, "reason": reason, "past": slot < now})
+        glucose_band.append({"start": _iso(max(slot, wake)), "end": _iso(min(slot + timedelta(minutes=30), bt)), "color": color, "reason": reason, "past": slot < now})
         slot += timedelta(minutes=30)
 
-    # ---- exercise band (future slots only; each judged with everything else in place)
+    # ---- exercise band: past slots replayed (what it was), future slots judged with everything else in place
+    past_starts = []
+    ps = wake.replace(minute=(wake.minute // 30) * 30)
+    if ps < wake:
+        ps += timedelta(minutes=30)
+    while ps + timedelta(minutes=30) <= now:
+        past_starts.append(ps)
+        ps += timedelta(minutes=30)
+    past_scan = scan_past(twin, past_starts, wake - timedelta(hours=3))
     starts = _slots(twin, now, bt - timedelta(minutes=30))
     per = []
     for st in starts:
@@ -469,10 +668,11 @@ def timeline(twin, workout: Optional[Dict[str, Any]] = None, snacks: Optional[Li
             base.append(w_ev)
         per.append(base)
     scan = scan_starts(twin, "exercise", starts, ctx_base + accepted + suggestions, per_start_ctx=per) if starts else []
-    exercise_band = [{"start": r["start"], "end": _iso(datetime.fromisoformat(r["start"]) + timedelta(minutes=30)), "color": r["color"], "reason": r["reason"] or "a good time to exercise"} for r in scan]
+    exercise_band = ([{"start": r["start"], "end": _iso(min(datetime.fromisoformat(r["start"]) + timedelta(minutes=30), now)), "color": r["color"], "reason": r["reason"], "past": True} for r in past_scan]
+                     + [{"start": r["start"], "end": _iso(min(datetime.fromisoformat(r["start"]) + timedelta(minutes=30), bt)), "color": r["color"], "reason": r["reason"] or "a good time to exercise", "past": False} for r in scan])
 
-    # ---- items on the axis
-    items: List[Dict[str, Any]] = [{"time": _iso(wake), "kind": "wake", "label": "woke up", "state": "logged", "reason": "when you got up"}]
+    # ---- items on the axis (no wake marker: the axis starts at wake time)
+    items: List[Dict[str, Any]] = []
     for e in twin.pt.events:
         if wake <= e.start <= now:
             k = _kind(e)
@@ -498,31 +698,35 @@ def timeline(twin, workout: Optional[Dict[str, Any]] = None, snacks: Optional[Li
     parts = []
     if low_i is not None and now + timedelta(minutes=5 * low_i) <= bt + timedelta(hours=2):
         t_eat = max(now + timedelta(minutes=15), now + timedelta(minutes=5 * low_i) - timedelta(minutes=45))
-        parts.append("eat by " + _hhmm(t_eat))
+        parts.append((_iso(t_eat), "eat something by " + _hhmm(t_eat)))
     else:
         nm = next((e for e in routine if e.type == "meal" and e.start > now), None)
-        parts.append(("next meal around " + _hhmm(nm.start)) if nm else "no more meals needed today")
+        if nm:
+            parts.append((nm.start_time, "your usual " + (nm.label or "meal").replace("usual ", "") + " around " + _hhmm(nm.start)))
     greens = _runs(scan, "green") if scan else []
     planned_ex = next((e for e in accepted if e.type == "exercise"), None)
     if planned_ex is not None:
-        parts.append("your workout at " + _hhmm(planned_ex.start))
+        parts.append((planned_ex.start_time, "your workout at " + _hhmm(planned_ex.start)))
     elif w_ev is not None:
-        parts.append("suggested workout at " + _hhmm(w_ev.start) + (" after a small snack" if s_evs else ""))
+        parts.append((w_ev.start_time, "a workout at " + _hhmm(w_ev.start) + (" with a small snack first" if s_evs else "")))
     elif greens:
         a, b, _ = max(greens, key=lambda r: r[2])
-        parts.append("best workout window " + _hhmm(datetime.fromisoformat(a)) + "–" + _hhmm(datetime.fromisoformat(b)))
+        parts.append((a, "a good window for a workout from " + _hhmm(datetime.fromisoformat(a)) + " to " + _hhmm(datetime.fromisoformat(b))))
     elif any(r["color"] == "amber" for r in scan):
-        parts.append("a light workout with a snack first would be safest")
-    else:
-        parts.append("no good workout window left today")
+        amb = next(r for r in scan if r["color"] == "amber")
+        parts.append((amb["start"], "only a light workout with a snack first from " + _hhmm(datetime.fromisoformat(amb["start"]))))
     alerts = twin.cached("alerts", lambda: compute_alerts(twin))
     if alerts:
         a0 = alerts[0]
         what = "low" if a0.kind == "hypo" else "high" if a0.kind == "hyper" else "ketone problem"
-        parts.append("watch for a " + what + " around " + a0.window_start[11:16])
-    else:
-        parts.append("no lows or highs expected before bed")
-    headline = ", ".join(parts) + "."
+        parts.append((a0.window_start, "watch for a " + what + " around " + fmt12(a0.window_start)))
+    parts.sort(key=lambda x: x[0])
+    phrases = [ph for _, ph in parts[:3]]
+    if not phrases:
+        phrases = ["nothing to plan: no lows or highs expected before bed"]
+    elif not alerts and len(phrases) < 3:
+        phrases.append("no lows or highs expected before bed")
+    headline = phrases[0] + ("" if len(phrases) == 1 else (", then " + phrases[1] if len(phrases) == 2 else ", then " + phrases[1] + ", and " + phrases[2])) + "."
     headline = headline[0].upper() + headline[1:]
 
     return {"start": _iso(wake), "end": _iso(bt), "now": _iso(now), "headline": headline,

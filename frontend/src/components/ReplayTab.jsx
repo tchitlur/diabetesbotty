@@ -74,7 +74,7 @@ export default function ReplayTab() {
               <ResponsiveContainer width="100%" height={260}>
                 <LineChart data={data} margin={{ ...MARGIN, bottom: 22 }}>
                   <CartesianGrid {...GRID} />
-                  <XAxis dataKey="t" tick={TICK} interval={23} label={xLabel('time (HH:MM), 06:00 through 08:00 next morning')} />
+                  <XAxis dataKey="t" tick={TICK} interval={23} label={xLabel('time, 6 am through 8 am the next morning')} />
                   <YAxis domain={[40, 320]} tick={TICK} width={46} label={yLabel('glucose (mg/dL)')} />
                   <Tooltip contentStyle={TIP} formatter={(v, n) => [`${Math.round(v)} mg/dL`, n]} />
                   <ReferenceLine y={70} stroke={COLORS.bad} strokeDasharray="4 4" />
@@ -92,7 +92,7 @@ export default function ReplayTab() {
                 <span className="k">Minutes below 70</span><b className="v">{Math.round(r.hypo_minutes_original)} → {Math.round(r.hypo_minutes_modified)} min</b><span />
               </div>
             ) : null}
-            <div className="note">The model restarts from where you really were at 06:00 and 18:00, then runs on its own; the sliders scale that day's logged food, drinks, exercise and insulin (alcohol at 0 also removes the drinks' carbs).</div>
+            <div className="note">The model restarts from where you really were at 6 am and 6 pm, then runs on its own; the sliders scale that day's logged food, drinks, exercise and insulin (alcohol at 0 also removes the drinks' carbs).</div>
           </> : null}
         </Status>
       </div>

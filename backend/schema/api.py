@@ -84,6 +84,7 @@ class PermissionCard(BaseModel):
     explanation: str = ""
     gate: Dict[str, Any] = Field(default_factory=dict)
     plain: Dict[str, Any] = Field(default_factory=dict)   # headline / reason / tone in plain language (decision/plain.py)
+    engine: Dict[str, Any] = Field(default_factory=dict)  # what the engine was given: start, horizon, window, samples, parameter source
 
 
 class TimelineBlock(BaseModel):

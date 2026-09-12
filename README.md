@@ -37,7 +37,7 @@ All data are synthetic. There is no real patient. Decision support only; nothing
 
 ## The demo, in order
 
-The clock is frozen at **Friday 2025-08-29 19:00** (just after dinner, glucose in the low 90s) inside 90 days of synthetic data. Everything on screen is as of that moment.
+The app is live: the demo person's 90 days of synthetic data are lined up with the real clock (the anchor day becomes today), so the number, the "now" marker and the plan move as the day goes on. The screens refresh every minute.
 
 1. **Login.** Tap **Alex** (the demo person) or **Add profile**: name, age, sex, weight, height, carb ratio, correction factor, target range. A new profile is matched to the closest virtual person in the 30-patient cohort and that person's model is fitted on the spot (about 10 s). Profiles are JSON files on the backend; no passwords, nothing in the browser.
 2. **Home.** One big number with a trend word, coloured by your target range; 3 hours of sensor and 3 hours of forecast starting where the sensor left off. Under it the **Right now** tiles (carbs digesting, liver stores, ketones, energy, recovery, insulin working; alcohol and caffeine only when you have had some), all the same shape. Tap a tile for its next 3 hours. **Coming up**: next meal, next workout, the next risk, the best window for what you do most.
@@ -52,13 +52,14 @@ Remove `.env` (or set an invalid key) and text is read by the built-in reader in
 
 ## Screenshots
 
-From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v3/` after a run). A curated set is committed under `docs/screens/`:
+From `frontend/audit.spec.ts` (Playwright walks every screen; `audit/screens_v4/` after a run). A curated set is committed under `docs/screens/`:
 
 | Screen | File |
 |---|---|
 | Home: glucose, tiles, coming up | `docs/screens/home.png` |
 | Chat answer card (pizza) | `docs/screens/chat-pizza.png` |
 | Plan: the day on one axis with suggestions | `docs/screens/plan.png` |
+| Chat: the same question with and without personalisation | `docs/screens/chat-compared.png` |
 | Details | `docs/screens/details.png` |
 | Login and add profile | `docs/screens/login.png`, `docs/screens/add-profile.png` |
 

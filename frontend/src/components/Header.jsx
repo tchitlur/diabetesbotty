@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import QuickLog from './QuickLog.jsx'
+import { fmtDate, fmtTime } from '../api.js'
 
 // Header: profile switcher, app name, tabs, sensor-status dot (plain tooltip), "Log something".
 export default function Header({ profile, profiles, home, health, onSwitch, onLogout, onQuick, parser, tab, setTab, tabs }) {
@@ -30,7 +31,7 @@ export default function Header({ profile, profiles, home, health, onSwitch, onLo
       <nav className="tabs">{tabs.map((t) => <button key={t} className={t === tab ? 'active' : ''} onClick={() => setTab(t)}>{t}</button>)}</nav>
       <div className="spacer" />
       <span className="sensor" title={tip}><span className={`dot ${tone}`} />{word}</span>
-      <span className="sensor" title="The demo clock. Everything on screen is as of this moment in the person's data.">{health ? `${health.now.slice(0, 10)} ${health.now.slice(11, 16)}` : ''}</span>
+      <span className="sensor" data-testid="clock" title="The clock. The demo person's data is lined up with the real time, so the numbers move as time passes.">{health?.wall_now ? `${fmtDate(health.wall_now)} · ${fmtTime(health.wall_now)}` : ''}</span>
       <button className="primary" onClick={() => setOpen((o) => !o)}>Log something</button>
       {open ? <div className="popover"><QuickLog parser={parser} onAction={(a) => { setOpen(false); onQuick(a) }} /></div> : null}
     </header>

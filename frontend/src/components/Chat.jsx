@@ -120,6 +120,7 @@ const Chat = forwardRef(function Chat({ onAccepted, onParser, goTo, parser, twin
 
   return (
     <div className="chat">
+      <div className="chat-head"><span className="bot-icon" aria-hidden="true">🩺</span><b>Diabetes Bot</b><span className="faint xs">asks the model, not a chatbot</span></div>
       <div className="log">
         {log.length === 0 ? <div className="msg plain faint">Nothing asked yet. Try "Can I have pizza for dinner?" or tap a button below.</div> : null}
         {log.map((m) => (m.role === 'user' ? <div key={m.id} className="msg user">{m.node}</div> : <div key={m.id} className={m.node?.props?.className === 'msg plain' ? '' : 'msg bot'}>{m.node}</div>))}

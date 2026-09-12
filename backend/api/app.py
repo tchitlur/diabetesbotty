@@ -24,6 +24,10 @@ from backend.api import profiles as prof_store
 from backend.api.profiles import Profile, ProfileIn
 from backend.decision.plain import permission_plain, plan_plain, change_plain, understood_line
 from backend.decision import home as home_view
+from backend.decision.personal import twin_summary, as_population
+from backend.decision.alerts import compute_alerts as _alerts_for_cause
+
+chat_log = logging.getLogger("glucopilot.chat")
 from backend.decision.permission import evaluate_permission
 from backend.decision.planner import plan_day
 from backend.decision.change import evaluate_change, CHANGES
@@ -82,8 +86,9 @@ class AcceptRequest(BaseModel):
 @app.get("/health")
 def health() -> Dict[str, Any]:
     tw = get_twin()
-    return {"ok": True, "now": tw.now.isoformat(timespec="minutes"), "patient": tw.patient_id if hasattr(tw, "patient_id") else tw.pt.patient_id,
-            "gemini": gemini_available(), "model": GEMINI_MODEL}
+    return {"ok": True, "now": tw.now.isoformat(timespec="minutes"), "wall_now": tw.wall_now().isoformat(timespec="minutes"),
+            "patient": tw.patient_id, "gemini": gemini_available(), "model": GEMINI_MODEL,
+            "live": bool(tw.shift), "data_until": tw.pt.cgm.times[-1].isoformat(timespec="minutes") if len(tw.pt.cgm.times) else None}
 
 
 @app.get("/state", response_model=StateNow)
@@ -111,9 +116,73 @@ def permission(req: PermissionRequest, stale: Optional[float] = Query(default=No
     except ValueError as ex:
         raise HTTPException(400, str(ex))
     card = heavy(lambda: evaluate_permission(tw, ev, stale_override=stale if stale is not None else req.stale))
-    card.plain = permission_plain(card, tw.now)
+    cause = _cause_of_pending_low(tw)
+    card.plain = permission_plain(card, tw.now, cause)
+    card.plain["understood"] = understood_line(card.proposed.model_dump() if card.proposed else {}, tw.now)
+    card.engine["log"] = _chat_log_line(tw, ev, card)
+    chat_log.info(card.engine["log"])
+    return card
+
+
+def _cause_of_pending_low(tw) -> Optional[Dict[str, Any]]:
+    """The past event most responsible for a low the do-nothing forecast already predicts (cached alerts)."""
+    try:
+        al = tw.cached("alerts", lambda: _alerts_for_cause(tw))
+        for a in al:
+            if a.kind == "hypo" and a.cause_event is not None:
+                return a.cause_event.model_dump()
+    except Exception:
+        return None
+    return None
+
+
+def _chat_log_line(tw, ev: Event, card: PermissionCard) -> str:
+    """One line per chat message: raw text -> parsed event -> parser -> engine inputs -> results -> verdict."""
+    lp = getattr(tw, "_last_parse", None) or {}
+    same = lp.get("event", {}).get("start_time") == ev.start_time and lp.get("event", {}).get("type") == ev.type
+    fields = {k: v for k, v in ev.to_dict().items() if v not in (0, 0.0, None, "", "synthetic")}
+    v = {x["name"]: x for x in card.variants}
+    dn, pr = v.get("do_nothing", {}), v.get("proposed", {})
+    eng = card.engine
+    return ("CHAT text=%r -> parser=%s event=%s -> engine(start=%s horizon=%s min window=%s min samples=%s params=%s) -> "
+            "do_nothing p_hypo=%.3f nadir=%s@%s | proposed p_hypo=%.3f p_hyper=%.3f nadir=%s@%s peak=%s@%s | best=%s p_hypo=%.3f -> verdict=%s") % (
+        lp.get("text") if same else "(built by a button)", lp.get("parser") if same else "tap", fields,
+        eng.get("start"), eng.get("horizon_min"), eng.get("window_min"), eng.get("n_samples"), eng.get("params"),
+        dn.get("p_hypo", float("nan")), dn.get("nadir"), (dn.get("nadir_time") or "")[11:16],
+        pr.get("p_hypo", float("nan")), pr.get("p_hyper", float("nan")), pr.get("nadir"), (pr.get("nadir_time") or "")[11:16], pr.get("peak"), (pr.get("peak_time") or "")[11:16],
+        card.variant_name, card.p_hypo, card.verdict)
+
+
+@app.post("/permission/compare", response_model=PermissionCard)
+def permission_compare(req: PermissionRequest) -> PermissionCard:
+    """The same question answered with population parameters (no fit, no learned correction):
+    what the app would say if it did not know this person."""
+    tw = get_twin()
+    d = req.event.model_dump()
+    if str(d.get("start_time", "")).lower() in ("", "now"):
+        d["start_time"] = tw.now.isoformat(timespec="minutes")
+    try:
+        ev = Event.from_dict(d)
+    except ValueError as ex:
+        raise HTTPException(400, str(ex))
+
+    def run():
+        saved_last = tw.last_card
+        with as_population(tw):
+            card = evaluate_permission(tw, ev)
+        tw.last_card = saved_last
+        tw.cards.pop()   # the population run is not part of the session history
+        return card
+    card = heavy(run)
+    card.plain = permission_plain(card, tw.now, None)
     card.plain["understood"] = understood_line(card.proposed.model_dump() if card.proposed else {}, tw.now)
     return card
+
+
+@app.get("/twin/summary")
+def twin_summary_route() -> Dict[str, Any]:
+    """Personalisation in plain words: how this person's fitted twin differs from the average."""
+    return twin_summary(get_twin())
 
 
 @app.get("/plan", response_model=PlanResponse)
@@ -189,7 +258,9 @@ def parse(req: ParseRequest) -> ParsedEvent:
     tw = get_twin()
     if not req.text.strip():
         raise HTTPException(400, "empty text")
-    return parse_text(req.text, tw.now)
+    pe = parse_text(req.text, tw.now)
+    tw._last_parse = {"text": req.text, "parser": pe.parser, "event": pe.event.model_dump()}
+    return pe
 
 
 @app.post("/parse/image", response_model=ParsedEvent)
@@ -369,7 +440,8 @@ def home() -> Dict[str, Any]:
         n = 3 * 12 + 1
         g = float(s.glucose)
         tone = "good" if lo <= g <= hi else ("bad" if g < lo else "warn")
-        return {"as_of": tw.now.isoformat(timespec="minutes"), "profile": tw.profile,
+        return {"as_of": tw.now.isoformat(timespec="minutes"), "wall_now": tw.wall_now().isoformat(timespec="minutes"), "profile": tw.profile,
+                "twin": twin_summary(tw),
                 "glucose": {"value": round(g), "std": round(float(std.get("glucose", 0.0))), "tone": tone, "target_low": lo, "target_high": hi, **home_view.trend(tw)},
                 "history": home_view.history(tw, 3.0),
                 "forecast": {"times": list(mc.times[:n]), "median": [round(float(x), 1) for x in mc.median[:n]],

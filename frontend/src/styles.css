@@ -252,3 +252,23 @@ pre { white-space: pre-wrap; word-break: break-word; font-size: var(--fs-xs); ba
   .tiles, .coming { grid-template-columns: repeat(2, 1fr); }
   .content { padding: var(--s4); }
 }
+
+/* ---------- round 3: chat header, compare box, twin card, tile detail ---------- */
+.chat-head { display: flex; align-items: center; gap: var(--s2); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--border); font-size: var(--fs-md); }
+.chat-head .bot-icon { font-size: 18px; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); color: var(--muted); cursor: pointer; }
+.compare-box { border-top: 1px dashed var(--border-strong); padding-top: var(--s2); display: grid; gap: var(--s1); }
+.compare-box .headline.small { font-size: var(--fs-md); font-weight: 600; }
+.compare-box.good .headline { color: var(--good); } .compare-box.warn .headline { color: var(--warn); } .compare-box.bad .headline { color: var(--bad); }
+.twin-line { font-size: var(--fs-sm); color: var(--muted); padding: var(--s2) var(--s3); border-top: 1px solid var(--border); }
+.twin-rows { display: grid; gap: var(--s2); }
+.twin-row { display: grid; grid-template-columns: 1fr 160px; align-items: center; gap: var(--s3); font-size: var(--fs-sm); }
+.twin-row .track { position: relative; height: 8px; border-radius: 4px; background: var(--panel-2); }
+.twin-row .track .mid { position: absolute; left: 50%; top: -3px; width: 1px; height: 14px; background: var(--border-strong); }
+.twin-row .track .dot { position: absolute; top: -3px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--accent); border: 2px solid #fff; box-shadow: var(--shadow); }
+.tile-detail .sentence { font-size: var(--fs-md); }
+.pt { height: 260px; }
+.pt-pill { fill: var(--panel); stroke: var(--border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.pt-emoji { font-size: 12px; }
+.pt-item .pt-dot { stroke-width: 1; }
+.pt-item.suggested .pt-dot { stroke-width: 1.6; }

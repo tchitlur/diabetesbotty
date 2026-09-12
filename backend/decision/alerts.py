@@ -15,6 +15,7 @@ from backend.engine import fast
 from backend.engine.fast import IDX, NU
 from backend.engine.simulate import events_to_inputs, initial_vector, state_params
 from backend.inference.windows import observed_at
+from backend.decision.plain import fmt12
 
 PROB_THRESHOLD = 0.15
 
@@ -65,13 +66,13 @@ def compute_alerts(twin, horizon_min: int = 480) -> List[Alert]:
         c = cause_event(twin, "hypo", horizon_min)
         out.append(Alert(window_start=w[0], window_end=w[1], kind="hypo", probability=round(w[2], 3),
                          cause_event=EventModel(**c.to_dict()) if c else None,
-                         message=f"Glucose likely below 70 mg/dL between {w[0][11:16]} and {w[1][11:16]} (peak probability {w[2]:.0%})." + (f" Most responsible past event: {c.label or c.type} at {c.start_time[11:16]}." if c else "")))
+                         message=f"Glucose likely below 70 mg/dL between {fmt12(w[0])} and {fmt12(w[1])} (peak probability {w[2]:.0%})." + (f" Most responsible past event: {c.label or c.type} at {fmt12(c.start_time)}." if c else "")))
     w = _window(p_high, mc.times)
     if w:
         c = cause_event(twin, "hyper", horizon_min)
         out.append(Alert(window_start=w[0], window_end=w[1], kind="hyper", probability=round(w[2], 3),
                          cause_event=EventModel(**c.to_dict()) if c else None,
-                         message=f"Glucose likely above 250 mg/dL between {w[0][11:16]} and {w[1][11:16]} (peak probability {w[2]:.0%})." + (f" Most responsible past event: {c.label or c.type} at {c.start_time[11:16]}." if c else "")))
+                         message=f"Glucose likely above 250 mg/dL between {fmt12(w[0])} and {fmt12(w[1])} (peak probability {w[2]:.0%})." + (f" Most responsible past event: {c.label or c.type} at {fmt12(c.start_time)}." if c else "")))
     if mc.p_dka > 0.05:
         out.append(Alert(window_start=mc.times[0], window_end=mc.times[-1], kind="dka", probability=round(mc.p_dka, 3),
                          message="Ketones rising with high glucose: check ketones."))

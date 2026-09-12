@@ -10,6 +10,7 @@
   "workouts_per_week": 4,
   "coffee_prob": 0.750819221239551,
   "illness_week": 6,
+  "bolus_scale": 1.0,
   "true_params": {
     "SIT": 0.0041540603375985865,
     "SID": 0.0005148154236581289,
@@ -39,12 +40,12 @@
   "days": 90,
   "data_quality": {
     "format": "dexcom",
-    "n_raw": 24468,
+    "n_raw": 24486,
     "n_grid": 25920,
-    "coverage": 0.9417438271604939,
-    "n_gaps": 241,
-    "n_artifacts": 58,
+    "coverage": 0.9432484567901235,
+    "n_gaps": 236,
+    "n_artifacts": 38,
     "staleness_min": 0.0,
-    "data_quality": 0.940354938271605
+    "data_quality": 0.981508487654321
   }
 }

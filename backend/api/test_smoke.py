@@ -9,6 +9,7 @@ from backend.api.app import app
 def client():
     assert (DEMO_PATIENT_DIR / "fit.json").exists(), "run: python -m backend.inference.fitter --patient demo"
     with TestClient(app) as c:
+        c.post("/profiles/demo/select")   # the active profile is a server-side file; another session may have left a different one
         c.post("/demo/reset")
         yield c
 
